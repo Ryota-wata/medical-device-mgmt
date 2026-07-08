@@ -616,7 +616,7 @@ function MaintenanceQuoteRegistrationContent() {
   };
 
   return (
-    <div className="flex flex-col min-h-dvh bg-surface-screen">
+    <div className="flex flex-col h-dvh bg-surface-screen">
       <Header
         title="保守契約管理"
         hideMenu={true}
@@ -643,17 +643,17 @@ function MaintenanceQuoteRegistrationContent() {
           className="flex flex-col overflow-auto p-4"
           style={{ width: `${leftPanelWidth}%` }}
         >
+          {/* 受付部署 / 担当者 (STEP①の外・1行インライン) */}
+          <div data-element-id="mqr-reception-row" className="flex items-center gap-6 mb-4 text-sm bg-surface-card border border-stroke-input rounded-md p-4">
+            <span className="text-content-primary font-semibold">受付部署 <span className="ml-2 font-normal">{formData.applicationDepartment || '（未設定）'}</span></span>
+            <span className="text-content-primary font-semibold">担当者</span>
+            <span className="px-3 py-1.5 rounded-md border border-stroke-input bg-surface-card text-content-primary min-w-[140px]">
+              {formData.applicationPerson || '（未設定）'}
+            </span>
+          </div>
+
           {/* ===== STEP① ===== */}
           <Section step={1} title="STEP①. 見積依頼" enabled={isStepEnabled(1)} completed={1 < activeStep} elementId="mqr-step1-section">
-            {/* 受付部署 / 担当者 (1行インライン) */}
-            <div data-element-id="mqr-reception-row" className="flex items-center gap-6 mb-4 text-sm">
-              <span className="text-content-primary font-semibold">受付部署 <span className="ml-2 font-normal">{formData.applicationDepartment || '（未設定）'}</span></span>
-              <span className="text-content-primary font-semibold">担当者</span>
-              <span className="px-3 py-1.5 rounded-md border border-stroke-input bg-surface-card text-content-primary min-w-[140px]">
-                {formData.applicationPerson || '（未設定）'}
-              </span>
-            </div>
-
             <div className="flex items-center gap-3 px-3.5 py-2.5 bg-surface-select rounded-md mb-4">
               <p className="flex-1 text-sm text-cta-primary-dark leading-relaxed">
                 業者を登録し保守見積依頼書を作成してください。プレビューで内容を確認後、依頼を送信できます。
@@ -1034,7 +1034,7 @@ function MaintenanceQuoteRegistrationContent() {
               </tbody>
             </table>
 
-            {/* 発注書の発行 / 申請を見送る (発注登録) */}
+            {/* 発注書の発行 / 申請を見送る (単一選択・選択に応じて下の入力/ボタンを切替) */}
             <div data-element-id="mqr-order-decision-section" className="mb-5 border border-stroke-input rounded-lg p-4">
               <div className="flex items-center gap-3 mb-4">
                 <label className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-md cursor-pointer text-sm font-semibold transition-colors ${orderDecision === 'issue' ? 'bg-surface-select text-cta-primary-dark' : 'bg-stroke-card text-content-primary'}`}>
@@ -1059,80 +1059,76 @@ function MaintenanceQuoteRegistrationContent() {
                   />
                   申請を見送る
                 </label>
-                <div className="flex gap-2">
+                {orderDecision === 'issue' && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => alert('発注書プレビュー（mock）')}
+                      disabled={!isStepEnabled(2)}
+                      className="px-3 py-1.5 bg-stroke-card text-content-primary border border-stroke-input rounded-md cursor-pointer text-xs hover:bg-stroke-input transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      プレビュー
+                    </button>
+                    <button
+                      onClick={() => alert('発注書メール送信（mock）')}
+                      disabled={!isStepEnabled(2)}
+                      className="px-3 py-1.5 bg-stroke-card text-content-primary border border-stroke-input rounded-md cursor-pointer text-xs hover:bg-stroke-input transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      メール送信
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* 発注書の発行 選択時: 決済日/決済No + 発注登録 */}
+              {orderDecision === 'issue' && (
+                <>
+                  <div className="flex items-center gap-6 flex-wrap mb-4">
+                    <span className="text-sm font-semibold text-content-primary">決済日</span>
+                    <input
+                      data-element-id="mqr-settlement-date"
+                      type="date"
+                      value={settlementDate}
+                      onChange={(e) => setSettlementDate(e.target.value)}
+                      disabled={!isStepEnabled(2)}
+                      className={`${inputCls} w-[190px] tabular-nums`}
+                    />
+                    <span className="text-sm font-semibold text-content-primary">決済No,</span>
+                    <input
+                      data-element-id="mqr-settlement-no"
+                      type="text"
+                      value={formData.settlementNo}
+                      onChange={(e) => updateFormData({ settlementNo: e.target.value })}
+                      placeholder="院内の決済No.を入力（任意）"
+                      disabled={!isStepEnabled(2)}
+                      className={`${inputCls} w-[260px]`}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      data-element-id="mqr-order-register-btn"
+                      onClick={() => setIsOrderRegisterModalOpen(true)}
+                      disabled={!isStepEnabled(2) || !!registeredOrderNo}
+                      className={`h-9 px-5 text-white border-0 rounded-md text-sm font-bold transition-colors ${!registeredOrderNo ? 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer' : 'bg-content-sub cursor-not-allowed'}`}
+                    >
+                      {registeredOrderNo ? `発注登録済 (${registeredOrderNo})` : '発注登録'}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* 申請を見送る 選択時: 見積グループを解除し終了 */}
+              {orderDecision === 'reject' && (
+                <div className="flex justify-end">
                   <button
-                    onClick={() => alert('発注書プレビュー（mock）')}
-                    disabled={!isStepEnabled(2) || orderDecision !== 'issue'}
-                    className="px-3 py-1.5 bg-stroke-card text-content-primary border border-stroke-input rounded-md cursor-pointer text-xs hover:bg-stroke-input transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    data-element-id="mqr-group-close-btn"
+                    onClick={handleRejectApplication}
+                    disabled={!isStepEnabled(2) || isSubmitting}
+                    className="h-10 px-6 rounded-lg bg-content-alert text-white border-0 text-sm font-bold cursor-pointer hover:opacity-90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    プレビュー
-                  </button>
-                  <button
-                    onClick={() => alert('発注書メール送信（mock）')}
-                    disabled={!isStepEnabled(2) || orderDecision !== 'issue'}
-                    className="px-3 py-1.5 bg-stroke-card text-content-primary border border-stroke-input rounded-md cursor-pointer text-xs hover:bg-stroke-input transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    メール送信
+                    見積グループを解除し終了
                   </button>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-6 flex-wrap mb-4">
-                <span className="text-sm font-semibold text-content-primary">決済日</span>
-                <input
-                  data-element-id="mqr-settlement-date"
-                  type="date"
-                  value={settlementDate}
-                  onChange={(e) => setSettlementDate(e.target.value)}
-                  disabled={!isStepEnabled(2)}
-                  className={`${inputCls} w-[190px] tabular-nums`}
-                />
-                <span className="text-sm font-semibold text-content-primary">決済No,</span>
-                <input
-                  data-element-id="mqr-settlement-no"
-                  type="text"
-                  value={formData.settlementNo}
-                  onChange={(e) => updateFormData({ settlementNo: e.target.value })}
-                  placeholder="院内の決済No.を入力（任意）"
-                  disabled={!isStepEnabled(2)}
-                  className={`${inputCls} w-[260px]`}
-                />
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  data-element-id="mqr-order-register-btn"
-                  onClick={() => setIsOrderRegisterModalOpen(true)}
-                  disabled={!isStepEnabled(2) || orderDecision !== 'issue' || !!registeredOrderNo}
-                  className={`h-9 px-5 text-white border-0 rounded-md text-sm font-bold transition-colors ${orderDecision === 'issue' && !registeredOrderNo ? 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer' : 'bg-content-sub cursor-not-allowed'}`}
-                >
-                  {registeredOrderNo ? `発注登録済 (${registeredOrderNo})` : '発注登録'}
-                </button>
-              </div>
-            </div>
-
-            {/* 発注書の発行 / 申請を見送る (見積グループ解除) */}
-            <div data-element-id="mqr-group-close-section" className="mb-5 border border-stroke-input rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-md bg-stroke-card text-sm font-semibold text-content-primary">
-                  <span className="w-3.5 h-3.5 rounded-full border border-content-sub inline-block" />
-                  発注書の発行
-                </div>
-                <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-md bg-[#F8D7E6] text-sm font-semibold text-content-alert">
-                  <span className="w-3.5 h-3.5 rounded-full border border-content-alert inline-block" />
-                  申請を見送る
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <button
-                  data-element-id="mqr-group-close-btn"
-                  onClick={handleRejectApplication}
-                  disabled={!isStepEnabled(2) || isSubmitting}
-                  className="h-10 px-6 rounded-lg bg-content-alert text-white border-0 text-sm font-bold cursor-pointer hover:opacity-90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  見積グループを解除し終了
-                </button>
-              </div>
+              )}
             </div>
 
             <div className="flex justify-end mt-4">
