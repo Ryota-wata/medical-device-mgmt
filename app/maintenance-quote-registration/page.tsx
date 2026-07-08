@@ -1130,17 +1130,6 @@ function MaintenanceQuoteRegistrationContent() {
                 </div>
               )}
             </div>
-
-            <div className="flex justify-end mt-4">
-              <button
-                data-element-id="mqr-step2-complete-btn"
-                onClick={handleStep2Complete}
-                disabled={!isStepEnabled(2) || isSubmitting}
-                className="h-10 px-6 rounded-lg bg-cta-primary-dark text-white border-0 text-sm font-bold cursor-pointer hover:bg-cta-primary transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                見積登録完了→STEP③へ
-              </button>
-            </div>
           </Section>
 
           {/* ===== STEP③ ===== */}
