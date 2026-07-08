@@ -4,7 +4,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Trash2, Printer } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
-import { useInspectionStore } from '@/lib/stores';
+import { useInspectionStore, useAuthStore } from '@/lib/stores';
 import { InspectionTask } from '@/lib/types';
 
 type DocumentType = '' | '点検報告書' | '請求書' | '見積書' | 'その他';
@@ -33,6 +33,7 @@ const ACCOUNT_OPTIONS = ['消耗品費', '修繕費', '保守料', '委託費', 
 export default function MakerMaintenanceResultPage() {
   const router = useRouter();
   const { deleteTask, addRecord } = useInspectionStore();
+  const { user } = useAuthStore(); // 担当者はログインユーザーから自動取得
 
   const [task, setTask] = useState<InspectionTask | null>(null);
   const [formData, setFormData] = useState<FormData>({
@@ -253,12 +254,12 @@ export default function MakerMaintenanceResultPage() {
 
       {/* メインコンテンツ */}
       <div ref={containerRef} style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative' }}>
-        {/* 左側: 登録エリア */}
+        {/* 左側: 登録エリア（ブロックのスクロールコンテナ。flex-columnだと子がshrinkして下部が到達不能になるため） */}
         <div style={{
           width: `${leftPanelWidth}%`,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'auto',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          minHeight: 0,
           padding: '16px',
         }}>
           {/* 受付部署／担当者 */}
@@ -282,14 +283,15 @@ export default function MakerMaintenanceResultPage() {
               <span style={{ fontWeight: 700, color: '#4A4A4A' }}>担当者</span>
               <input
                 type="text"
-                defaultValue=""
-                placeholder=""
-                style={{ ...styles.input, width: '180px' }}
+                value={user?.username ?? ''}
+                readOnly
+                title="ログインユーザーから自動取得"
+                style={{ ...styles.input, width: '180px', background: '#F7F7F7', color: '#4A4A4A' }}
               />
             </div>
           </div>
 
-          {/* STEP③. 完了登録 */}
+          {/* 完了登録（本画面は完了登録のみのためSTEP番号なし） */}
           <div style={{
             background: 'white',
             border: '1px solid #E1E1E1',
@@ -302,7 +304,7 @@ export default function MakerMaintenanceResultPage() {
               fontWeight: 700,
               color: '#4A4A4A',
             }}>
-              STEP③. 完了登録
+              完了登録
             </div>
 
             <div style={{ padding: '0 20px 20px' }}>
@@ -784,6 +786,20 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '4px',
     fontSize: '13px',
     boxSizing: 'border-box',
+  },
+  fileSelectBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '8px 16px',
+    background: '#FFFFFF',
+    border: '1px solid #C4C4C4',
+    borderRadius: '4px',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: '#4A4A4A',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    boxShadow: '0 1px 0 rgba(0,0,0,0.03)',
   },
   radioLabel: {
     display: 'flex',
