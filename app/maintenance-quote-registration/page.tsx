@@ -387,7 +387,7 @@ function MaintenanceQuoteRegistrationContent() {
   if (!formData) {
     return (
       <div className="flex flex-col min-h-dvh bg-surface-screen">
-        <Header title="保守契約管理" hideMenu={true} showBackButton={false} />
+        <Header title="各種契約登録管理" hideMenu={true} showBackButton={false} />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-content-sub">読み込み中...</p>
         </div>
@@ -618,7 +618,7 @@ function MaintenanceQuoteRegistrationContent() {
   return (
     <div className="flex flex-col h-dvh bg-surface-screen">
       <Header
-        title="保守契約管理"
+        title="各種契約登録管理"
         hideMenu={true}
         showBackButton={true}
         backHref="/quotation-data-box/maintenance-contracts"
@@ -1852,7 +1852,7 @@ export default function MaintenanceQuoteRegistrationPage() {
   return (
     <Suspense fallback={
       <div className="flex flex-col min-h-dvh bg-surface-screen">
-        <Header title="保守契約管理" hideMenu={true} showBackButton={false} />
+        <Header title="各種契約登録管理" hideMenu={true} showBackButton={false} />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-content-sub">読み込み中...</p>
         </div>
