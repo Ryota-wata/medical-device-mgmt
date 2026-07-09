@@ -155,21 +155,131 @@ $individualRows = @(
   @('orderItemId', 'int64', '✓', '`order_items.order_item_id`'),
   @('qrCodeValue', 'string', '-', 'QRコード値'),
   @('serialNo', 'string', '-', 'シリアルNo.'),
-  @('itemName', 'string', '✓', '品目名'),
+  @('shipAssetMasterId', 'int64', '-', '`individuals.ship_asset_master_id`。選択SHIP資産マスタID'),
+  @('categoryId', 'int64', '-', '`individuals.category_id`。選択Category ID'),
+  @('categoryName', 'string', '-', '`individuals.category_name`。選択Category表示名'),
+  @('largeClassId', 'int64', '-', '`individuals.large_class_id`。選択大分類ID'),
+  @('largeClassName', 'string', '-', '`individuals.large_class_name`。選択大分類名'),
+  @('mediumClassId', 'int64', '-', '`individuals.medium_class_id`。選択中分類ID'),
+  @('mediumClassName', 'string', '-', '`individuals.medium_class_name`。選択中分類名'),
+  @('assetItemId', 'int64', '-', '`individuals.asset_item_id`。選択品目ID'),
+  @('assetItemName', 'string', '-', '`individuals.asset_item_name`。選択品目名'),
+  @('itemName', 'string', '✓', '`individuals.item_name`。発注明細由来の品目名'),
   @('makerName', 'string', '-', 'メーカー名'),
   @('modelName', 'string', '-', '型式'),
   @('acquisitionAmount', 'decimal', '-', '取得金額'),
-  @('acquiredOn', 'date', '-', '取得日'),
+  @('acquiredOn', 'date', '-', '購入年月日 / 取得日'),
   @('facilityLocationId', 'int64', '-', '設置ロケーションID'),
+  @('buildingName', 'string', '-', '`individuals.building_name`。棟'),
   @('floorName', 'string', '-', '階'),
   @('departmentName', 'string', '-', '部門'),
   @('sectionName', 'string', '-', '部署'),
   @('roomName', 'string', '-', '室名'),
+  @('widthMm', 'string', '-', '`individuals.width_mm`。幅(mm)'),
+  @('depthMm', 'string', '-', '`individuals.depth_mm`。奥行(mm)'),
+  @('heightMm', 'string', '-', '`individuals.height_mm`。高さ(mm)'),
   @('provisionalAccountTitle', 'string', '-', '仮勘定科目'),
   @('photoDocumentIds', 'int64[]', '-', '既存検収写真ドキュメントID。新規写真を同時アップロードする場合は `photoDocuments` を使用する'),
   @('photoDocuments', 'DocumentInput[]', '-', '新規検収写真メタデータ。各要素の `filePartName` で対応するファイルパートを指定する'),
   @('fixedAssetNo', 'string', '-', '固定資産番号'),
-  @('registrationStatus', 'string', '✓', '`INSPECTED` / `REGISTERED`')
+  @('registrationStatus', 'string', '✓', '`PROVISIONAL` / `REGISTERED` / `CANCELED`')
+)
+
+$masterFilterOptionRows = @(
+  @('id', 'int64', '✓', '候補ID'),
+  @('label', 'string', '✓', '画面表示名'),
+  @('parentId', 'int64|null', '-', '親候補ID。大分類は categoryId、中分類は largeClassId、品目は mediumClassId')
+)
+
+$assetClassificationRows = @(
+  @('shipAssetMasterId', 'int64', '-', 'SHIP資産マスタID。候補が `ship_asset_masters` まで一意に決まる場合に設定する'),
+  @('categoryId', 'int64', '-', 'Category ID'),
+  @('categoryName', 'string', '-', 'Category表示名'),
+  @('largeClassId', 'int64', '-', '大分類ID'),
+  @('largeClassName', 'string', '-', '大分類名'),
+  @('mediumClassId', 'int64', '-', '中分類ID'),
+  @('mediumClassName', 'string', '-', '中分類名'),
+  @('assetItemId', 'int64', '-', '品目ID'),
+  @('assetItemName', 'string', '-', '品目名'),
+  @('matchedBy', 'string', '-', '`quotationItem` / `itemName` / `modelName` / `manual`'),
+  @('confidence', 'decimal', '-', '自動候補の信頼度。手動選択時は null')
+)
+
+$inspectionItemRows = @(
+  @('orderItemId', 'int64', '✓', '`order_items.order_item_id`'),
+  @('quotationItemId', 'int64', '✓', '`quotation_items.quotation_item_id`'),
+  @('itemName', 'string', '✓', '発注明細の品目名'),
+  @('makerName', 'string', '-', '発注明細のメーカー名'),
+  @('modelName', 'string', '-', '発注明細の型式'),
+  @('quantity', 'int32', '✓', '発注明細数量'),
+  @('registeredIndividualCount', 'int32', '✓', '保存済み個体数'),
+  @('requiredIndividualCount', 'int32', '✓', '必要個体数。通常は `quantity` と一致する'),
+  @('registrationStatus', 'string', '✓', '`NOT_STARTED` / `IN_PROGRESS` / `PROVISIONAL`'),
+  @('savedIndividuals', 'AssetProvisionalIndividual[]', '✓', '保存済み検収入力。未保存時は空配列'),
+  @('initialClassification', 'AssetClassification|null', '-', '初期選択する分類候補。候補なしの場合は null'),
+  @('classificationCandidates', 'AssetClassification[]', '✓', '発注明細の品目名・型式から推定した分類候補'),
+  @('locationCandidate', 'object', '-', '申請明細から推定した設置場所初期値')
+)
+
+$assetProvisionalItemInputRows = @(
+  @('payload.rfqGroupId', 'int64', '✓', '`rfqs.rfq_id`'),
+  @('payload.individualId', 'int64', '-', '既存個体を更新する場合の `individuals.individual_id`。新規時は null'),
+  @('payload.serialNo', 'string', '-', 'シリアルNo.'),
+  @('payload.qrCodeValue', 'string', '-', 'QRコード値'),
+  @('payload.shipAssetMasterId', 'int64', '-', '選択SHIP資産マスタID。指定時は有効な `ship_asset_masters` から分類階層、品目、メーカー、型式を再解決する'),
+  @('payload.categoryId', 'int64', '-', '選択Category ID'),
+  @('payload.largeClassId', 'int64', '-', '選択大分類ID'),
+  @('payload.mediumClassId', 'int64', '-', '選択中分類ID'),
+  @('payload.assetItemId', 'int64', '-', '選択品目ID。大分類/中分類/品目ドロップダウンの保存値'),
+  @('payload.itemName', 'string', '-', '品目名。発注明細由来の表示名'),
+  @('payload.makerName', 'string', '-', 'メーカー名'),
+  @('payload.modelName', 'string', '-', '型式'),
+  @('payload.acquisitionAmount', 'decimal', '-', '取得金額'),
+  @('payload.acquiredOn', 'date', '-', '購入年月日 / 取得日'),
+  @('payload.facilityLocationId', 'int64', '-', '設置ロケーションID'),
+  @('payload.buildingName', 'string', '-', '棟'),
+  @('payload.floorName', 'string', '-', '階'),
+  @('payload.departmentName', 'string', '-', '部門'),
+  @('payload.sectionName', 'string', '-', '部署'),
+  @('payload.roomName', 'string', '-', '室名'),
+  @('payload.widthMm', 'string', '-', '幅(mm)'),
+  @('payload.depthMm', 'string', '-', '奥行(mm)'),
+  @('payload.heightMm', 'string', '-', '高さ(mm)'),
+  @('payload.provisionalAccountTitle', 'string', '-', '仮勘定科目'),
+  @('payload.photoDocumentIds', 'int64[]', '-', '既存検収写真ドキュメントID'),
+  @('payload.photoDocuments', 'DocumentInput[]', '-', '新規検収写真メタデータ。各要素の `filePartName` で対応するファイルパートを指定する'),
+  @('payload.remarks', 'string', '-', '受領時メモ。`order_items.remarks` に保存する'),
+  @('payload.expectedUpdatedAt', 'datetime', '-', '画面取得時の `order_items.updated_at` または `individuals.updated_at`'),
+  @('files', 'binary[]', '-', '`payload.photoDocuments[].filePartName` で参照される検収写真ファイル本体')
+)
+
+$assetProvisionalBulkIndividualInputRows = @(
+  @('individualId', 'int64', '-', '既存個体を更新する場合の `individuals.individual_id`。新規時は null'),
+  @('orderItemId', 'int64', '✓', '`order_items.order_item_id`'),
+  @('serialNo', 'string', '-', 'シリアルNo.'),
+  @('qrCodeValue', 'string', '-', 'QRコード値'),
+  @('shipAssetMasterId', 'int64', '-', '選択SHIP資産マスタID。指定時は有効な `ship_asset_masters` から分類階層、品目、メーカー、型式を再解決する'),
+  @('categoryId', 'int64', '-', '選択Category ID'),
+  @('largeClassId', 'int64', '-', '選択大分類ID'),
+  @('mediumClassId', 'int64', '-', '選択中分類ID'),
+  @('assetItemId', 'int64', '-', '選択品目ID。大分類/中分類/品目ドロップダウンの保存値'),
+  @('itemName', 'string', '-', '品目名。発注明細由来の表示名'),
+  @('makerName', 'string', '-', 'メーカー名'),
+  @('modelName', 'string', '-', '型式'),
+  @('acquisitionAmount', 'decimal', '-', '取得金額'),
+  @('acquiredOn', 'date', '-', '購入年月日 / 取得日'),
+  @('facilityLocationId', 'int64', '-', '設置ロケーションID'),
+  @('buildingName', 'string', '-', '棟'),
+  @('floorName', 'string', '-', '階'),
+  @('departmentName', 'string', '-', '部門'),
+  @('sectionName', 'string', '-', '部署'),
+  @('roomName', 'string', '-', '室名'),
+  @('widthMm', 'string', '-', '幅(mm)'),
+  @('depthMm', 'string', '-', '奥行(mm)'),
+  @('heightMm', 'string', '-', '高さ(mm)'),
+  @('provisionalAccountTitle', 'string', '-', '仮勘定科目'),
+  @('photoDocumentIds', 'int64[]', '-', '既存検収写真ドキュメントID'),
+  @('photoDocuments', 'DocumentInput[]', '-', '新規検収写真メタデータ。各要素の `filePartName` で対応するファイルパートを指定する')
 )
 
 function New-EndpointBlock {
@@ -899,7 +1009,7 @@ $endpointBlocks = @(
       '`orders.inspection_on` と `orders.inspection_cert_type` を更新する。明細ごとの納品日は本APIの保存対象外とする。',
       '`rfqs.status=''納期確定''`、`last_status_changed_at` を更新する。',
       '対象RFQに紐づく購入申請のうち、同一申請配下の有効な購入申請明細がすべて納品日登録済以降へ到達した申請は `applications.status=''納品済''` へ更新し、`application_status_histories` を登録する。',
-      '実際の個体単位検収登録完了は `POST /quotation-data-box/asset-provisional-registration/complete` で扱う。'
+      '資産仮登録画面の初期表示は `GET /quotation-data-box/asset-provisional-registration/context`、明細単位保存は `PATCH /quotation-data-box/asset-provisional-registration/items/{orderItemId}`、全件確定は `POST /quotation-data-box/asset-provisional-registration/complete` で扱う。'
     ) `
     -ResponseRows @(
       @('rfqGroupId', 'int64', '✓', '対象RFQ ID'),
@@ -920,6 +1030,113 @@ $endpointBlocks = @(
     )
 
   New-EndpointBlock `
+    -Title '検収登録コンテキスト取得（/quotation-data-box/asset-provisional-registration/context）' `
+    -Overview '資産仮登録画面のPC/モバイル初期表示に必要な対象発注明細、保存済み個体、分類初期候補、分類ドロップダウン候補、設置場所初期候補、戻り先を取得する。保存済み個体がある場合はW/D/Hも返す。' `
+    -Method 'GET' `
+    -Path '/quotation-data-box/asset-provisional-registration/context' `
+    -Auth '要（Bearer）' `
+    -ParametersRows @(
+      @('rfqGroupId', 'query', 'int64', '✓', '`rfqs.rfq_id`'),
+      @('mode', 'query', 'string', '-', '`mobile` / `pc`。未指定時は `mobile`')
+    ) `
+    -PermissionLines $acceptancePermissionLines `
+    -ProcessingLines @(
+      '対象RFQが `management_type=''PURCHASE''`、`workflow_type=''RFQ''`、`status=''納期確定''`、`deleted_at IS NULL` であることを検証する。',
+      '対象RFQまたは対象発注データを画面表示に使えない場合は、HTTP 200 で `screenState=''NOT_FOUND''`、`items=[]`、戻り先を返す。画面は未検出状態を表示する。',
+      '対象発注、発注明細、発注明細に紐づく保存済み `individuals`、検収写真リンクを取得し、数量分の登録状況を算出する。保存済み `individuals` がある場合はQR、シリアル、品目名、メーカー、型式、購入年月日、取得金額、分類、棟、階、部門、部署、室名、W/D/H、写真を優先して返す。',
+      '大分類 / 中分類 / 品目ドロップダウン候補は No.14a「資産マスタ選択」の `GET /asset-master/filter-options` と同一の有効マスタ母集団から生成する。具体的には `ship_asset_masters.is_active=true` かつ JOIN 先の `asset_categories`、`asset_large_classes`、`asset_medium_classes`、`asset_items` が有効な組み合わせだけを対象とする。',
+      'レスポンスの `classificationFilterOptions` は `categories` / `largeClasses` / `mediumClasses` / `assetItems` をまとめて返す。画面は `parentId` により、Category変更時は大分類以下、大分類変更時は中分類以下、中分類変更時は品目を連動絞り込みする。',
+      '分類初期候補は、まず `quotation_items.asset_item_id` と確定分類名を優先し、未確定の場合は発注明細の品目名または型式を `asset_items.item_name` / `models.model_name` と照合して算出する。一意に `ship_asset_masters` まで解決できる場合は `shipAssetMasterId` を返す。',
+      '設置場所初期値は同一RFQに紐づく購入申請明細から、資産名または型式と発注明細を照合して決定する。付属品行は親明細の候補を継承し、一致しない場合は同一RFQ申請の先頭明細をフォールバック候補とする。',
+      '本APIは表示用候補と保存済み入力を返すだけで、RFQステータスおよび個体データは更新しない。'
+    ) `
+    -ResponseRows @(
+      @('context', 'RfqContext', '✓', '管理区分、入力モード、戻り先'),
+      @('screenState', 'string', '✓', '`ACTIVE` / `NOT_FOUND`'),
+      @('order', 'OrderSummary|null', '-', '対象発注。`screenState=''NOT_FOUND''` の場合は null'),
+      @('items', 'OrderItemForInspection[]', '✓', '発注明細、登録状況、初期候補'),
+      @('classificationFilterOptions', 'object', '✓', '大分類 / 中分類 / 品目ドロップダウン候補'),
+      @('locationCandidates', 'object', '✓', '設置場所初期候補')
+    ) `
+    -ResponseSubtables @(
+      @{ Title = 'items要素（OrderItemForInspection）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $inspectionItemRows },
+      @{ Title = 'savedIndividuals要素（AssetProvisionalIndividual）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $individualRows },
+      @{ Title = 'AssetClassification'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $assetClassificationRows },
+      @{ Title = 'MasterFilterOption'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $masterFilterOptionRows }
+    ) `
+    -ExtraTables @(
+      @{ Title = 'classificationFilterOptions要素と参照元'; Headers = @('レスポンス項目', '参照元', '親項目'); Rows = @(
+        @('categories', '`asset_categories` + 有効 `ship_asset_masters`', 'なし'),
+        @('largeClasses', '`asset_large_classes` + 有効 `ship_asset_masters`', 'categoryId'),
+        @('mediumClasses', '`asset_medium_classes` + 有効 `ship_asset_masters`', 'largeClassId'),
+        @('assetItems', '`asset_items` + 有効 `ship_asset_masters`', 'mediumClassId')
+      ) }
+    ) `
+    -StatusRows @(
+      @('200', '取得成功', 'AssetProvisionalRegistrationContextResponse'),
+      @('400', '検索条件不正', 'ErrorResponse'),
+      @('401', '未認証', 'ErrorResponse'),
+      @('403', '実効 `normal_acceptance` なし', 'ErrorResponse'),
+      @('404', '作業対象施設なし', 'ErrorResponse'),
+      @('409', 'RFQ状態不整合', 'ErrorResponse'),
+      @('500', 'サーバー内部エラー', 'ErrorResponse')
+    )
+
+  New-EndpointBlock `
+    -Title '検収登録明細保存（/quotation-data-box/asset-provisional-registration/items/{orderItemId}）' `
+    -Overview '資産仮登録画面で入力した個体単位のQR、シリアル、写真、設置場所、W/D/H、分類選択を発注明細単位で保存する。モバイル1件登録とPC一覧編集の双方で利用する。' `
+    -Method 'PATCH' `
+    -Path '/quotation-data-box/asset-provisional-registration/items/{orderItemId}' `
+    -Auth '要（Bearer）' `
+    -ParametersRows @(
+      @('orderItemId', 'path', 'int64', '✓', '`order_items.order_item_id`')
+    ) `
+    -RequestTitle 'リクエストボディ（multipart/form-data）' `
+    -RequestRows $assetProvisionalItemInputRows `
+    -RequestSubtables @(
+      @{ Title = 'photoDocuments要素（DocumentInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows }
+    ) `
+    -PermissionLines $acceptancePermissionLines `
+    -ProcessingLines @(
+      '対象RFQが `management_type=''PURCHASE''`、`workflow_type=''RFQ''`、`status=''納期確定''`、`deleted_at IS NULL` であることを検証する。',
+      '対象発注明細が指定RFQの発注に属し、削除済みではないことを検証する。',
+      '`payload.shipAssetMasterId` が指定された場合は、有効な `ship_asset_masters.is_active=true` と JOIN 先の有効マスタから Category / 大分類 / 中分類 / 品目 / メーカー / 型式を再解決する。',
+      '`payload.shipAssetMasterId` 未指定で分類IDを保存する場合は、`payload.categoryId`、`payload.largeClassId`、`payload.mediumClassId`、`payload.assetItemId` の親子関係を `asset_categories`、`asset_large_classes`、`asset_medium_classes`、`asset_items` で検証する。品目まで指定された場合は、同じ組み合わせを持つ有効な `ship_asset_masters.is_active=true` が存在することを確認する。',
+      '分類選択を保存する場合、APIはマスタから表示名を再解決し、`individuals.ship_asset_master_id`、`category_id`、`category_name`、`large_class_id`、`large_class_name`、`medium_class_id`、`medium_class_name`、`asset_item_id`、`asset_item_name` に検収時点の分類スナップショットとして保存する。',
+      '`individuals` には検収個体として必要な `item_name`、`maker_name`、`model_name`、`acquired_on`、`acquisition_amount`、`building_name`、`floor_name`、`department_name`、`section_name`、`room_name`、`width_mm`、`depth_mm`、`height_mm`、`qr_code_value`、`serial_no` を保持する。',
+      '`quotation_items` は見積登録時点の明細・AI判定・分類結果の正本として扱い、検収登録の個体単位入力では上書きしない。',
+      '`payload.widthMm`、`payload.depthMm`、`payload.heightMm` は各50文字以内とし、入力された場合はmm単位の数値文字列として解釈できることを検証する。',
+      '`payload.remarks` は受領時メモとして `order_items.remarks` に保存する。',
+      '`payload.photoDocuments[].filePartName` が multipart の写真ファイルパートに存在することを確認し、拡張子・MIME Type は画像として許可された形式に限定する。',
+      '新規検収写真ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`rfqGroupId` や `orderItemId` などの業務IDを含めない。',
+      '検収登録中の写真は資産登録前の工程ドキュメントとして `application_documents` に `owner_type=''RFQ''`、`rfq_id`、`step_code=''ACCEPTANCE''`、`document_category=''PHOTO''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`taken_at`、`is_primary`、`uploaded_by_user_id`、`uploaded_at` を保存する。S3バケット名やHTTPS URLはDBへ保存しない。',
+      '`payload.photoDocumentIds` は同一RFQの未削除 `application_documents(owner_type=''RFQ'', document_category=''PHOTO'')` であり、`application_document_order_item_links(relation_type=''ACCEPTANCE_PHOTO'', order_item_id=対象発注明細ID, deleted_at IS NULL)` に有効リンクがあるIDのみ受け付ける。',
+      '保存対象の発注明細IDと写真ドキュメントIDの対応は `application_document_order_item_links` に `relation_type=''ACCEPTANCE_PHOTO''` として保存する。S3オブジェクトキーの接頭辞から `orderItemId` を再解決しない。',
+      'Amazon S3保存後にDBメタデータ保存または明細保存へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`PURCHASE_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す。',
+      '明細単位保存ではRFQステータスを変更しない。RFQの `検収済` への遷移は `POST /quotation-data-box/asset-provisional-registration/complete` で全件条件を満たした場合だけ行う。'
+    ) `
+    -ResponseRows @(
+      @('orderItemId', 'int64', '✓', '対象発注明細ID'),
+      @('individualId', 'int64', '-', '保存または更新した個体ID'),
+      @('photoDocumentIds', 'int64[]', '-', '保存後に当該発注明細へ紐付く検収写真ドキュメントID'),
+      @('savedClassification', 'AssetClassification|null', '-', '保存後の分類選択。未指定の場合は null'),
+      @('saved', 'boolean', '✓', '保存結果'),
+      @('updatedAt', 'datetime', '✓', '更新日時')
+    ) `
+    -ResponseSubtables @(
+      @{ Title = 'AssetClassification'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $assetClassificationRows }
+    ) `
+    -StatusRows @(
+      @('200', '保存成功', 'AssetProvisionalItemSaveResponse'),
+      @('400', '入力不正または分類階層不正', 'ErrorResponse'),
+      @('401', '未認証', 'ErrorResponse'),
+      @('403', '実効 `normal_acceptance` なし', 'ErrorResponse'),
+      @('404', 'RFQ、発注、発注明細なし', 'ErrorResponse'),
+      @('409', 'RFQ状態不整合または競合更新', 'ErrorResponse'),
+      @('502', 'Amazon S3 への検収写真保存またはロールバック削除に失敗した', 'ErrorResponse')
+    )
+
+  New-EndpointBlock `
     -Title '検収登録完了（/quotation-data-box/asset-provisional-registration/complete）' `
     -Overview '資産仮登録画面でPC一括入力またはモバイル個体登録を完了し、検収登録済み個体情報を保存する。' `
     -Method 'POST' `
@@ -930,26 +1147,30 @@ $endpointBlocks = @(
       @('payload.rfqGroupId', 'int64', '✓', '`rfqs.rfq_id`'),
       @('payload.orderId', 'int64', '✓', '`orders.order_id`'),
       @('payload.mode', 'string', '✓', '`pc` / `mobile`'),
-      @('payload.individuals', 'IndividualInput[]', '✓', '検収登録する個体。対象数量分を登録する'),
+      @('payload.individuals', 'AssetProvisionalIndividualInput[]', '-', 'PC一括入力で検収登録する個体。モバイルでは `PATCH /quotation-data-box/asset-provisional-registration/items/{orderItemId}` の保存済み入力を集約する'),
       @('payload.expectedUpdatedAt', 'datetime', '-', '画面取得時の `rfqs.updated_at`'),
       @('files', 'binary[]', '-', '`payload.individuals[].photoDocuments[].filePartName` で参照される検収写真ファイル本体')
     ) `
     -RequestSubtables @(
-      @{ Title = 'individuals要素（IndividualInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $individualRows },
+      @{ Title = 'individuals要素（AssetProvisionalIndividualInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $assetProvisionalBulkIndividualInputRows },
       @{ Title = 'photoDocuments要素（DocumentInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows }
     ) `
     -PermissionLines $acceptancePermissionLines `
     -ProcessingLines @(
       '対象RFQが `management_type=''PURCHASE''`、`status=''納期確定''` であることを検証する。',
       '対象発注・発注明細が同一RFQに属することを検証する。',
-      'PCモードでは全対象明細分の個体情報を一括登録し、モバイルモードでは登録済み個体を集約して全件登録条件を確認する。',
+      'PCモードでは `payload.individuals` による全対象明細分の個体情報を一括登録する。モバイルモードでは `PATCH /quotation-data-box/asset-provisional-registration/items/{orderItemId}` で保存済みの明細入力を集約して全件登録条件を確認する。',
+      'SHIP資産マスタIDまたは大分類 / 中分類 / 品目の選択値が含まれる場合は、No.14a「資産マスタ選択」の `GET /asset-master/filter-options` と同じ有効マスタ母集団で親子関係と有効性を検証する。',
+      '分類選択を保存する場合、APIはマスタから表示名を再解決し、`individuals.ship_asset_master_id`、`category_id`、`category_name`、`large_class_id`、`large_class_name`、`medium_class_id`、`medium_class_name`、`asset_item_id`、`asset_item_name` に検収時点の分類スナップショットとして保存する。',
+      '保存した分類スナップショットは資産登録時に `asset_ledgers` の分類項目へ反映する。',
+      '`individuals` は検収済み個体の中間正本としてQR、シリアル、品目名、メーカー、型式、購入年月日、取得金額、分類、設置場所、W/D/H、写真リンクを保持する。',
       '`payload.individuals[].photoDocuments` を指定した場合は、各 `filePartName` が multipart の写真ファイルパートに存在することを確認し、拡張子・MIME Type は画像として許可された形式に限定する。',
       '新規検収写真ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`rfqGroupId` や `orderItemId` などの業務IDを含めない。',
       '検収登録中の写真は資産登録前の工程ドキュメントとして `application_documents` に `owner_type=''RFQ''`、`rfq_id`、`step_code=''ACCEPTANCE''`、`document_category=''PHOTO''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`taken_at`、`is_primary`、`uploaded_by_user_id`、`uploaded_at` を保存する。S3バケット名やHTTPS URLはDBへ保存しない。',
       '`payload.individuals[].photoDocumentIds` は同一RFQの未削除 `application_documents(owner_type=''RFQ'', document_category=''PHOTO'')` であり、`application_document_order_item_links(relation_type=''ACCEPTANCE_PHOTO'', order_item_id=当該個体のorderItemId, deleted_at IS NULL)` に有効リンクがあるIDのみ受け付ける。',
       '保存対象の発注明細IDと写真ドキュメントIDの対応は `application_document_order_item_links` に `relation_type=''ACCEPTANCE_PHOTO''` として保存する。S3オブジェクトキーの接頭辞から `orderItemId` を再解決しない。',
       'Amazon S3保存後にDBメタデータ保存または検収登録トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`PURCHASE_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す。',
-      '`individuals` を作成または更新し、`registration_status=''INSPECTED''`、検収日、設置場所、QR、シリアル、仮勘定科目を保持する。',
+      '`individuals` を作成または更新し、`registration_status=''PROVISIONAL''`、検収日、品目名、メーカー、型式、購入年月日、取得金額、分類、設置場所、W/D/H、QR、シリアル、仮勘定科目を保持する。',
       '全対象数量分の個体が登録済みになった場合だけ `rfqs.status=''検収済''` に更新する。',
       '対象RFQに紐づく購入申請のうち、同一申請配下の有効な購入申請明細がすべて検収登録済以降へ到達した申請は `applications.status=''検収済''` へ更新し、`application_status_histories` を登録する。'
     ) `
@@ -996,8 +1217,8 @@ $endpointBlocks = @(
     -PermissionLines $acceptancePermissionLines `
     -ProcessingLines @(
       '対象RFQが `management_type=''PURCHASE''`、`status=''検収済''` であることを検証する。',
-      '対象発注に属する `individuals.registration_status=''INSPECTED''` の個体が必要数量分揃っていることを確認する。',
-      '各個体から `asset_ledgers` を作成し、品目、メーカー、型式、QR、シリアル、設置場所、取得金額、契約・見積情報、発注日、納品日、検収日、固定資産番号、`source_order_item_id` を反映する。',
+      '対象発注に属する `individuals.registration_status=''PROVISIONAL''` の個体が必要数量分揃っていることを確認する。',
+      '各個体から `asset_ledgers` を作成し、検収登録で確定した `category_id`、大分類名、中分類名、品目ID・品目名、`ship_asset_master_id`、メーカー、型式、QR、シリアル、`facility_location_id`、室名、W/D/H、取得金額、契約・見積情報、発注日、納品日、検収日、固定資産番号、`source_order_item_id` を反映する。棟/階/部門/部署の入力値は `individuals` の検収時点履歴として保持し、原本資産の表示では `asset_ledgers.facility_location_id` からロケーションを解決する。`individuals.ship_asset_master_id` が有効マスタとして確認できる場合は優先し、未設定の場合だけ分類・品目・メーカー・型式から一意に再解決できる場合に設定する。',
       '`individuals.asset_ledger_id` と `registration_status=''REGISTERED''` を更新する。',
       '`assets[].photoDocumentIds` 未指定時は、当該個体の `orderItemId` に対応する `application_document_order_item_links(relation_type=''ACCEPTANCE_PHOTO'', deleted_at IS NULL)` から有効な未削除RFQ写真をAPIが再解決する。',
       '`assets[].photoDocumentIds` 指定時は、各IDが同一RFQ、未削除 `application_documents(owner_type=''RFQ'', document_category=''PHOTO'')`、かつ当該個体の `orderItemId` に対応する有効な `application_document_order_item_links(relation_type=''ACCEPTANCE_PHOTO'', deleted_at IS NULL)` を持つことを検証する。不一致は 400 (`VALIDATION_ERROR`) とする。',
@@ -1065,9 +1286,9 @@ $endpointBlocks = @(
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_購入管理.docx'
   ScreenLabel = '購入管理'
-  CoverDateText = '2026年5月27日'
-  RevisionDateText = '2026/5/27'
-  RevisionSummaryText = '要件・DB設計に基づく購入管理API設計の再作成'
+  CoverDateText = '2026年6月24日'
+  RevisionDateText = '2026/6/24'
+  RevisionSummaryText = '検収登録モバイルの分類候補取得元と個体保存項目を画面・DB設計へ整合'
   RevisionAuthorText = 'Codex'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
@@ -1101,7 +1322,7 @@ $endpointBlocks = @(
       @('見積管理画面', '/quotation-management', '登録済み購入見積明細を編集リスト・RFQ単位で参照する'),
       @('発注登録画面', '/quotation-data-box/order-registration', '発注ヘッダーと発注明細を作成する'),
       @('検収登録画面', '/quotation-data-box/inspection-registration', '納品検収予定日と検収書種別を登録する'),
-      @('資産仮登録画面', '/quotation-data-box/asset-provisional-registration', '個体単位の検収登録済み情報を保存する'),
+      @('資産仮登録画面', '/quotation-data-box/asset-provisional-registration', '個体単位の検収入力、分類候補、設置場所、写真を保存し、検収登録を完了する'),
       @('資産登録画面', '/quotation-data-box/asset-registration', '検収登録済み個体を原本資産台帳へ登録する')
     ) },
 
@@ -1126,6 +1347,8 @@ $endpointBlocks = @(
       @('見積管理一覧', '`GET /quotation-management/quotation-items`', '登録済み購入見積明細を参照する'),
       @('発注登録', '`POST /quotation-data-box/order-registration/orders`', '発注ヘッダーと発注明細を作成し、RFQを発注済へ進める'),
       @('納品日登録', '`POST /quotation-data-box/inspection-registration/records`', '検収日と検収書種別を保存し、RFQを納期確定へ進める'),
+      @('検収登録初期表示', '`GET /quotation-data-box/asset-provisional-registration/context`', '対象発注明細、保存済み個体、分類初期候補、大分類/中分類/品目候補、設置場所候補を取得する'),
+      @('検収登録明細保存', '`PATCH /quotation-data-box/asset-provisional-registration/items/{orderItemId}`', 'QR、シリアル、写真、設置場所、W/D/H、分類選択を発注明細単位で保存する'),
       @('検収登録完了', '`POST /quotation-data-box/asset-provisional-registration/complete`', '個体検収情報を保存し、全件登録時にRFQを検収済へ進める'),
       @('資産登録', '`POST /quotation-data-box/asset-registration/register-bulk`', '検収済み個体を原本資産へ登録し、RFQを完了へ進める'),
       @('RFQ削除', '`DELETE /quotation-data-box/rfq-groups/{rfqGroupId}`', '発注済到達前だけ論理削除する')
@@ -1152,7 +1375,9 @@ $endpointBlocks = @(
       @('`quotation_item_application_links`', 'READ / DELETE', '見積DB Link由来の対応関係。RFQ削除時は論理削除する'),
       @('`orders`', 'READ / CREATE / UPDATE', '発注ヘッダー、決済No、納期、検収日、検収書種別'),
       @('`order_items`', 'READ / CREATE / UPDATE', '発注明細、個体登録対象、納品日'),
-      @('`individuals`', 'READ / CREATE / UPDATE', '検収登録済み個体の中間正本。資産登録時に `asset_ledgers` へ反映する'),
+      @('`individuals`', 'READ / CREATE / UPDATE', '検収登録済み個体の中間正本。分類、品目名、メーカー、型式、設置場所、W/D/H、QR、シリアル、写真リンクを保持し、資産登録時に原本資産へ引き継ぐ'),
+      @('`asset_categories` / `asset_large_classes` / `asset_medium_classes` / `asset_items`', 'READ', '検収登録のCategory、大分類、中分類、品目候補と親子関係の検証'),
+      @('`ship_asset_masters`', 'READ', '検収登録の分類候補を有効な資産マスタ組み合わせへ限定するための母集団'),
       @('`vendors`', 'READ', '依頼先業者・見積業者のマスタ参照'),
       @('`users`', 'READ', 'ログインユーザー、依頼送信者、申請者表示、共有システム管理者判定'),
       @('`facilities`', 'READ', 'Bearer トークン上の作業対象施設、申請対象施設、編集リスト対象施設、RFQ対象施設の存在確認・未削除判定'),
@@ -1165,7 +1390,7 @@ $endpointBlocks = @(
     @{ Type = 'Heading2'; Text = 'API 共通仕様' },
     @{ Type = 'Bullets'; Items = @(
       '通信方式: HTTPS',
-      'データ形式: JSON（見積ドラフト保存・検収登録完了のファイル実体を含む multipart/form-data を除く）。ファイル実体はAPI内でAmazon S3へPutObjectし、DBには `application_documents` のメタデータを保存する',
+      'データ形式: JSON（見積ドラフト保存・検収登録明細保存・検収登録完了のファイル実体を含む multipart/form-data を除く）。ファイル実体はAPI内でAmazon S3へPutObjectし、DBには `application_documents` のメタデータを保存する',
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-05-27T10:00:00+09:00`）',
       '日付形式: `YYYY-MM-DD`',
@@ -1211,7 +1436,7 @@ $endpointBlocks = @(
       @('発注登録用見積確定', '`見積依頼` / `発注用見積依頼済` など', '`発注見積登録済`', '`POST /quotation-data-box/quotations/{quotationId}/confirm`'),
       @('発注登録', '`発注見積登録済`', 'RFQ=`発注済` / 購入申請=`発注済`', '`POST /quotation-data-box/order-registration/orders`'),
       @('納品日登録', '`発注済`', 'RFQ=`納期確定` / 購入申請=`納品済`', '`POST /quotation-data-box/inspection-registration/records`'),
-      @('検収登録', '`納期確定`', 'RFQ=`検収済` / 購入申請=`検収済`', '`POST /quotation-data-box/asset-provisional-registration/complete`'),
+      @('検収登録', '`納期確定`', 'RFQ=`検収済` / 購入申請=`検収済`', '`GET /quotation-data-box/asset-provisional-registration/context`、`PATCH /quotation-data-box/asset-provisional-registration/items/{orderItemId}`、`POST /quotation-data-box/asset-provisional-registration/complete`'),
       @('資産登録', '`検収済`', 'RFQ=`完了` / 購入申請=`完了`', '`POST /quotation-data-box/asset-registration/register-bulk`')
     ) },
 
@@ -1232,9 +1457,11 @@ $endpointBlocks = @(
       @('25-13', '見積管理明細一覧取得', 'GET', '/quotation-management/quotation-items', '購入見積明細一覧参照', 'normal_quotation'),
       @('25-14', '発注登録', 'POST', '/quotation-data-box/order-registration/orders', '発注ヘッダー・明細作成', 'normal_order'),
       @('25-15', '納品検収予定日登録', 'POST', '/quotation-data-box/inspection-registration/records', '検収日・検収書種別登録', 'normal_acceptance'),
-      @('25-16', '検収登録完了', 'POST', '/quotation-data-box/asset-provisional-registration/complete', '検収登録済み個体保存', 'normal_acceptance'),
-      @('25-17', '原本資産登録', 'POST', '/quotation-data-box/asset-registration/register-bulk', '検収済み個体の原本資産登録', 'normal_acceptance'),
-      @('25-18', 'RFQグループ削除', 'DELETE', '/quotation-data-box/rfq-groups/{rfqGroupId}', '発注済到達前RFQの論理削除', 'normal_purchase')
+      @('25-16', '検収登録コンテキスト取得', 'GET', '/quotation-data-box/asset-provisional-registration/context', '検収登録対象、保存済み個体、分類候補、設置場所候補取得', 'normal_acceptance'),
+      @('25-17', '検収登録明細保存', 'PATCH', '/quotation-data-box/asset-provisional-registration/items/{orderItemId}', 'QR、シリアル、写真、設置場所、分類選択の明細保存', 'normal_acceptance'),
+      @('25-18', '検収登録完了', 'POST', '/quotation-data-box/asset-provisional-registration/complete', '検収登録済み個体保存と全件確定', 'normal_acceptance'),
+      @('25-19', '原本資産登録', 'POST', '/quotation-data-box/asset-registration/register-bulk', '検収済み個体の原本資産登録', 'normal_acceptance'),
+      @('25-20', 'RFQグループ削除', 'DELETE', '/quotation-data-box/rfq-groups/{rfqGroupId}', '発注済到達前RFQの論理削除', 'normal_purchase')
     ) },
 
     @{ Type = 'Heading1'; Text = '第5章 機能設計' },
@@ -1249,7 +1476,8 @@ $endpointBlocks = @(
       '購入管理タブでは作成済み `rfqs.management_type=''PURCHASE''` のRFQ一覧表示と後続進行を扱い、リモデル管理のRFQとは混在させない',
       '業者への見積依頼送信、Outlook連携、個別送信API、`send-bulk`、`rfq_vendors.request_status=''SENT''` 更新はPhase1の本書では扱わない',
       'SHIP代理作業依頼の作成・一覧・担当取得・差戻し・完了・取消APIはPhase2対象であり、本書では扱わない。`SHIPへ依頼` は見積書アップロード後のOCR〜見積DB登録代理依頼であり、業者への見積依頼送信とは別責務とする',
-      'OCR抽出、OCRジョブ制御、OCR結果取込・補正APIは本書の対象外とし、見積登録APIは手動入力された見積明細を保存する'
+      'OCR抽出、OCRジョブ制御、OCR結果取込・補正APIは本書の対象外とし、見積登録APIは手動入力された見積明細を保存する',
+      '検収登録モバイルの大分類 / 中分類 / 品目ドロップダウン候補は No.14a 資産マスタ選択APIの有効マスタ母集団を正本とする'
     ) },
     @{ Type = 'Heading2'; Text = '購入申請受付ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -1275,8 +1503,10 @@ $endpointBlocks = @(
     @{ Type = 'Bullets'; Items = @(
       '発注登録は `rfqs.status=''発注見積登録済''` のRFQに限り許可し、登録成功時に `発注済` へ進める',
       '納品検収予定日登録は `rfqs.status=''発注済''` のRFQに限り許可し、登録成功時に `納期確定` へ進める',
+      '資産仮登録の初期表示では、対象発注明細、保存済み個体、分類候補、設置場所候補を取得する。保存済み個体がある場合はW/D/Hも返す。大分類 / 中分類 / 品目は `asset_categories`、`asset_large_classes`、`asset_medium_classes`、`asset_items` と有効な `ship_asset_masters` の組み合わせから生成する',
+      '検収登録明細保存では、選択された分類階層の親子関係と有効マスタ組み合わせを検証し、分類表示名をマスタから再解決して `individuals` へ保存する',
       '資産仮登録は `rfqs.status=''納期確定''` のRFQに限り許可し、対象数量分の `individuals` が揃った場合だけ `検収済` へ進める',
-      '資産登録は `rfqs.status=''検収済''` のRFQに限り許可し、`individuals` を `asset_ledgers` へ反映して `完了` へ進める',
+      '資産登録は `rfqs.status=''検収済''` のRFQに限り許可し、`individuals` の分類、施設ロケーション、室名、W/D/H、QR、シリアルなどを `asset_ledgers` へ反映して `完了` へ進める',
       '更新購入の後処理は申請時の `application_assets.replacement_action` に従い、廃棄管理、移動管理、または継続利用として扱う。`DISPOSAL` は `disposal_application_details.related_purchase_application_id`、`TRANSFER` は `transfer_application_details.related_purchase_application_id` で起点購入申請を追跡し、購入管理APIは関連廃棄/移動申請を新規起票しない'
     ) },
     @{ Type = 'Heading2'; Text = '削除・競合ルール' },
@@ -1306,6 +1536,7 @@ $endpointBlocks = @(
       '購入申請の正本は `applications` / `purchase_application_details` / `application_assets` とし、購入管理タブでは起票済み申請の状態更新と編集リスト取り込みを行う',
       '通常購入RFQの正本は `rfqs.management_type=''PURCHASE''` とし、リモデル、廃棄、修理、保守契約のRFQと混在させない',
       '見積明細の分類、AI判定、按分結果は `quotation_items` に保持し、原本資産へは資産登録完了時に必要項目だけ反映する',
+      '検収登録で利用する大分類 / 中分類 / 品目候補は No.14a 資産マスタ選択APIと同じ有効 `ship_asset_masters` 母集団から生成し、保存時は `individuals` の分類ID・分類名・`ship_asset_master_id` を更新する',
       '検収登録済み個体の中間正本は `individuals` とし、資産登録完了時に `asset_ledgers` を作成して `registration_status=''REGISTERED''` へ更新する',
       'ファイル実体はAmazon S3に保存し、本APIでは `application_documents` にS3オブジェクトキー、ファイルメタデータ、工程上の所有者を保持する。APIレスポンスではS3オブジェクトキーやS3バケット名を直接返さない'
     ) },

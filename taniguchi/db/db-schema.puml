@@ -74,8 +74,17 @@ package "認証・ユーザー" {
 
   note right of users
     account_type:
-    HOSPITAL / SHRC / SHIP = 通常アカウント
+    HOSPITAL = ユーザー管理画面で扱う病院ユーザー
+    SHIP = SHIPユーザー管理画面で扱うSHIPユーザー
     SYSTEM_ADMIN = 共有システム管理者アカウント
+    account_type は管理画面/APIの対象区分に利用し、
+    通常アカウントの機能認可には使わない。
+    通常アカウントの担当施設と施設別権限は
+    user_facility_assignments、
+    user_facility_feature_settings、
+    user_facility_column_settings を正本とする。
+    facility_id は既定施設を表し、
+    user_facility_assignments.is_default=true の施設と同期する。
     SYSTEM_ADMIN は有効アカウント1件のみ。
     未削除の全施設・全機能・全カラムを利用可能。
     監査ログは共有アカウントの user_id として記録し、
@@ -99,8 +108,11 @@ package "認証・ユーザー" {
   }
 
   note right of user_facility_assignments
-    直接割り当てられた
-    作業対象施設のみを保持する。
+    病院ユーザー/SHIPユーザー共通で、
+    直接割り当てられた作業対象施設のみを保持する。
+    ユーザー管理画面では選択中施設を必ず含め、
+    選択中施設と同一設立母体の担当施設候補から設定する。
+    SHIPユーザー管理画面では未削除の全施設から設定する。
     他施設閲覧グループ経由で見える施設は
     本テーブルへ展開しない。
   end note
@@ -150,8 +162,11 @@ package "認証・ユーザー" {
   }
 
   note right of user_facility_feature_settings
+    病院ユーザー/SHIPユーザー共通で、
+    担当施設ごとのユーザー機能利用可否を保持する。
     config_scope が FACILITY_USER の
     feature_code のみ保持する。
+    施設側で有効な機能の範囲内でON/OFFできる。
     Phase1では lending_in_use_used も
     FACILITY_USER として保持する。
     normal_ship_request は Phase2 対象のため
@@ -169,6 +184,12 @@ package "認証・ユーザー" {
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of user_facility_column_settings
+    病院ユーザー/SHIPユーザー共通で、
+    担当施設ごとのユーザー表示カラム可否を保持する。
+    施設側で有効なカラムの範囲内でON/OFFできる。
+  end note
 
   entity "user_remember_tokens" as user_remember_tokens {
     * トークンID / token_id : bigint
@@ -1514,6 +1535,12 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     業務上の所有者・紐づきは owner_type/FK と
     必要なリンクテーブルで管理し、
     S3 object key の prefix から再解決しない。
+    保守契約STEP3の契約文書は
+    owner_type='RFQ'、
+    document_category='CONTRACT' とし、
+    画面選択「契約書」は document_type='契約書'、
+    「その他（免責部品一覧など）」は
+    document_type='その他' で保持する。
   end note
 
   entity "application_document_order_item_links" as application_document_order_item_links {
@@ -2119,16 +2146,29 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     見積依頼ID / rfq_id : bigint
     QRコード値 / qr_code_value : varchar
     シリアルNo / serial_no : varchar
+    SHIP資産マスタID / ship_asset_master_id : bigint
+    カテゴリID / category_id : bigint
+    category / category_name : varchar
+    大分類ID / large_class_id : bigint
+    大分類 / large_class_name : varchar
+    中分類ID / medium_class_id : bigint
+    中分類 / medium_class_name : varchar
+    品目ID / asset_item_id : bigint
+    品目 / asset_item_name : varchar
     品目名 / item_name : varchar
     メーカー名 / maker_name : varchar
     型式 / model_name : varchar
     取得金額 / acquisition_amount : decimal(14,2)
     取得日 / acquired_on : date
     設置ロケーションID / facility_location_id : bigint
+    棟 / building_name : varchar
     階 / floor_name : varchar
     部門 / department_name : varchar
     部署 / section_name : varchar
     室名 / room_name : varchar
+    幅(mm) / width_mm : varchar
+    奥行(mm) / depth_mm : varchar
+    高さ(mm) / height_mm : varchar
     仮勘定科目 / provisional_account_title : varchar
     固定資産番号 / fixed_asset_no : varchar
     登録状態 / registration_status : varchar
@@ -2140,7 +2180,12 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
   note right of individuals
     資産仮登録で作成する
     検収登録済み個体の中間正本。
-    資産登録時に asset_ledgers へ反映し、
+    検収時点の分類、設置場所、寸法を
+    個体単位スナップショットとして保持する。
+    資産登録時は分類、facility_location_id、
+    room_name、W/D/Hを asset_ledgers へ反映し、
+    棟/階/部門/部署の入力値は
+    検収時点履歴として本テーブルに保持する。
     registration_status を REGISTERED に更新する。
   end note
 
@@ -2184,13 +2229,16 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     maintenance_contract_assets を正本にする。
     見積依頼は rfqs.management_type='MAINTENANCE'
     のRFQを rfq_id で参照する。
-    タスク管理側の一覧は進行中契約と
-    契約終了日前の完了契約を既定表示し、
-    期限切れ契約は期限切れも表示指定時のみ含める。
-    契約内容見直しは完了契約の
+    タスク管理側の一覧は進行中契約と完了契約のうち、
+    contract_end_on がNULLまたは業務日以降の契約を
+    既定表示し、契約終了日超過と申請見送りは除外する。
+    既定並び順は maintenance_contract_no 昇順。
+    契約内容見直しは完了かつ契約終了日を過ぎていない契約について
     資産追加・除外と金額変更履歴を保持する。
     契約更新は元契約を直接戻さず、
-    新しい保守契約を作成し、元契約IDを保持する。
+    contract_group_name を元契約名 + 「（更新）」で生成し、
+    maintenance_type / maintenance_type_note を引き継いだ
+    新しい保守契約を作成して元契約IDを保持する。
     画面表示用 currentStep は status から算出し、
     DBには保持しない。
   end note
@@ -2250,10 +2298,10 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
 
   note right of maintenance_contract_reviews
     契約内容見直しの履歴。
-    完了かつ契約中の保守契約に対してのみ作成する。
+    完了かつ契約終了日を過ぎていない保守契約に対してのみ作成する。
     契約ステータスは完了のまま維持し、
     見直し後契約金額を maintenance_contracts へ反映する。
-    契約変更覚書などの添付は
+    契約変更覚書などが任意添付された場合は
     application_documents.owner_type='MAINTENANCE_CONTRACT_REVIEW'
     で保持する。
   end note
@@ -2290,8 +2338,6 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     点検種別 / inspection_type : varchar
     点検周期(月) / inspection_cycle_months : int
     年間点検回数 / inspection_count_per_year : int
-    保証開始日 / warranty_start_on : date
-    保証終了日 / warranty_end_on : date
     部品免責条件 / parts_exemption_text : varchar
     部品免責フラグ / parts_exemption_flag : boolean
     免責金額 / exemption_amount : decimal(14,2)
@@ -2312,8 +2358,13 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     asset_ledger_id 重複を禁止する。
     excluded_flag=true の行は
     点検管理リスト登録から除外する。
-    点検管理リスト登録では同一契約由来の
-    inspection_tasks を作成または更新する。
+    保守登録時の点検管理連携は
+    inspection_type='メーカー保守' の行のみを対象に、
+    同一契約由来の inspection_tasks を作成または更新する。
+    院内定期点検、院内スポット点検、日常点検は
+    保守契約管理から作成しない。
+    保証期間は保持せず、
+    点検予定日算出にも使用しない。
   end note
 
   entity "inspection_menus" as inspection_menus {
@@ -2331,6 +2382,13 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of inspection_menus
+    cycle_months は周期を持つ定期点検メニューで使用する。
+    院内スポット点検は点検周期を持たず、
+    点検予定日はタスク作成後の
+    日程調整で設定する。
+  end note
 
   entity "inspection_menu_items" as inspection_menu_items {
     * 点検項目ID / inspection_menu_item_id : bigint
@@ -2372,11 +2430,17 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     定期点検タスクと日常点検設定行を保持する。
     定期点検は periodic_menu_id、status、
     next_inspection_on、last_inspection_on を用いる。
+    保守契約由来の maintenance_contract_id は
+    inspection_type='メーカー保守' のタスクで使用する。
     1資産に複数の定期点検メニューを登録でき、
     有効な同一資産・同一点検種別・同一定期メニューは
     重複登録不可とする。
+    院内スポット点検は点検周期を持たず、
+    作成時は next_inspection_on=NULL、
+    status='点検日調整' を許可し、
+    日程調整で点検予定日を設定する。
     日常点検設定は資産一覧画面の
-    点検管理登録導線から選択資産単位で
+    点検管理登録導線から選択した原本資産単位で
     作成・更新し、同じ大分類・中分類・品目の
     全資産へ自動展開しない。
     対象メニューは資産の大分類・中分類・品目と
@@ -2424,6 +2488,8 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     点検月 / 点検週 / 点検月超過 /
     点検日調整 / 点検実施中 /
     点検完了 / 再点検。
+    点検日調整はメーカー保守と
+    院内スポット点検で使用する。
     日常点検はステータスを持たないため
     本定義の対象外。
     点検Nヶ月前は運用月数に応じて
@@ -2434,9 +2500,12 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     START_INSPECTION で
     予定系ステータスから点検実施中へ遷移。
     COMPLETE で点検完了または再点検へ遷移。
-    SKIP / SET_DATE / RECALCULATE_SCHEDULE は
+    SKIP / RECALCULATE_SCHEDULE は
+    周期を持つ院内定期点検またはメーカー保守で使用し、
     次回予定日を再計算し、
     再計算後の予定系ステータスへ遷移する。
+    SET_DATE はメーカー保守と院内スポット点検の
+    日程調整で使用する。
     日常点検はステータス遷移対象外。
   end note
 

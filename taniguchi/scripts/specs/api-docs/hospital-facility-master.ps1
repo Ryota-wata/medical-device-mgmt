@@ -93,8 +93,34 @@
     @{ Type = 'Bullets'; Items = @(
       'インポート対象拡張子は `.xlsx` / `.xls` とする',
       'テンプレートとエクスポートは同一列定義を採用する',
-      'インポートはプレビュー成功後に追加または置換で確定する',
+      '追加または置換の本取込は、`errorCount=0` かつ `validRowCount>0` のプレビューに対してのみ実行する',
       '置換は選択施設分のみを対象とし、他施設データは変更しない'
+    ) },
+    @{ Type = 'Table'; Headers = @('No.', '列名', '取込時必須', '用途'); Rows = @(
+      @('1', 'ID', '-', '個別部署マスタ行識別子。エクスポート時に出力し、インポート時は採用しない'),
+      @('2', '病院ID', '✓', '選択施設の `facilities.facility_code`'),
+      @('3', '病院名', '✓', '選択施設の `facilities.facility_name`'),
+      @('4', '旧_SHIP部門', '-', '旧側の共通SHIP部門名'),
+      @('5', '旧_SHIP部署', '-', '旧側の共通SHIP部署名'),
+      @('6', '旧_SHIP諸室区分①', '-', '旧側の共通SHIP諸室区分①'),
+      @('7', '諸室区分②', '-', '旧側の共通SHIP諸室区分②'),
+      @('8', '部門ID', '-', '旧側の部門ID'),
+      @('9', '旧_部署ID', '✓', '旧側の部署ID'),
+      @('10', '諸室ID', '-', '旧側の諸室ID'),
+      @('11', '新_棟', '-', 'リモデル先の棟'),
+      @('12', '新_フロア', '-', 'リモデル先のフロア'),
+      @('13', '新_部門', '-', 'リモデル先の部門'),
+      @('14', '新_部署', '-', 'リモデル先の部署'),
+      @('15', '新_室名称', '-', 'リモデル先の室名称'),
+      @('16', '新_室数', '-', 'リモデル先の室数'),
+      @('17', '旧_棟', '-', '旧側の棟'),
+      @('18', '旧_フロア', '✓', '旧側のフロア'),
+      @('19', '旧_部門', '✓', '旧側の部門'),
+      @('20', '旧_部署', '-', '旧側の部署'),
+      @('21', '旧_室名称', '✓', '旧側の室名称'),
+      @('22', '新_SHIP部門', '-', 'リモデル先の共通SHIP部門名'),
+      @('23', '新_SHIP部署', '-', 'リモデル先の共通SHIP部署名'),
+      @('24', '新_SHIP諸室区分', '-', 'リモデル先の共通SHIP諸室区分')
     ) },
     @{ Type = 'Heading2'; Text = 'エラーレスポンス仕様' },
     @{ Type = 'Heading3'; Text = '基本エラーレスポンス（ErrorResponse）' },
@@ -110,14 +136,14 @@
       @('対象施設候補取得', 'GET', '/hospital-facility-master/facilities', '施設候補を取得する', '要'),
       @('SHIP部署候補取得', 'GET', '/hospital-facility-master/ship-departments', '共通マスタの部門/部署候補を取得する', '要'),
       @('SHIP諸室区分候補取得', 'GET', '/hospital-facility-master/ship-room-categories', '共通マスタの諸室区分候補を取得する', '要'),
-      @('個別部署マスタ一覧取得', 'GET', '/hospital-facility-master/facility-locations', '選択施設の個別部署マスタ一覧を取得する', '要'),
-      @('個別部署マスタエクスポート', 'GET', '/hospital-facility-master/facility-locations/export', '絞り込み結果を Excel 出力する', '要'),
-      @('個別部署マスタテンプレート取得', 'GET', '/hospital-facility-master/facility-locations/template', 'インポート用テンプレートを取得する', '要'),
-      @('個別部署マスタインポートプレビュー', 'POST', '/hospital-facility-master/facility-locations/import-preview', 'Excel 取込内容を検証してプレビューを返す', '要'),
-      @('個別部署マスタインポート実行', 'POST', '/hospital-facility-master/facility-locations/import', '追加/置換インポートを実行する', '要'),
-      @('個別部署マスタ新規作成', 'POST', '/hospital-facility-master/facility-locations', '個別部署マスタ1行を新規登録する', '要'),
-      @('個別部署マスタ更新', 'PUT', '/hospital-facility-master/facility-locations/{facilityLocationId}', '個別部署マスタ1行を更新する', '要'),
-      @('個別部署マスタ削除', 'DELETE', '/hospital-facility-master/facility-locations/{facilityLocationId}', '個別部署マスタ1行を削除する', '要')
+      @('個別部署マスタ一覧取得', 'GET', '/hospital-facility-master/departments', '選択施設の個別部署マスタ一覧を取得する', '要'),
+      @('個別部署マスタエクスポート', 'GET', '/hospital-facility-master/departments/export', '絞り込み結果を Excel 出力する', '要'),
+      @('個別部署マスタテンプレート取得', 'GET', '/hospital-facility-master/departments/template', 'インポート用テンプレートを取得する', '要'),
+      @('個別部署マスタインポートプレビュー', 'POST', '/hospital-facility-master/departments/import-preview', 'Excel 取込内容を検証してプレビューを返す', '要'),
+      @('個別部署マスタインポート実行', 'POST', '/hospital-facility-master/departments/import', '追加/置換インポートを実行する', '要'),
+      @('個別部署マスタ新規作成', 'POST', '/hospital-facility-master/departments', '個別部署マスタ1行を新規登録する', '要'),
+      @('個別部署マスタ更新', 'PUT', '/hospital-facility-master/departments/{facilityLocationId}', '個別部署マスタ1行を更新する', '要'),
+      @('個別部署マスタ削除', 'DELETE', '/hospital-facility-master/departments/{facilityLocationId}', '個別部署マスタ1行を削除する', '要')
     ) },
 
     @{ Type = 'Heading1'; Text = '第5章 個別部署マスタ機能設計' },
@@ -186,7 +212,7 @@
           '認可条件: 通常アカウントの場合、有効な担当施設のうち少なくとも1件で `hospital_dept_master_list` が有効であること'
         )
         ProcessingLines = @(
-          '`ship_departments` の未削除レコードを返却する',
+          '`ship_departments.is_active=true` の有効レコードを返却する',
           '個別部署マスタ画面の共通マスタ候補として利用するため、対象施設ごとの差分公開設定は適用しない'
         )
         ResponseTitle = 'レスポンス（200：ShipDepartmentOptionResponse）'
@@ -231,7 +257,7 @@
           '認可条件: 通常アカウントの場合、有効な担当施設のうち少なくとも1件で `hospital_dept_master_list` が有効であること'
         )
         ProcessingLines = @(
-          '`ship_room_categories` の未削除レコードを返却する',
+          '`ship_room_categories.is_active=true` の有効レコードを返却する',
           '個別部署マスタ画面の共通マスタ候補として利用するため、対象施設ごとの差分公開設定は適用しない'
         )
         ResponseTitle = 'レスポンス（200：ShipRoomCategoryOptionResponse）'
@@ -259,10 +285,10 @@
         )
       },
       @{
-        Title = '個別部署マスタ一覧取得（/hospital-facility-master/facility-locations）'
+        Title = '個別部署マスタ一覧取得（/hospital-facility-master/departments）'
         Overview = '選択施設の個別部署マスタ一覧を取得する。`facility_locations` と `facility_location_remodels` を結合した1行DTOとして返却する。'
         Method = 'GET'
-        Path = '/hospital-facility-master/facility-locations'
+        Path = '/hospital-facility-master/departments'
         Auth = '要（Bearer）'
         ParametersTitle = 'リクエストパラメータ'
         ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
@@ -312,7 +338,7 @@
               @('shipRoomCategory1', 'string', '-', '現行側諸室区分①'),
               @('shipRoomCategory2', 'string', '-', '現行側諸室区分②'),
               @('divisionId', 'string', '-', '旧_部門ID'),
-              @('departmentId', 'string', '-', '旧_部署ID'),
+              @('departmentId', 'string', '✓', '旧_部署ID'),
               @('roomId', 'string', '-', '旧_諸室ID'),
               @('building', 'string', '-', '旧_棟'),
               @('floor', 'string', '-', '旧_階'),
@@ -345,10 +371,10 @@
         )
       },
       @{
-        Title = '個別部署マスタエクスポート（/hospital-facility-master/facility-locations/export）'
+        Title = '個別部署マスタエクスポート（/hospital-facility-master/departments/export）'
         Overview = '選択施設の個別部署マスタ一覧を Excel ファイルとして返却する。'
         Method = 'GET'
-        Path = '/hospital-facility-master/facility-locations/export'
+        Path = '/hospital-facility-master/departments/export'
         Auth = '要（Bearer）'
         ParametersTitle = 'リクエストパラメータ'
         ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
@@ -383,10 +409,10 @@
         )
       },
       @{
-        Title = '個別部署マスタテンプレート取得（/hospital-facility-master/facility-locations/template）'
+        Title = '個別部署マスタテンプレート取得（/hospital-facility-master/departments/template）'
         Overview = 'インポート用テンプレートを返却する。'
         Method = 'GET'
-        Path = '/hospital-facility-master/facility-locations/template'
+        Path = '/hospital-facility-master/departments/template'
         Auth = '要（Bearer）'
         PermissionLines = @(
           '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、未削除施設が存在することを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `hospital_dept_master_list` 判定をバイパスする',
@@ -409,15 +435,15 @@
         )
       },
       @{
-        Title = '個別部署マスタインポートプレビュー（/hospital-facility-master/facility-locations/import-preview）'
+        Title = '個別部署マスタインポートプレビュー（/hospital-facility-master/departments/import-preview）'
         Overview = 'アップロードされた Excel ファイルを解析し、取込可否とエラー内容を返却する。'
         Method = 'POST'
-        Path = '/hospital-facility-master/facility-locations/import-preview'
+        Path = '/hospital-facility-master/departments/import-preview'
         Auth = '要（Bearer）'
         RequestTitle = 'リクエスト（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('facilityId', 'int64', '✓', '選択施設ID'),
+          @('facilityId', 'int64', '✓', '選択施設ID（`facilities.facility_id`）'),
           @('file', 'binary', '✓', '.xlsx / .xls ファイル')
         )
         PermissionLines = @(
@@ -428,16 +454,21 @@
         ProcessingLines = @(
           '対象施設が存在し、未削除であることを確認する',
           'テンプレート列定義に基づきヘッダーと各行を検証する',
-          '選択施設とファイル内施設情報が不整合な場合はエラーとする',
-          'プレビュー成功時は後続の本取込で使う `previewToken` を返却する'
+          'テンプレート列のうち `旧_部署ID` / `旧_フロア` / `旧_部門` / `旧_室名称` は必須とし、未入力行は取込不可行として `errors` に行番号とエラー内容を返却する',
+          'ファイル内の同一 `旧_部署ID` 行では `旧_部門` / `旧_部署` が一致することを確認し、不一致行は取込不可行として `errors` に返却する',
+          'ヘッダーを除き、テンプレート対象列のいずれかに値を持つ非空データ行が0件の場合は `IMPORT_FILE_INVALID` として 400 を返却する。空行は無視する',
+          'Excel の `病院ID` / `病院名` は、`facilityId` で特定した `facilities.facility_code` / `facilities.facility_name` と前後空白除去後に完全一致することを確認する',
+          '病院ID / 病院名が未入力、不一致、または複数施設混在の場合はファイル単位の `IMPORT_FILE_INVALID` として 400 を返却し、`errors` と `previewToken` は返却しない',
+          '非空データ行が存在し、全行が行検証エラーの場合は `validRowCount=0`、`errorCount>0`、`errors` あり、`previewToken` なしの 200 を返却する',
+          '`errorCount=0` かつ `validRowCount>0` の場合のみ、後続の本取込で使う `previewToken` を返却する'
         )
         ResponseTitle = 'レスポンス（200：HospitalFacilityImportPreviewResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
         ResponseRows = @(
-          @('previewToken', 'string', '✓', 'プレビュー識別子'),
+          @('previewToken', 'string', '-', '`errorCount=0` かつ `validRowCount>0` の場合に発行するプレビュー識別子'),
           @('validRowCount', 'int32', '✓', '取込可能件数'),
           @('errorCount', 'int32', '✓', 'エラー件数'),
-          @('errors', 'ImportPreviewError[]', '-', 'エラー詳細')
+          @('errors', 'ImportPreviewError[]', '-', '`errorCount>0` の場合は必須。要素数は `errorCount` と一致し、`errorCount=0` の場合は空配列または省略')
         )
         ResponseSubtables = @(
           @{
@@ -450,8 +481,8 @@
           }
         )
         StatusRows = @(
-          @('200', 'プレビュー成功', 'HospitalFacilityImportPreviewResponse'),
-          @('400', 'ファイル形式不正または内容不正', 'ErrorResponse'),
+          @('200', 'プレビュー完了（行エラーを含む場合あり）', 'HospitalFacilityImportPreviewResponse'),
+          @('400', 'ファイル形式不正、ヘッダー不正、非空データ行が0件、または選択施設との不一致', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
           @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
@@ -459,10 +490,10 @@
         )
       },
       @{
-        Title = '個別部署マスタインポート実行（/hospital-facility-master/facility-locations/import）'
+        Title = '個別部署マスタインポート実行（/hospital-facility-master/departments/import）'
         Overview = 'プレビュー済みデータを追加または置換モードで反映する。'
         Method = 'POST'
-        Path = '/hospital-facility-master/facility-locations/import'
+        Path = '/hospital-facility-master/departments/import'
         Auth = '要（Bearer）'
         RequestTitle = 'リクエストボディ'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
@@ -478,8 +509,10 @@
         )
         ProcessingLines = @(
           '対象施設が存在し、未削除であることを確認する',
+          '`previewToken` が指定施設の `errorCount=0` かつ `validRowCount>0` の有効なプレビューに対応することを確認し、未指定または無効な場合は 400 を返却する',
           '`ADD` は既存データへ追記する',
           '`REPLACE` は選択施設分の `facility_locations` と関連 `facility_location_remodels` を置き換える',
+          '反映後の未削除行について、同一施設・同一 `department_id` の `department_name` / `section_name` が一致しない場合は 409 を返し、取込全体を取り消す',
           '反映後、インポート結果件数を返却する'
         )
         ResponseTitle = 'レスポンス（200：HospitalFacilityImportResultResponse）'
@@ -491,19 +524,19 @@
         )
         StatusRows = @(
           @('200', '取込成功', 'HospitalFacilityImportResultResponse'),
-          @('400', 'プレビュー未実施またはモード不正', 'ErrorResponse'),
+          @('400', '`previewToken` 未指定/無効、またはモード不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
           @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
-          @('404', 'プレビュー情報が存在しない', 'ErrorResponse'),
+          @('409', '同一施設・同一部署IDの名称不一致', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
       @{
-        Title = '個別部署マスタ新規作成（/hospital-facility-master/facility-locations）'
+        Title = '個別部署マスタ新規作成（/hospital-facility-master/departments）'
         Overview = '個別部署マスタ1行を新規登録する。リモデル先項目が入力されている場合は子レコードも同時作成する。'
         Method = 'POST'
-        Path = '/hospital-facility-master/facility-locations'
+        Path = '/hospital-facility-master/departments'
         Auth = '要（Bearer）'
         RequestTitle = 'リクエストボディ'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
@@ -512,7 +545,7 @@
           @('shipDepartmentId', 'int64', '-', '現行側SHIP部署ID'),
           @('shipRoomCategoryId', 'int64', '-', '現行側SHIP諸室区分ID'),
           @('divisionId', 'string', '-', '旧_部門ID'),
-          @('departmentId', 'string', '-', '旧_部署ID'),
+          @('departmentId', 'string', '✓', '旧_部署ID'),
           @('roomId', 'string', '-', '旧_諸室ID'),
           @('building', 'string', '-', '旧_棟'),
           @('floor', 'string', '✓', '旧_階'),
@@ -535,6 +568,7 @@
         )
         ProcessingLines = @(
           '対象施設が存在し、未削除であることを確認する',
+          '同一施設・同一 `departmentId` の未削除行がある場合、`departmentName` / `sectionName` が一致することを確認する',
           '`facility_locations` に現行ロケーションを新規作成する',
           'リモデル先項目が1つ以上入力されている場合は `facility_location_remodels` を同時作成する',
           'リモデル先未入力の場合は子レコードを作成しない'
@@ -550,14 +584,15 @@
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
           @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
+          @('409', '同一施設・同一部署IDの名称不一致', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
       @{
-        Title = '個別部署マスタ更新（/hospital-facility-master/facility-locations/{facilityLocationId}）'
+        Title = '個別部署マスタ更新（/hospital-facility-master/departments/{facilityLocationId}）'
         Overview = '既存の個別部署マスタ1行を更新する。'
         Method = 'PUT'
-        Path = '/hospital-facility-master/facility-locations/{facilityLocationId}'
+        Path = '/hospital-facility-master/departments/{facilityLocationId}'
         Auth = '要（Bearer）'
         ParametersTitle = 'リクエストパラメータ'
         ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
@@ -570,7 +605,7 @@
           @('shipDepartmentId', 'int64', '-', '現行側SHIP部署ID'),
           @('shipRoomCategoryId', 'int64', '-', '現行側SHIP諸室区分ID'),
           @('divisionId', 'string', '-', '旧_部門ID'),
-          @('departmentId', 'string', '-', '旧_部署ID'),
+          @('departmentId', 'string', '✓', '旧_部署ID'),
           @('roomId', 'string', '-', '旧_諸室ID'),
           @('building', 'string', '-', '旧_棟'),
           @('floor', 'string', '✓', '旧_階'),
@@ -594,6 +629,7 @@
         ProcessingLines = @(
           '対象 `facility_locations` が未削除で存在することを確認する',
           '対象 `facility_locations.facility_id` の施設が未削除であることを確認する',
+          '更新後に同一施設・同一 `departmentId` となる未削除行がある場合、`departmentName` / `sectionName` が一致することを確認する',
           '現行ロケーションを更新する',
           '新側項目が入力されていれば `facility_location_remodels` を作成または更新し、すべて空なら削除または論理削除する'
         )
@@ -608,14 +644,15 @@
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
           @('404', '対象ロケーションまたは対象施設が存在しない/削除済み', 'ErrorResponse'),
+          @('409', '同一施設・同一部署IDの名称不一致', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
       @{
-        Title = '個別部署マスタ削除（/hospital-facility-master/facility-locations/{facilityLocationId}）'
+        Title = '個別部署マスタ削除（/hospital-facility-master/departments/{facilityLocationId}）'
         Overview = '指定した個別部署マスタ1行を削除する。'
         Method = 'DELETE'
-        Path = '/hospital-facility-master/facility-locations/{facilityLocationId}'
+        Path = '/hospital-facility-master/departments/{facilityLocationId}'
         Auth = '要（Bearer）'
         ParametersTitle = 'リクエストパラメータ'
         ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
@@ -659,29 +696,32 @@
       '1つの現行ロケーションに対して有効な `facility_location_remodels` は 0..1 件とする',
       '新側項目が全て空の場合は子レコードを作成しない、または既存子レコードを削除する'
     ) },
+    @{ Type = 'Heading2'; Text = '部署ID名称整合ルール' },
+    @{ Type = 'Bullets'; Items = @(
+      '同一施設・同一 `department_id` の未削除行では `department_name` / `section_name` を一致させ、登録・更新・インポートで不一致を拒否する'
+    ) },
     @{ Type = 'Heading2'; Text = 'インポート運用ルール' },
     @{ Type = 'Bullets'; Items = @(
       '追加インポートは既存データへ追記する',
       '置換インポートは選択施設分のみを置き換える',
-      'テンプレート列定義と一致しない場合はプレビュー段階でエラーとする'
-    ) },
-    @{ Type = 'Heading2'; Text = '未確定事項' },
-    @{ Type = 'Bullets'; Items = @(
-      'Excel テンプレートの最終必須列定義は、運用詳細確定時に再確認余地がある',
-      'モックでは一部新側項目がインライン表示されていないが、DB/API は `targetFloor` / `targetRoomCount` を保持可能とする'
+      'テンプレート列定義と一致しない場合はプレビュー段階でエラーとする',
+      '`旧_部署ID` / `旧_フロア` / `旧_部門` / `旧_室名称` は必須列とし、未入力行はプレビュー段階で取込不可行として扱う',
+      '空行を除く非空データ行が0件のファイルはプレビューを生成しない',
+      'ファイル内の施設情報が選択施設と一致しない場合は、ファイル単位のエラーとする',
+      '本取込は `errorCount=0` かつ `validRowCount>0` のプレビューのみ許可し、正常行だけの部分取込は行わない'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明'); Rows = @(
       @('VALIDATION_ERROR', '400', '入力不正、必須不足、形式不正'),
       @('FACILITY_SELECTION_REQUIRED', '400', '施設未選択で一覧/出力/取込を要求した'),
-      @('IMPORT_FILE_INVALID', '400', '取込ファイル形式不正または内容不正'),
+      @('IMPORT_FILE_INVALID', '400', '取込ファイル形式不正、ヘッダー不正、非空データ行が0件、または選択施設との不一致'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
       @('AUTH_403_HOSPITAL_DEPT_MASTER_LIST_DENIED', '403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_list` がない、または実効 `hospital_dept_master_list` を持つ担当施設がない。共有システム管理者では対象施設が未削除であれば通常権限判定をバイパスする'),
       @('AUTH_403_HOSPITAL_DEPT_MASTER_EDIT_DENIED', '403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_edit` がない。共有システム管理者では対象施設が未削除であれば通常権限判定をバイパスする'),
       @('FACILITY_NOT_FOUND', '404', '対象施設が存在しない、または削除済み'),
       @('FACILITY_LOCATION_NOT_FOUND', '404', '対象施設ロケーションが存在しない、または削除済み'),
-      @('IMPORT_PREVIEW_NOT_FOUND', '404', 'プレビュー情報が存在しない'),
+      @('DEPARTMENT_ID_NAME_CONFLICT', '409', '同一施設・同一部署IDの部門名または部署名が既存の未削除行と一致しない'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
     ) },
 
@@ -691,12 +731,6 @@
       '個別部署マスタは施設単位で保守する',
       'SHIP部署・諸室区分は標準候補として利用し、現有品調査/調査登録内容修正の部門・部署正本は `facility_locations` 側とする',
       '削除済みデータは一覧、エクスポート、候補表示の対象外とする'
-    ) },
-    @{ Type = 'Heading2'; Text = '今後拡張時の留意点' },
-    @{ Type = 'Bullets'; Items = @(
-      '件数増加時はページングや並び順指定の追加を検討する',
-      'インポートが大規模化する場合は非同期ジョブ化を検討する',
-      '現行値反映の別機能を設ける場合は `facility_location_remodels` のライフサイクル整理が必要になる'
     ) }
   )
 }

@@ -41,6 +41,7 @@ $transferApplicationRows = @(
   @('requestedByContact', 'string', '-', '申請者連絡先'),
   @('sourceLocationName', 'string', '-', '移動元設置場所'),
   @('destinationLocationName', 'string', '✓', '移動先設置場所'),
+  @('transferReason', 'string', '-', 'コメント（移動理由 他）。`transfer_application_details.transfer_reason`。一覧テーブル列ではなく、申請内容確認モーダル表示用'),
   @('assets', 'ApplicationAssetSummary[]', '✓', '移動対象資産'),
   @('availableActions', 'string[]', '✓', '表示可能操作。例: `APPROVE_TRANSFER` / `VIEW_DETAIL`')
 )
@@ -226,7 +227,7 @@ $actionResponseRows = @(
     @{ Type = 'Table'; Headers = @('テーブル/VIEW', '利用種別', '用途'); Rows = @(
       @('`applications`', 'READ/UPDATE', '移動/廃棄申請ヘッダ、ステータス、申請番号、申請者情報'),
       @('`application_assets`', 'READ/UPDATE', '移動/廃棄対象資産、移動先スナップショット、廃棄対象スナップショット'),
-      @('`transfer_application_details`', 'READ', '移動申請の移動先、関連購入申請、コメント'),
+      @('`transfer_application_details`', 'READ', '移動申請の移動先、関連購入申請、コメント（移動理由 他）'),
       @('`disposal_application_details`', 'READ/UPDATE', '廃棄理由、関連修理/購入、受付、期限、発注、廃棄予定日、検収情報'),
       @('`application_status_histories`', 'CREATE', '申請ステータス変更履歴'),
       @('`application_task_steps`', 'CREATE/UPDATE', '廃棄契約タスクの工程進捗'),

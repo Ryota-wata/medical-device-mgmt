@@ -36,7 +36,7 @@ $spec = @{
     @{ Type = 'Bullets'; Items = @(
       '点検管理の定期点検タスクおよび日常点検設定行の一覧取得 I/F',
       '点検メニューの登録・更新・無効化 I/F',
-      '資産一覧画面の選択資産から起動する点検管理登録 I/F',
+      '資産一覧画面で選択した原本資産（`asset_ledgers`）から起動する点検管理登録 I/F',
       '日常点検設定行の変更・一部解除・設定解除 I/F',
       '定期点検の実施開始、点検結果登録、日程調整、スキップ、予定表CSV出力 I/F',
       'メーカー保守結果登録、添付ファイルのAPI内S3保存、メタデータ保存 I/F',
@@ -44,11 +44,12 @@ $spec = @{
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = '点検管理は、点検メニューを作成し、資産単位に定期点検タスクまたは日常点検設定行を紐づけ、定期点検の進行管理と日常点検設定の管理CRUDを一元的に扱う機能である。日常点検の実施自体はメイン画面から `/inspection-prep`、`/daily-inspection` へ進む No.4 日常点検APIの責務とし、本書ではその前提となるメニューと資産別設定行を管理する。' },
-    @{ Type = 'Paragraph'; Text = '点検管理登録では、対象資産の大分類・中分類・品目と一致する点検メニューのみ適用できる。同じ分類の資産が複数存在しても自動展開せず、選択資産単位で `inspection_tasks` を作成または更新する。定期点検は1資産に複数メニューを紐づけられるが、日常点検は1資産1有効行として使用前・使用中・使用後メニューを保持する。' },
+    @{ Type = 'Paragraph'; Text = '点検管理登録では、資産一覧画面で選択した原本資産（`asset_ledgers`）を起点に、対象資産の大分類・中分類・品目と一致する点検メニューのみ適用できる。同じ分類の資産が複数存在しても自動展開せず、選択された原本資産単位で `inspection_tasks` を作成または更新する。定期点検は1資産に複数メニューを紐づけられるが、日常点検は1資産1有効行として使用前・使用中・使用後メニューを保持する。' },
+    @{ Type = 'Paragraph'; Text = '院内スポット点検は点検周期を持たない単発の点検タスクとして扱う。点検管理登録では予定日未定の `点検日調整` で作成し、Action の日程調整で点検予定日を設定する。周期による次回予定日の自動算出は行わない。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('点検メニュー', '`inspection_menus` と `inspection_menu_items` に保持する点検項目テンプレート。`menu_type=PERIODIC` または `DAILY` で区分する'),
-      @('定期点検タスク', '`inspection_tasks.inspection_type` が `院内定期点検`、`メーカー保守`、`院内スポット点検` の行。予定日、ステータス、前回実施日を持つ'),
+      @('定期点検タスク', '`inspection_tasks.inspection_type` が `院内定期点検`、`メーカー保守`、`院内スポット点検` の行。予定日、ステータス、前回実施日を持つ。院内スポット点検は点検周期を持たず、日程調整で予定日を設定する'),
       @('日常点検設定行', '`inspection_tasks.inspection_type=''日常点検''` の1資産1有効行。`daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` に使用前・使用中・使用後メニューを保持する'),
       @('点検種別表示ラベル', '画面表示の `院内点検` / `メーカー点検` / `スポット点検` / `日常点検`。API保存値は `院内定期点検` / `メーカー保守` / `院内スポット点検` / `日常点検` へ変換する'),
       @('点検ステータス', '定期点検系のみ `inspection_task_status_definitions` / `inspection_task_status_transitions` で管理する状態。日常点検行はステータスを持たない')
@@ -71,12 +72,12 @@ $spec = @{
       @('点検メニュー登録', '`POST /quotation-data-box/inspection-requests/menus`', 'メニュー本体と点検項目を同時に登録する'),
       @('点検メニュー更新', '`PUT /quotation-data-box/inspection-requests/menus/{menuId}`', '未使用メニューの内容を更新する。使用中メニューは履歴整合のため更新制限する'),
       @('点検メニュー削除', '`DELETE /quotation-data-box/inspection-requests/menus/{menuId}`', '`inspection_menus.is_active=false` による無効化を行う'),
-      @('点検管理登録', '`POST /quotation-data-box/inspection-requests/tasks`', '選択資産に定期点検タスクまたは日常点検設定行を作成/更新する'),
+      @('点検管理登録', '`POST /quotation-data-box/inspection-requests/tasks`', '資産一覧で選択した原本資産に定期点検タスクまたは日常点検設定行を作成/更新する'),
       @('設定変更', '`PUT /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}`', '定期点検タスクまたは日常点検設定行を更新する'),
       @('設定解除', '`DELETE /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}`', '`inspection_tasks.is_active=false`、`deleted_at` 設定で論理解除する'),
       @('定期点検のQR照合後開始', '`POST /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/start`', '`START_INSPECTION` 遷移で `点検実施中` へ更新する'),
-      @('日程調整', '`POST /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/schedule`', 'メーカー保守タスクの日程を更新し `点検日調整` から予定系ステータスへ戻す'),
-      @('スキップ', '`POST /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/skip`', '次回予定日を再計算し、再計算後の予定系ステータスへ更新する'),
+      @('日程調整', '`POST /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/schedule`', 'メーカー保守または院内スポット点検の日程を更新し、`点検日調整` から予定系ステータスへ戻す'),
+      @('スキップ', '`POST /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/skip`', '周期を持つ定期点検タスクの次回予定日を再計算し、再計算後の予定系ステータスへ更新する'),
       @('定期点検完了', '`POST /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/result`', '点検結果を登録し、前回点検日・次回予定日・ステータスを更新する'),
       @('メーカー保守結果登録画面表示', '`GET /maker-maintenance-result/tasks/{maintenanceTaskId}`', '対象タスク、資産、添付候補、費用入力初期値を取得する'),
       @('メーカー保守結果登録', '`POST /maker-maintenance-result/tasks/{maintenanceTaskId}/result`', 'メーカー保守結果、費用、添付ファイル本体を受け取り、API内でAmazon S3へ保存してメタデータを登録し、対象タスクを論理解除する')
@@ -85,7 +86,7 @@ $spec = @{
     @{ Type = 'Table'; Headers = @('テーブル名', '利用種別', '用途'); Rows = @(
       @('`asset_ledgers`', 'READ', '点検対象資産、分類一致、施設スコープ、QR表示情報の取得'),
       @('`qr_codes`', 'READ', '資産に紐づくQR識別子、定期点検開始時のQR照合'),
-      @('`inspection_menus`', 'READ / CREATE / UPDATE', '点検メニュー本体、メニュー種別、日常点検タイミング、周期、分類条件の管理'),
+      @('`inspection_menus`', 'READ / CREATE / UPDATE', '点検メニュー本体、メニュー種別、日常点検タイミング、周期、分類条件の管理。周期は院内定期点検で使用し、院内スポット点検では使用しない'),
       @('`inspection_menu_items`', 'READ / CREATE / UPDATE / DELETE', '点検項目、入力方式、評価方式、表示順の管理'),
       @('`inspection_tasks`', 'READ / CREATE / UPDATE', '定期点検タスクと日常点検設定行の正本。解除時は `is_active=false` と `deleted_at` を設定する'),
       @('`inspection_task_status_definitions`', 'READ', '定期点検系ステータスの許容値、初期状態、終端状態確認'),
@@ -143,6 +144,8 @@ $spec = @{
     @{ Type = 'Bullets'; Items = @(
       '画面表示ラベル `院内点検` は DB/API保存値 `院内定期点検`、`メーカー点検` は `メーカー保守`、`スポット点検` は `院内スポット点検`、`日常点検` は `日常点検` へ変換する',
       '定期点検系タスクは `inspection_tasks.periodic_menu_id`、`status`、`last_inspection_on`、`next_inspection_on` を用いる',
+      '院内スポット点検は点検周期を持たず、登録時は `next_inspection_on=NULL`、`status=''点検日調整''` とし、日程調整APIで初回予定日を設定する',
+      'メーカー保守は保守契約管理の保守登録から作成または更新される。点検管理登録APIでは保守契約由来のメーカー保守タスクを新規作成しない',
       '日常点検設定行は `inspection_type=''日常点検''`、`status=NULL`、`periodic_menu_id=NULL`、`last_inspection_on=NULL`、`next_inspection_on=NULL` とし、一覧では `-` 表示用に返す',
       '日常点検設定行の使用前・使用中・使用後メニュー更新では、JSONフィールド未指定は既存値維持、明示的な null は該当タイミングの解除として扱う',
       '完了回数は現行DBに保持カラムがないため、対象 `inspection_task_id` または同一資産・同一メニューの `inspection_results` 件数から画面表示時に算出する。`inspection_tasks` へ完了回数を保存しない',
@@ -164,12 +167,12 @@ $spec = @{
       @('4', '点検メニュー登録', 'POST', '/quotation-data-box/inspection-requests/menus', '点検メニューと項目を登録する', '`inspection_management`'),
       @('5', '点検メニュー更新', 'PUT', '/quotation-data-box/inspection-requests/menus/{menuId}', '点検メニューと項目を更新する', '`inspection_management`'),
       @('6', '点検メニュー削除', 'DELETE', '/quotation-data-box/inspection-requests/menus/{menuId}', '点検メニューを無効化する', '`inspection_management`'),
-      @('7', '点検管理登録', 'POST', '/quotation-data-box/inspection-requests/tasks', '選択資産に点検メニューを紐づける', '`inspection_management`'),
+      @('7', '点検管理登録', 'POST', '/quotation-data-box/inspection-requests/tasks', '資産一覧で選択した原本資産に点検メニューを紐づける', '`inspection_management`'),
       @('8', '点検タスク/日常点検設定更新', 'PUT', '/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}', '定期点検タスクまたは日常点検設定行を更新する', '`inspection_management`'),
       @('9', '点検タスク/日常点検設定解除', 'DELETE', '/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}', '点検タスクまたは日常点検設定行を論理解除する', '`inspection_management`'),
       @('10', '定期点検開始', 'POST', '/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/start', 'QR照合後に定期点検タスクを点検実施中へ更新する', '`inspection_management`'),
-      @('11', '点検日程調整', 'POST', '/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/schedule', 'メーカー保守の日程を調整する', '`inspection_management`'),
-      @('12', '点検スキップ', 'POST', '/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/skip', '定期点検タスクの次回予定日を再計算する', '`inspection_management`'),
+      @('11', '点検日程調整', 'POST', '/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/schedule', 'メーカー保守または院内スポット点検の日程を調整する', '`inspection_management`'),
+      @('12', '点検スキップ', 'POST', '/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/skip', '周期を持つ定期点検タスクの次回予定日を再計算する', '`inspection_management`'),
       @('13', '定期点検結果登録', 'POST', '/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/result', '定期点検結果を登録しタスク状態を更新する', '`inspection_management`'),
       @('14', 'メーカー保守結果登録詳細取得', 'GET', '/maker-maintenance-result/tasks/{maintenanceTaskId}', 'メーカー保守結果登録画面の詳細を取得する', '`inspection_management`'),
       @('15', 'メーカー保守結果登録', 'POST', '/maker-maintenance-result/tasks/{maintenanceTaskId}/result', 'メーカー保守結果、費用、添付ファイル本体を登録し、ファイル実体をS3へ保存する', '`inspection_management`')
@@ -200,6 +203,7 @@ $spec = @{
           '`inspection_tasks.is_active=true` かつ `deleted_at IS NULL` の行を対象とする',
           '定期点検系は `periodic_menu_id`、`status`、`next_inspection_on`、`last_inspection_on` を返す',
           '日常点検行は `inspection_type=''日常点検''` の行として返し、点検周期、前回点検日、次回点検予定、ステータスは null として返す',
+          '`availableActions` は点検種別とステータスから返却する。`SCHEDULE` はメーカー保守または院内スポット点検、`SKIP` は周期を持つ院内定期点検またはメーカー保守のみ返し、院内スポット点検と日常点検行には `SKIP` を返さない',
           '点検日フィルターは定期点検系の `next_inspection_on` と `status` にのみ適用する。日常点検行は `inspectionDateFilter=ALL` または未指定の場合のみ返す',
           '貸出状況フィルターは `lending_devices.status` を参照し、貸出中は `貸出中` / `使用中` / `使用済` を対象とする',
           '既定並び順は、日常点検行を定期点検行の後、定期点検系は `next_inspection_on ASC NULLS LAST`、`inspection_task_id ASC` とする'
@@ -241,7 +245,7 @@ $spec = @{
               @('lastInspectionOn', 'date', '-', '前回点検日。日常点検行は null'),
               @('nextInspectionOn', 'date', '-', '次回点検予定日。日常点検行は null'),
               @('status', 'string', '-', '定期点検系ステータス。日常点検行は null'),
-              @('availableActions', 'string[]', '✓', '`START` / `SCHEDULE` / `MAKER_RESULT` / `SKIP` / `EDIT` / `RELEASE` / `KARTE`')
+              @('availableActions', 'string[]', '✓', '`START` / `SCHEDULE` / `MAKER_RESULT` / `SKIP` / `EDIT` / `RELEASE` / `KARTE`。種別・ステータス別の返却可否は処理仕様に従う')
             )
           }
         )
@@ -419,7 +423,7 @@ $spec = @{
       },
       @{
         Title = '点検メニュー更新（/quotation-data-box/inspection-requests/menus/{menuId}）'
-        Overview = '未使用の点検メニューを更新する。履歴整合とオフライン同期保護のため、有効タスクまたは点検結果で利用済みのメニューは更新不可とし、旧メニューを無効化して新メニューを作成する運用とする。'
+        Overview = '未使用の点検メニューを更新する。履歴整合とオフライン同期保護のため、有効タスクまたは点検結果で利用済みのメニューは更新不可とし、既存メニューを無効化して新メニューを作成する運用とする。'
         Method = 'PUT'
         Path = '/quotation-data-box/inspection-requests/menus/{menuId}'
         Auth = '要（Bearer）'
@@ -498,32 +502,33 @@ $spec = @{
       },
       @{
         Title = '点検管理登録（/quotation-data-box/inspection-requests/tasks）'
-        Overview = '資産一覧画面の点検管理登録から、選択資産に定期点検タスクまたは日常点検設定行を作成/更新する。'
+        Overview = '資産一覧画面の点検管理登録から、選択した原本資産（`asset_ledgers`）に定期点検タスクまたは日常点検設定行を作成/更新する。'
         Method = 'POST'
         Path = '/quotation-data-box/inspection-requests/tasks'
         Auth = '要（Bearer）'
         RequestTitle = 'リクエスト（InspectionTaskUpsertRequest）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('assetLedgerId', 'int64', '✓', '資産台帳ID'),
-          @('inspectionType', 'string', '✓', '`院内定期点検` / `メーカー保守` / `院内スポット点検` / `日常点検`'),
-          @('periodicMenuId', 'int64', '-', '定期点検系で指定する点検メニューID'),
+          @('assetLedgerId', 'int64', '✓', '原本資産の資産台帳ID（`asset_ledgers.asset_ledger_id`）'),
+          @('inspectionType', 'string', '✓', '`院内定期点検` / `院内スポット点検` / `日常点検`。`メーカー保守` は保守契約管理から連携するため本APIでは指定不可'),
+          @('periodicMenuId', 'int64', '-', '院内定期点検または院内スポット点検で指定する点検メニューID。院内スポット点検では点検項目テンプレートとして参照し、点検周期は使用しない。メーカー保守は保守契約管理から連携するため本APIでは指定しない'),
           @('dailyBeforeMenuId', 'int64', '-', '日常点検 使用前メニューID'),
           @('dailyDuringMenuId', 'int64', '-', '日常点検 使用中メニューID'),
           @('dailyAfterMenuId', 'int64', '-', '日常点検 使用後メニューID'),
-          @('nextInspectionOn', 'date', '-', '定期点検系の次回予定日'),
-          @('vendorId', 'int64', '-', '委託業者ID。メーカー保守などで使用'),
-          @('maintenanceContractId', 'int64', '-', '保守契約ID。保守契約管理タブ由来のタスクで使用する')
+          @('nextInspectionOn', 'date', '-', '院内定期点検の次回予定日。院内スポット点検は登録時点では指定せず、日程調整APIで設定する'),
+          @('vendorId', 'int64', '-', '委託業者ID。院内点検で委託先を表示する場合に使用する')
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
           $workFacilityProcessingLine,
-          '対象資産が作業対象施設内に存在し、`asset_ledgers.status=''ACTIVE''` であることを確認する',
+          '対象の原本資産が作業対象施設内に存在し、`asset_ledgers.status=''ACTIVE''` であることを確認する',
           '指定メニューはすべて `inspection_menus.is_active=true` であり、対象資産の大分類・中分類・品目と一致することを確認する',
-          '定期点検系の場合は `periodicMenuId` 必須、`inspection_menus.menu_type=''PERIODIC''` であることを確認する',
-          '`inspection_type=''院内定期点検''` / `院内スポット点検` では `nextInspectionOn` 必須とする。`inspection_type=''メーカー保守''` は日程未定登録を許可し、その場合は `status=''点検日調整''` とする',
+          '`inspectionType` は `院内定期点検` / `院内スポット点検` / `日常点検` を許可する。`メーカー保守` は保守契約管理の保守登録から作成または更新するため、本APIでの新規作成は 400 とする',
+          '院内定期点検または院内スポット点検の場合は `periodicMenuId` 必須、`inspection_menus.menu_type=''PERIODIC''` であることを確認する。院内スポット点検では `inspection_menus.cycle_months` を予定日算出やスキップに使用しない',
+          '`inspection_type=''院内定期点検''` では `nextInspectionOn` 必須とし、点検予定日を算出したステータスで作成する',
+          '`inspection_type=''院内スポット点検''` では `nextInspectionOn` を受け付けず、`next_inspection_on=NULL`、`status=''点検日調整''` で作成する。点検予定日は日程調整APIで設定する',
           '有効な同一資産・同一点検種別・同一定期メニューの `inspection_tasks` が既に存在する場合は 409 とする',
-          '定期点検系の初期 `status` は `inspection_task_status_definitions.is_initial_status=true` の予定系ステータスから `nextInspectionOn` に応じて算出する。`メーカー保守` の日程未定登録は `点検日調整` を許可する',
+          '院内定期点検の初期 `status` は `inspection_task_status_definitions.is_initial_status=true` の予定系ステータスから `nextInspectionOn` に応じて算出する。院内スポット点検は `点検日調整` を許可する',
           '日常点検の場合は指定された日常点検メニューが `menu_type=''DAILY''` であり、`dailyBeforeMenuId` は `daily_timing=''BEFORE''`、`dailyDuringMenuId` は `daily_timing=''DURING''`、`dailyAfterMenuId` は `daily_timing=''AFTER''` と一致することを確認する',
           '日常点検の場合は `periodicMenuId`、`status`、`nextInspectionOn`、`lastInspectionOn` を null とし、`daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` の少なくとも1つを必須とする',
           '有効な日常点検設定行が既に存在する場合は同じ行を更新し、存在しない場合は新規作成する',
@@ -572,7 +577,7 @@ $spec = @{
           @('dailyBeforeMenuId', 'int64|null', '-', '日常点検 使用前メニューID。未指定は維持、null指定で一部解除'),
           @('dailyDuringMenuId', 'int64|null', '-', '日常点検 使用中メニューID。未指定は維持、null指定で一部解除'),
           @('dailyAfterMenuId', 'int64|null', '-', '日常点検 使用後メニューID。未指定は維持、null指定で一部解除'),
-          @('nextInspectionOn', 'date', '-', '定期点検系の次回予定日'),
+          @('nextInspectionOn', 'date', '-', '院内定期点検の次回予定日。メーカー保守と院内スポット点検は日程調整APIで更新する'),
           @('vendorId', 'int64', '-', '委託業者ID')
         )
         PermissionLines = $permissionLines
@@ -584,7 +589,9 @@ $spec = @{
           '日常点検行で指定されたメニューは `menu_type=''DAILY''` かつ各フィールドに対応する `daily_timing` と一致することを確認する',
           '日常点検行では `status`、`nextInspectionOn`、`lastInspectionOn` を更新しない',
           '定期点検系で `periodicMenuId` を変更する場合は、指定メニューが `menu_type=''PERIODIC''` であることを確認し、有効な同一資産・同一点検種別・同一定期メニュー重複を禁止する',
-          '`inspection_type=''院内定期点検''` / `院内スポット点検` で予定日を更新する場合は `nextInspectionOn` を null にできない。`メーカー保守` は日程未定を許可し、その場合は `点検日調整` へ戻す',
+          '`inspection_type=''院内定期点検''` で予定日を更新する場合は `nextInspectionOn` を null にできない',
+          '`inspection_type=''院内スポット点検''` の予定日は本APIでは更新せず、日程調整APIで設定する',
+          '`inspection_type=''メーカー保守''` の予定日は本APIでは更新せず、日程調整APIで設定する',
           '指定メニューは対象資産の大分類・中分類・品目と一致することを確認する',
           '点検実施中または完了済みタスクのメニュー変更は 409 とする'
         )
@@ -689,7 +696,7 @@ $spec = @{
       },
       @{
         Title = '点検日程調整（/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/schedule）'
-        Overview = 'メーカー保守タスクの日程を調整する。'
+        Overview = 'メーカー保守または院内スポット点検の日程を調整する。院内スポット点検は点検管理登録時点では予定日未定で作成し、本APIで初回予定日を設定する。'
         Method = 'POST'
         Path = '/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/schedule'
         Auth = '要（Bearer）'
@@ -707,10 +714,10 @@ $spec = @{
         PermissionLines = $permissionLines
         ProcessingLines = @(
           $workFacilityProcessingLine,
-          '対象タスクが `inspection_type=''メーカー保守''`、`is_active=true` であることを確認する',
+          '対象タスクが `inspection_type in (''メーカー保守'', ''院内スポット点検'')`、`is_active=true` であることを確認する',
           '`inspection_task_status_transitions` で `SET_DATE` が許可されることを確認する',
           '`next_inspection_on` を更新し、調整後日付に応じた予定系ステータスへ更新する',
-          '院内定期点検、院内スポット点検、日常点検行では 409 とする'
+          '対象外の点検種別（院内定期点検、日常点検行）では 409 とする'
         )
         ResponseTitle = 'レスポンス（200：InspectionTaskUpsertResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -731,7 +738,7 @@ $spec = @{
       },
       @{
         Title = '点検スキップ（/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/skip）'
-        Overview = '定期点検系タスクをスキップし、次回予定日とステータスを再計算する。スキップ専用ステータスは保存しない。'
+        Overview = '周期を持つ定期点検タスクをスキップし、次回予定日とステータスを再計算する。スキップ専用ステータスは保存しない。'
         Method = 'POST'
         Path = '/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/skip'
         Auth = '要（Bearer）'
@@ -749,8 +756,9 @@ $spec = @{
         ProcessingLines = @(
           $workFacilityProcessingLine,
           '対象タスクが定期点検系であり、`inspection_type<>''日常点検''`、`is_active=true` であることを確認する',
+          '院内スポット点検は点検周期を持たないためスキップ対象外とし、409 とする。予定日を変更する場合は日程調整APIを使用する',
           '`inspection_task_status_transitions` で `SKIP` または `RECALCULATE_SCHEDULE` が許可されることを確認する',
-          '`inspection_menus.cycle_months` を基準に `next_inspection_on` を再計算する。周期がないスポット点検は `next_inspection_on=NULL` とし終端扱いにする',
+          '院内定期点検は `inspection_menus.cycle_months`、メーカー保守は保守契約由来の点検周期を基準に `next_inspection_on` を再計算する',
           '再計算後の予定系ステータスへ更新する。スキップ専用ステータスは保持しない'
         )
         ResponseTitle = 'レスポンス（200：InspectionTaskUpsertResponse）'
@@ -765,7 +773,7 @@ $spec = @{
           @('401', '未認証', 'ErrorResponse'),
           @('403', '作業対象施設に対する実効 `inspection_management` なし', 'ErrorResponse'),
           @('404', '対象タスクが存在しない', 'ErrorResponse'),
-          @('409', '日常点検行指定、点検実施中、またはステータス遷移不可', 'ErrorResponse'),
+          @('409', '院内スポット点検/日常点検行指定、点検実施中、またはステータス遷移不可', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -798,7 +806,7 @@ $spec = @{
           '`overallResult=PASS` の場合は `COMPLETE` 遷移で `点検完了` または次回予定系ステータスへ更新する',
           '`overallResult=REINSPECT` の場合は `再点検` へ更新する',
           '`overallResult=REPAIR_REQUEST` の場合も点検結果は登録し、`REINSPECT` 遷移で `再点検` へ更新したうえで修理申請連携用 `repairRequestSeed` を返す',
-          '`last_inspection_on=inspectedOn` を設定し、`inspection_menus.cycle_months` がある場合は `next_inspection_on` を再計算する',
+          '`last_inspection_on=inspectedOn` を設定し、院内定期点検またはメーカー保守で周期がある場合は `next_inspection_on` を再計算する。院内スポット点検は周期を持たないため、完了後の次回予定日は null とする',
           '完了回数は `inspection_results` の件数集計で算出し、`inspection_tasks` には保持しない'
         )
         ResponseTitle = 'レスポンス（201：PeriodicInspectionResultResponse）'
@@ -964,14 +972,14 @@ $spec = @{
       '有効な日常点検設定行は `(asset_ledger_id, inspection_type=''日常点検'')` の重複を禁止する',
       '点検管理登録で適用できるメニューは、対象資産の大分類・中分類・品目と一致する有効メニューに限定する',
       '日常点検設定行は使用前・使用中・使用後の各タイミングに最大1メニューを保持する',
-      '点検メニューが有効タスクまたは点検結果で使用済みの場合、項目IDを破壊する更新は許可せず、新メニュー作成と旧メニュー無効化で運用する'
+      '点検メニューが有効タスクまたは点検結果で使用済みの場合、項目IDを破壊する更新は許可せず、新メニュー作成と既存メニュー無効化で運用する'
     ) },
     @{ Type = 'Heading2'; Text = 'ステータス遷移ルール' },
     @{ Type = 'Bullets'; Items = @(
       '`START_INSPECTION` は予定系ステータスまたは再点検から `点検実施中` への遷移に使用する',
       '`COMPLETE` は `点検実施中` から `点検完了` または `再点検` への遷移に使用する',
-      '`SKIP` / `RECALCULATE_SCHEDULE` は次回予定日を再計算し、再計算後の予定系ステータスへ更新する',
-      '`SET_DATE` はメーカー保守の日程調整に使用する。`inspection_type=''メーカー保守''` 以外で `点検日調整` を保存しない',
+      '`SKIP` / `RECALCULATE_SCHEDULE` は周期を持つ院内定期点検またはメーカー保守で使用し、次回予定日を再計算して再計算後の予定系ステータスへ更新する',
+      '`SET_DATE` はメーカー保守と院内スポット点検の日程調整に使用する。`点検日調整` は `inspection_type=''メーカー保守''` または `院内スポット点検` で許可する',
       '日常点検行はステータス遷移対象外であり、`inspection_task_status_definitions` / `inspection_task_status_transitions` の対象に含めない'
     ) },
 

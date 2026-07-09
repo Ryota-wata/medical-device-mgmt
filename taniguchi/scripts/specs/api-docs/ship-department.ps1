@@ -17,7 +17,7 @@
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = 'SHIP部署マスタは、部門/部署および諸室区分の標準候補を参照・管理する画面である。個別部署マスタ画面における標準候補選択と、施設ロケーションの標準化に利用する。' },
-    @{ Type = 'Paragraph'; Text = '画面は左右2カラムで構成され、左側で部署マスタ、右側で諸室区分マスタを独立して検索・登録・更新・削除する。' },
+    @{ Type = 'Paragraph'; Text = '画面は左右2カラムで構成され、左側で部署マスタ、右側で諸室区分マスタを独立して検索・登録・更新・論理削除する。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('SHIP部署マスタ', 'SHIPで定義する部門/部署の標準候補マスタ'),
@@ -28,13 +28,13 @@
     @{ Type = 'Table'; Headers = @('項目', '内容'); Rows = @(
       @('画面名', '20. SHIP部署マスタ画面'),
       @('画面URL', '/ship-department-master'),
-      @('主機能', '部署マスタと諸室区分マスタを独立して検索・登録・更新・削除する')
+      @('主機能', '部署マスタと諸室区分マスタを独立して検索・登録・更新・論理削除する')
     ) },
 
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'SHIP部署マスタAPIの位置づけ' },
-    @{ Type = 'Paragraph'; Text = '本API群は、SHIP部署マスタ画面の一覧参照、登録、更新、削除を提供する。部署マスタと諸室区分マスタは独立したAPI群として扱う。' },
-    @{ Type = 'Paragraph'; Text = 'また、個別部署マスタ画面の標準候補として利用されるため、削除時は関連テーブルからの参照整合性を考慮する。' },
+    @{ Type = 'Paragraph'; Text = '本API群は、SHIP部署マスタ画面の一覧参照、登録、更新、論理削除を提供する。部署マスタと諸室区分マスタは独立したAPI群として扱う。' },
+    @{ Type = 'Paragraph'; Text = 'また、個別部署マスタ画面の標準候補として利用されるため、削除時は関連テーブルの既存参照を保持したまま、削除済みマスタを通常一覧・標準候補から除外する。' },
     @{ Type = 'Heading2'; Text = '画面とAPIの関係' },
     @{ Type = 'Numbered'; Items = @(
       '画面初期表示および絞り込み時に部署マスタ一覧取得APIまたは諸室区分マスタ一覧取得APIを呼び出す',
@@ -48,10 +48,10 @@
       @('user_facility_assignments', '通常アカウントの作業対象施設割当判定', 'user_id, facility_id, is_active, valid_from, valid_to'),
       @('facility_feature_settings', '通常アカウントの作業対象施設における `ship_dept_master_list` / `ship_dept_master_edit` 提供有無判定', 'facility_id, feature_code, is_enabled'),
       @('user_facility_feature_settings', '通常アカウントのユーザー×作業対象施設単位の `ship_dept_master_list` / `ship_dept_master_edit` 利用可否判定', 'user_facility_assignment_id, feature_code, is_enabled'),
-      @('ship_departments', '部署マスタの一覧取得・新規作成・更新・削除', 'ship_department_id, division_name, department_name'),
-      @('ship_room_categories', '諸室区分マスタの一覧取得・新規作成・更新・削除', 'ship_room_category_id, room_category1, room_category2'),
-      @('facility_locations', '部署/諸室区分マスタ削除時の参照有無確認', 'ship_department_id, ship_room_category_id'),
-      @('facility_location_remodels', '削除時の参照有無確認', 'target_ship_department_id, target_ship_room_category_id')
+      @('ship_departments', '部署マスタの一覧取得・新規作成・更新・論理削除', 'ship_department_id, division_name, department_name, is_active'),
+      @('ship_room_categories', '諸室区分マスタの一覧取得・新規作成・更新・論理削除', 'ship_room_category_id, room_category1, room_category2, is_active'),
+      @('facility_locations', '部署/諸室区分マスタ削除後も保持する既存参照', 'ship_department_id, ship_room_category_id'),
+      @('facility_location_remodels', '削除後も保持する既存参照', 'target_ship_department_id, target_ship_room_category_id')
     ) },
     @{ Type = 'Paragraph'; Text = '本画面は左右2カラムで構成され、左側の部署マスタ領域と右側の諸室区分マスタ領域を独立した API 群で扱う。' },
 
@@ -107,11 +107,11 @@
       @('部署マスタ一覧取得', 'GET', '/ship-department-master/departments', '部門/部署の一覧と表示件数を取得する', '要'),
       @('部署マスタ新規作成', 'POST', '/ship-department-master/departments', '部門/部署を新規登録する', '要'),
       @('部署マスタ更新', 'PUT', '/ship-department-master/departments/{shipDepartmentId}', '部門/部署を更新する', '要'),
-      @('部署マスタ削除', 'DELETE', '/ship-department-master/departments/{shipDepartmentId}', '部門/部署を削除する', '要'),
+      @('部署マスタ削除', 'DELETE', '/ship-department-master/departments/{shipDepartmentId}', '部門/部署を論理削除する', '要'),
       @('諸室区分マスタ一覧取得', 'GET', '/ship-department-master/room-categories', '諸室区分①/②の一覧と表示件数を取得する', '要'),
       @('諸室区分マスタ新規作成', 'POST', '/ship-department-master/room-categories', '諸室区分①/②を新規登録する', '要'),
       @('諸室区分マスタ更新', 'PUT', '/ship-department-master/room-categories/{shipRoomCategoryId}', '諸室区分①/②を更新する', '要'),
-      @('諸室区分マスタ削除', 'DELETE', '/ship-department-master/room-categories/{shipRoomCategoryId}', '諸室区分①/②を削除する', '要')
+      @('諸室区分マスタ削除', 'DELETE', '/ship-department-master/room-categories/{shipRoomCategoryId}', '諸室区分①/②を論理削除する', '要')
     ) },
 
     @{ Type = 'Heading1'; Text = '第5章 SHIP部署マスタ機能設計' },
@@ -135,7 +135,7 @@
         )
         ProcessingLines = @(
           'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
-          '`ship_departments` を `sort_order ASC, ship_department_id ASC` で取得する',
+          '`ship_departments` のうち `is_active=true` のレコードを `sort_order ASC, ship_department_id ASC` で取得する',
           '部門名と部署名は AND 条件で絞り込む',
           '文字列検索は部分一致を基本とする',
           '画面要件上ページングは定義しない'
@@ -240,7 +240,7 @@
         )
         ProcessingLines = @(
           'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
-          '指定IDの `ship_departments` を更新する',
+          '指定IDの `ship_departments` が存在し、`is_active=true` であることを確認したうえで更新する',
           '`(division_name, department_name)` の重複は更新不可とする',
           '`facility_locations` / `facility_location_remodels` は FK 参照を維持したまま、JOIN名称が更新後値へ切り替わる想定とする'
         )
@@ -266,14 +266,14 @@
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで作業対象施設に対する実効 `ship_dept_master_edit` なし', 'ErrorResponse'),
           @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
-          @('404', '対象マスタが存在しない', 'ErrorResponse'),
+          @('404', '対象マスタが存在しない、または論理削除済み', 'ErrorResponse'),
           @('409', '部門/部署の組み合わせが重複', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
       @{
         Title = '部署マスタ削除（/ship-department-master/departments/{shipDepartmentId}）'
-        Overview = '指定したSHIP部署マスタを削除する。'
+        Overview = '指定したSHIP部署マスタを論理削除する。'
         Method = 'DELETE'
         Path = '/ship-department-master/departments/{shipDepartmentId}'
         Auth = '要（Bearer）'
@@ -289,8 +289,10 @@
         )
         ProcessingLines = @(
           'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
-          '対象レコードを物理削除する想定とする',
-          '`facility_locations.ship_department_id` または `facility_location_remodels.target_ship_department_id` から参照されている場合は削除不可とする'
+          '指定IDの `ship_departments` が存在し、`is_active=true` であることを確認する',
+          '対象レコードの `is_active=false` とし、`updated_at` を更新する',
+          '`facility_locations.ship_department_id` および `facility_location_remodels.target_ship_department_id` の既存参照は変更しない',
+          '論理削除後のレコードは通常一覧および個別部署マスタ画面の標準候補から除外する'
         )
         ResponseTitle = 'レスポンス（204：No Content）'
         ResponseLines = @(
@@ -301,8 +303,7 @@
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで作業対象施設に対する実効 `ship_dept_master_edit` なし', 'ErrorResponse'),
           @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
-          @('404', '対象マスタが存在しない', 'ErrorResponse'),
-          @('409', '関連データから参照中で削除不可', 'ErrorResponse'),
+          @('404', '対象マスタが存在しない、または論理削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -325,7 +326,7 @@
         )
         ProcessingLines = @(
           'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
-          '`ship_room_categories` を `sort_order ASC, ship_room_category_id ASC` で取得する',
+          '`ship_room_categories` のうち `is_active=true` のレコードを `sort_order ASC, ship_room_category_id ASC` で取得する',
           '諸室区分①と諸室区分②は AND 条件で絞り込む',
           '文字列検索は部分一致を基本とする',
           '画面要件上ページングは定義しない'
@@ -430,7 +431,7 @@
         )
         ProcessingLines = @(
           'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
-          '指定IDの `ship_room_categories` を更新する',
+          '指定IDの `ship_room_categories` が存在し、`is_active=true` であることを確認したうえで更新する',
           '`(room_category1, room_category2)` の重複は更新不可とする',
           '`facility_locations` / `facility_location_remodels` は FK 参照を維持したまま、JOIN名称が更新後値へ切り替わる想定とする'
         )
@@ -456,14 +457,14 @@
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで作業対象施設に対する実効 `ship_dept_master_edit` なし', 'ErrorResponse'),
           @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
-          @('404', '対象マスタが存在しない', 'ErrorResponse'),
+          @('404', '対象マスタが存在しない、または論理削除済み', 'ErrorResponse'),
           @('409', '諸室区分①/②の組み合わせが重複', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
       @{
         Title = '諸室区分マスタ削除（/ship-department-master/room-categories/{shipRoomCategoryId}）'
-        Overview = '指定したSHIP諸室区分マスタを削除する。'
+        Overview = '指定したSHIP諸室区分マスタを論理削除する。'
         Method = 'DELETE'
         Path = '/ship-department-master/room-categories/{shipRoomCategoryId}'
         Auth = '要（Bearer）'
@@ -479,8 +480,10 @@
         )
         ProcessingLines = @(
           'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
-          '対象レコードを物理削除する想定とする',
-          '`facility_locations.ship_room_category_id` または `facility_location_remodels.target_ship_room_category_id` から参照されている場合は削除不可とする'
+          '指定IDの `ship_room_categories` が存在し、`is_active=true` であることを確認する',
+          '対象レコードの `is_active=false` とし、`updated_at` を更新する',
+          '`facility_locations.ship_room_category_id` および `facility_location_remodels.target_ship_room_category_id` の既存参照は変更しない',
+          '論理削除後のレコードは通常一覧および個別部署マスタ画面の標準候補から除外する'
         )
         ResponseTitle = 'レスポンス（204：No Content）'
         ResponseLines = @(
@@ -491,8 +494,7 @@
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで作業対象施設に対する実効 `ship_dept_master_edit` なし', 'ErrorResponse'),
           @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
-          @('404', '対象マスタが存在しない', 'ErrorResponse'),
-          @('409', '関連データから参照中で削除不可', 'ErrorResponse'),
+          @('404', '対象マスタが存在しない、または論理削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       }
@@ -512,18 +514,18 @@
       '`ship_room_categories` は `(room_category1, room_category2)` の組み合わせを一意に保つ',
       '重複登録・重複更新は 409 を返却する'
     ) },
-    @{ Type = 'Heading2'; Text = '削除制約' },
+    @{ Type = 'Heading2'; Text = '削除方針' },
     @{ Type = 'Bullets'; Items = @(
-      '`ship_departments` は `facility_locations` または `facility_location_remodels` から参照されている場合、削除不可とする',
-      '`ship_room_categories` も同様に `facility_locations` または `facility_location_remodels` から参照されている場合、削除不可とする',
-      '参照中削除は 409 (`MASTER_IN_USE`) を返却する想定とする'
+      '`ship_departments` の削除は物理削除ではなく `is_active=false` の論理削除とする',
+      '`ship_room_categories` の削除も同様に `is_active=false` の論理削除とする',
+      '`facility_locations` または `facility_location_remodels` からの既存参照は保持し、論理削除済みマスタは通常一覧・標準候補から除外する'
     ) },
     @{ Type = 'Heading2'; Text = '実装前提' },
     @{ Type = 'Bullets'; Items = @(
       '画面の表示制御は `/auth/context` の `ship_dept_master_list` / `ship_dept_master_edit` を参照して行い、一覧表示、編集ボタン、新規作成ボタン、削除ボタンを同じ `feature_code` で出し分ける。共有システム管理者アカウントでは作業対象施設が未削除であれば両 `feature_code` を有効扱いにする',
       'モックの状態管理は `DEPT001` / `ROOM001` の文字列IDを用いるが、API と DB の正本キーは bigint の内部IDとする',
       '`sort_order` と `is_active` は現行画面の入力項目に含めず、登録時は DB 既定値を採用する',
-      '削除は論理削除ではなく物理削除とし、参照整合性を満たす場合のみ実行する'
+      '削除は `is_active=false` への更新として扱い、既存の個別部署マスタ参照は維持する'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
@@ -533,11 +535,10 @@
       @('AUTH_403_SHIP_DEPT_MASTER_LIST_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `ship_dept_master_list` がない。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
       @('AUTH_403_SHIP_DEPT_MASTER_EDIT_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `ship_dept_master_edit` がない。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
       @('FACILITY_NOT_FOUND', '404', '作業対象施設が存在しない、または削除済み'),
-      @('SHIP_DEPARTMENT_NOT_FOUND', '404', '対象のSHIP部署マスタが存在しない'),
-      @('SHIP_ROOM_CATEGORY_NOT_FOUND', '404', '対象のSHIP諸室区分マスタが存在しない'),
+      @('SHIP_DEPARTMENT_NOT_FOUND', '404', '対象のSHIP部署マスタが存在しない、または論理削除済み'),
+      @('SHIP_ROOM_CATEGORY_NOT_FOUND', '404', '対象のSHIP諸室区分マスタが存在しない、または論理削除済み'),
       @('SHIP_DEPARTMENT_DUPLICATE', '409', '部門名/部署名の組み合わせが重複している'),
       @('SHIP_ROOM_CATEGORY_DUPLICATE', '409', '諸室区分①/②の組み合わせが重複している'),
-      @('MASTER_IN_USE', '409', '関連データから参照されているため削除できない'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
     ) },
 
@@ -546,7 +547,7 @@
     @{ Type = 'Bullets'; Items = @(
       '部署マスタと諸室区分マスタは、個別部署マスタ画面の標準候補として利用される共通マスタとして管理する',
       '名称変更は個別部署マスタ画面の標準候補表示へ即時反映できるよう、FK 参照を前提に運用する',
-      '削除は参照整合性を確認したうえで実施する'
+      '削除は `is_active=false` の論理削除として実施し、既存参照を保持したまま通常一覧・標準候補から除外する'
     ) },
     @{ Type = 'Heading2'; Text = '今後拡張時の留意点' },
     @{ Type = 'Bullets'; Items = @(
