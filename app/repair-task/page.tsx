@@ -261,6 +261,7 @@ const Section = ({
   headerAction,
   enabled,
   completed,
+  elementId,
 }: {
   step: number;
   title: string;
@@ -269,6 +270,7 @@ const Section = ({
   headerAction?: React.ReactNode;
   enabled: boolean;
   completed: boolean;
+  elementId?: string;
 }) => {
   // Figma 構造: 色帯ヘッダー撤去、プレーンテキスト + チェックマーク + 状態バッジ (outline)
   // (step / accentColor prop は呼び出し側API互換のため引数残す)
@@ -276,7 +278,7 @@ const Section = ({
   void accentColor;
   const titleColor = enabled || completed ? COLORS.textPrimary : COLORS.textMuted;
   return (
-    <div style={{
+    <div data-element-id={elementId} style={{
       background: COLORS.white,
       border: `1px solid ${COLORS.borderLight}`,
       borderRadius: '8px',
@@ -671,7 +673,7 @@ function RepairTaskContent() {
 
   // プログレスバー（顧客レンダリング準拠: 左に「院外対応」赤バッジ、中央に 4 ステップ）
   const ProgressBar = () => (
-    <div style={{
+    <div data-element-id="rp-progress-bar" style={{
       display: 'flex',
       alignItems: 'center',
       padding: '16px 24px',
@@ -749,7 +751,7 @@ function RepairTaskContent() {
 
   // 上部赤情報行（顧客レンダリング準拠: プログレスバー直下・全幅固定）
   const InfoRow = () => (
-    <div style={{
+    <div data-element-id="rp-info-bar" style={{
       display: 'flex',
       alignItems: 'center',
       flexWrap: 'wrap',
@@ -815,18 +817,19 @@ function RepairTaskContent() {
           padding: '16px',
         }}>
         {/* 受付部署ブロック（顧客レンダリング準拠: STEP①見出しの外・上に独立カードで配置） */}
-        <div style={{ background: COLORS.white, border: `1px solid ${COLORS.borderLight}`, borderRadius: '8px', marginBottom: '16px', padding: '16px' }}>
+        <div data-element-id="rp-reception-card" style={{ background: COLORS.white, border: `1px solid ${COLORS.borderLight}`, borderRadius: '8px', marginBottom: '16px', padding: '16px' }}>
           {/* 受付部署・担当者ヘッダー行（顧客レンダリング準拠） */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '16px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div data-element-id="rp-reception-department" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '15px', fontWeight: 'bold', color: COLORS.textPrimary }}>受付部署</span>
               <span style={{ fontSize: '14px', color: COLORS.textPrimary }}>{formData.receptionDepartment || '―'}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '15px', fontWeight: 'bold', color: COLORS.textPrimary }}>担当者</span>
-              <input type="text" placeholder="担当者名" value={formData.receptionPerson} onChange={(e) => updateFormData({ receptionPerson: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '180px' }} />
+              <input data-element-id="rp-reception-person" type="text" placeholder="担当者名" value={formData.receptionPerson} onChange={(e) => updateFormData({ receptionPerson: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '180px' }} />
             </div>
             <button
+              data-element-id="rp-reception-preview-btn"
               className="repair-btn"
               onClick={() => { setPreviewTab('申請申請書'); }}
               disabled={!isStepEnabled(1)}
@@ -852,7 +855,7 @@ function RepairTaskContent() {
               <tr>
                 <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>代替機対応</th>
                 <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div data-element-id="rp-alternative-radio" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <input type="radio" name="alternative" checked={formData.needsAlternative} onChange={() => updateFormData({ needsAlternative: true })} disabled={!isStepEnabled(1)} />
                       必要
@@ -864,10 +867,11 @@ function RepairTaskContent() {
                     {formData.needsAlternative && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
                         <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>納品日:</span>
-                        <input type="date" value={formData.alternativeDeliveryDate} onChange={(e) => updateFormData({ alternativeDeliveryDate: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '150px' }} />
+                        <input data-element-id="rp-alternative-delivery-date" type="date" value={formData.alternativeDeliveryDate} onChange={(e) => updateFormData({ alternativeDeliveryDate: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '150px' }} />
                         <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>返却日:</span>
-                        <input type="date" value={formData.alternativeReturnDate} onChange={(e) => updateFormData({ alternativeReturnDate: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '150px' }} />
+                        <input data-element-id="rp-alternative-return-date" type="date" value={formData.alternativeReturnDate} onChange={(e) => updateFormData({ alternativeReturnDate: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '150px' }} />
                         <button
+                          data-element-id="rp-alternative-returned-btn"
                           className="repair-btn"
                           onClick={() => updateFormData({ alternativeReturned: true })}
                           disabled={!isStepEnabled(1) || formData.alternativeReturned}
@@ -892,7 +896,7 @@ function RepairTaskContent() {
               <tr>
                 <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>商品引取対応</th>
                 <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div data-element-id="rp-pickup-radio" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <input type="radio" name="pickupRequired" checked={formData.pickupRequired} onChange={() => updateFormData({ pickupRequired: true })} disabled={!isStepEnabled(1)} />
                       必要
@@ -904,7 +908,7 @@ function RepairTaskContent() {
                     {formData.pickupRequired && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                         <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>引取日:</span>
-                        <input type="date" value={formData.pickupRequiredDate} onChange={(e) => updateFormData({ pickupRequiredDate: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '150px' }} />
+                        <input data-element-id="rp-pickup-date" type="date" value={formData.pickupRequiredDate} onChange={(e) => updateFormData({ pickupRequiredDate: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '150px' }} />
                       </div>
                     )}
                   </div>
@@ -912,13 +916,13 @@ function RepairTaskContent() {
               </tr>
               <tr>
                 <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>導入業者</th>
-                <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}`, fontSize: '13px', color: COLORS.textPrimary }}>
+                <td data-element-id="rp-installer-info" style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}`, fontSize: '13px', color: COLORS.textPrimary }}>
                   {request.installerName} / {request.installerPerson} / {request.installerContact}
                 </td>
               </tr>
               <tr>
                 <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>保守契約</th>
-                <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}`, fontSize: '13px', color: request.hasMaintenanceContract ? COLORS.success : COLORS.error }}>
+                <td data-element-id="rp-maintenance-contract" style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}`, fontSize: '13px', color: request.hasMaintenanceContract ? COLORS.success : COLORS.error }}>
                   {request.hasMaintenanceContract ? '保守契約対象' : '保守契約なし'}
                   {request.warrantyEndDate && ` (期限: ${request.warrantyEndDate})`}
                 </td>
@@ -934,10 +938,11 @@ function RepairTaskContent() {
           accentColor="#087CB6"
           enabled={isStepEnabled(1)}
           completed={1 < activeStep}
+          elementId="rp-step1-section"
         >
           {/* 見積依頼セクション */}
           <>
-              <div style={{
+              <div data-element-id="rp-step1-guide" style={{
                 padding: '12px 16px',
                 background: '#EBF5EE',
                 borderRadius: '4px',
@@ -951,6 +956,7 @@ function RepairTaskContent() {
               }}>
                 <span>修理業者を登録し、修理見積依頼書を作成してください。プレビューで内容を確認後、依頼を送信できます。</span>
                 <button
+                  data-element-id="rp-add-vendor-btn"
                   onClick={handleAddVendor}
                   disabled={!isStepEnabled(1)}
                   style={{
@@ -971,7 +977,7 @@ function RepairTaskContent() {
 
               {/* 依頼先テーブル */}
               <div style={{ overflowX: 'auto', marginBottom: '12px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
+                <table data-element-id="rp-rfq-vendor-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
                   <thead>
                     <tr style={{ background: COLORS.surfaceAlt }}>
                       <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}`, width: '70px' }}></th>
@@ -1011,27 +1017,27 @@ function RepairTaskContent() {
                             {i === 0 && <span style={{ display: 'block', fontSize: '10px', color: COLORS.success, marginTop: '2px' }}>(導入業者)</span>}
                           </td>
                           <td style={{ padding: '4px' }}>
-                            <input type="text" value={vendor.name} onChange={(e) => updateVendor(i, 'name', e.target.value)} placeholder="業者名" disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
+                            <input data-element-id={i === 0 ? 'rp-rfq-vendor-name-first' : undefined} type="text" value={vendor.name} onChange={(e) => updateVendor(i, 'name', e.target.value)} placeholder="業者名" disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
                           </td>
                           <td style={{ padding: '4px' }}>
-                            <input type="text" value={vendor.person} onChange={(e) => updateVendor(i, 'person', e.target.value)} placeholder="担当者" disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
+                            <input data-element-id={i === 0 ? 'rp-rfq-vendor-person-first' : undefined} type="text" value={vendor.person} onChange={(e) => updateVendor(i, 'person', e.target.value)} placeholder="担当者" disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
                           </td>
                           <td style={{ padding: '4px' }}>
-                            <input type="email" value={vendor.email} onChange={(e) => updateVendor(i, 'email', e.target.value)} placeholder="email@example.com" disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
+                            <input data-element-id={i === 0 ? 'rp-rfq-vendor-email-first' : undefined} type="email" value={vendor.email} onChange={(e) => updateVendor(i, 'email', e.target.value)} placeholder="email@example.com" disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
                           </td>
                           <td style={{ padding: '4px' }}>
-                            <input type="tel" value={vendor.contact} onChange={(e) => updateVendor(i, 'contact', e.target.value)} placeholder="03-0000-0000" disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
+                            <input data-element-id={i === 0 ? 'rp-rfq-vendor-tel-first' : undefined} type="tel" value={vendor.contact} onChange={(e) => updateVendor(i, 'contact', e.target.value)} placeholder="03-0000-0000" disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
                           </td>
                           <td style={{ padding: '4px' }}>
-                            <input type="date" value={vendor.deadline} onChange={(e) => updateVendor(i, 'deadline', e.target.value)} disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
+                            <input data-element-id={i === 0 ? 'rp-rfq-vendor-deadline-first' : undefined} type="date" value={vendor.deadline} onChange={(e) => updateVendor(i, 'deadline', e.target.value)} disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
                           </td>
                           <td style={{ padding: '4px', textAlign: 'center' }}>
                             <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                              <button className="repair-btn" onClick={() => { setPreviewTab('修理依頼書'); setPreviewVendorIndex(i); }} disabled={!isStepEnabled(1) || !hasVendorData} style={{ padding: '4px 8px', background: hasVendorData ? '#087CB6' : COLORS.disabled, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: hasVendorData ? 'pointer' : 'not-allowed', fontSize: '11px' }} title={hasVendorData ? 'プレビュー表示' : '業者名とメールを入力してください'}>
+                              <button data-element-id={i === 0 ? 'rp-rfq-preview-btn-first' : undefined} className="repair-btn" onClick={() => { setPreviewTab('修理依頼書'); setPreviewVendorIndex(i); }} disabled={!isStepEnabled(1) || !hasVendorData} style={{ padding: '4px 8px', background: hasVendorData ? '#087CB6' : COLORS.disabled, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: hasVendorData ? 'pointer' : 'not-allowed', fontSize: '11px' }} title={hasVendorData ? 'プレビュー表示' : '業者名とメールを入力してください'}>
                                 プレビュー
                               </button>
                               {!isSent && (
-                                <button className="repair-btn" onClick={() => handleStep2Submit(i)} disabled={!isStepEnabled(1) || !hasVendorData} style={{ padding: '4px 8px', background: hasVendorData ? COLORS.primary : COLORS.disabled, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: hasVendorData ? 'pointer' : 'not-allowed', fontSize: '11px' }} title={hasVendorData ? '依頼を送信' : '業者名とメールを入力してください'}>
+                                <button data-element-id={i === 0 ? 'rp-rfq-send-btn-first' : undefined} className="repair-btn" onClick={() => handleStep2Submit(i)} disabled={!isStepEnabled(1) || !hasVendorData} style={{ padding: '4px 8px', background: hasVendorData ? COLORS.primary : COLORS.disabled, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: hasVendorData ? 'pointer' : 'not-allowed', fontSize: '11px' }} title={hasVendorData ? '依頼を送信' : '業者名とメールを入力してください'}>
                                   依頼送信
                                 </button>
                               )}
@@ -1053,6 +1059,7 @@ function RepairTaskContent() {
               <div style={{ marginBottom: '16px' }}>
                 <span style={{ ...labelStyle, display: 'block', marginBottom: '4px' }}>ご依頼事項</span>
                 <textarea
+                  data-element-id="rp-rfq-note"
                   value={formData.requestComment}
                   onChange={(e) => updateFormData({ requestComment: e.target.value })}
                   placeholder="例：商品を引き取りにきてください / 見積書を作成してください / 保証期間内での対応は可能ですか？"
@@ -1068,6 +1075,7 @@ function RepairTaskContent() {
 
               <FormRow style={{ justifyContent: 'flex-end' }}>
                 <button
+                  data-element-id="rp-step1-complete-btn"
                   className="repair-btn"
                   onClick={handleStep1VendorComplete}
                   disabled={!isStepEnabled(1) || isSubmitting}
@@ -1095,8 +1103,9 @@ function RepairTaskContent() {
           accentColor="#008C1D"
           enabled={isStepEnabled(2)}
           completed={2 < activeStep}
+          elementId="rp-step2-section"
           headerAction={
-            <button className="repair-btn" onClick={() => { setPreviewTab('見積書'); setPreviewQuotationIndex(null); }} disabled={!isStepEnabled(2)} style={{ padding: 0, background: 'transparent', color: COLORS.primary, border: 'none', cursor: 'pointer', fontSize: '13px', textDecoration: 'none' }}>
+            <button data-element-id="rp-step2-list-link" className="repair-btn" onClick={() => { setPreviewTab('見積書'); setPreviewQuotationIndex(null); }} disabled={!isStepEnabled(2)} style={{ padding: 0, background: 'transparent', color: COLORS.primary, border: 'none', cursor: 'pointer', fontSize: '13px', textDecoration: 'none' }}>
               一覧表示
             </button>
           }
@@ -1112,7 +1121,7 @@ function RepairTaskContent() {
                 登録済み見積（{registeredQuotations.length}件）
               </div>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <table data-element-id="rp-registered-quote-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                   <thead>
                     <tr style={{ background: COLORS.surfaceAlt }}>
                       <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>フェーズ</th>
@@ -1163,7 +1172,7 @@ function RepairTaskContent() {
                   <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>添付ファイル</th>
                   <td colSpan={3} style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <label style={{ padding: '6px 16px', background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(2) ? 1 : 0.6 }}>
+                      <label data-element-id="rp-quote-file-select" style={{ padding: '6px 16px', background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(2) ? 1 : 0.6 }}>
                         ファイルの選択
                         <input type="file" accept=".pdf,.jpg,.jpeg,.png" disabled={!isStepEnabled(2)} onChange={(e) => { const file = e.target.files?.[0]; if (file) setSelectedFileName(file.name); }} style={{ display: 'none' }} />
                       </label>
@@ -1177,7 +1186,7 @@ function RepairTaskContent() {
                 <tr>
                   <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>見積フェーズ</th>
                   <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div data-element-id="rp-quote-phase-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="quotationPhase" checked={formData.quotationPhase === '発注用'} onChange={() => updateFormData({ quotationPhase: '発注用' })} disabled={!isStepEnabled(2)} /> 修理発注登録用見積</label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="quotationPhase" checked={formData.quotationPhase === '参考'} onChange={() => updateFormData({ quotationPhase: '参考' })} disabled={!isStepEnabled(2)} /> 参考見積</label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="quotationPhase" checked={formData.quotationPhase === '追加'} onChange={() => updateFormData({ quotationPhase: '追加' })} disabled={!isStepEnabled(2)} /> 追加見積（部品交換など）</label>
@@ -1185,7 +1194,7 @@ function RepairTaskContent() {
                   </td>
                   <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>保存形式</th>
                   <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div data-element-id="rp-quote-save-format-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="saveFormat" checked={formData.saveFormat === '電子取引'} onChange={() => updateFormData({ saveFormat: '電子取引' })} disabled={!isStepEnabled(2)} /> 電子取引</label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="saveFormat" checked={formData.saveFormat === 'スキャナ保存'} onChange={() => updateFormData({ saveFormat: 'スキャナ保存' })} disabled={!isStepEnabled(2)} /> スキャナ保存</label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="saveFormat" checked={formData.saveFormat === '未指定'} onChange={() => updateFormData({ saveFormat: '未指定' })} disabled={!isStepEnabled(2)} /> 未指定</label>
@@ -1200,28 +1209,28 @@ function RepairTaskContent() {
           <div style={{ marginBottom: '20px', display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr) auto minmax(0, 1fr)', gap: '16px 12px', alignItems: 'center' }}>
             {/* 行1: 業者名 / 見積No, */}
             <label style={{ fontSize: '13px', fontWeight: 'bold' }}>業者名</label>
-            <select value={quotationVendorName} onChange={(e) => setQuotationVendorName(e.target.value)} disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '100%', maxWidth: '260px' }}>
+            <select data-element-id="rp-quote-vendor-select" value={quotationVendorName} onChange={(e) => setQuotationVendorName(e.target.value)} disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '100%', maxWidth: '260px' }}>
               <option value="">選択してください</option>
               {formData.vendors.filter(v => v.name).map((v, i) => (
                 <option key={i} value={v.name}>{v.name}</option>
               ))}
             </select>
             <label style={{ fontSize: '13px', fontWeight: 'bold' }}>見積No,</label>
-            <input type="text" value={formData.businessRegistrationNo} onChange={(e) => updateFormData({ businessRegistrationNo: e.target.value })} placeholder="業者側の見積No,入力" disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '100%', maxWidth: '260px' }} />
+            <input data-element-id="rp-quote-no" type="text" value={formData.businessRegistrationNo} onChange={(e) => updateFormData({ businessRegistrationNo: e.target.value })} placeholder="業者側の見積No,入力" disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '100%', maxWidth: '260px' }} />
 
             {/* 行2: 見積日付 / 見積金額（税別） */}
             <label style={{ fontSize: '13px', fontWeight: 'bold' }}>見積日付</label>
-            <input type="date" value={formData.quotationDate} onChange={(e) => updateFormData({ quotationDate: e.target.value })} disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '180px' }} />
+            <input data-element-id="rp-quote-date" type="date" value={formData.quotationDate} onChange={(e) => updateFormData({ quotationDate: e.target.value })} disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '180px' }} />
             <label style={{ fontSize: '13px', fontWeight: 'bold' }}>見積金額（税別）</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ fontSize: '14px', fontWeight: 'bold' }}>¥</span>
-              <input type="number" value={quotationAmount} onChange={(e) => setQuotationAmount(e.target.value)} placeholder="0" disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '160px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }} />
+              <input data-element-id="rp-quote-amount" type="number" value={quotationAmount} onChange={(e) => setQuotationAmount(e.target.value)} placeholder="0" disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '160px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }} />
               <span style={{ fontSize: '12px', color: COLORS.textMuted }}>（税別）</span>
             </div>
 
             {/* 行3: 勘定科目 / 見積書の登録ボタン */}
             <label style={{ fontSize: '13px', fontWeight: 'bold' }}>勘定科目</label>
-            <select value={quotationAccountDivision} onChange={(e) => setQuotationAccountDivision(e.target.value)} disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '100%', maxWidth: '260px' }}>
+            <select data-element-id="rp-quote-account" value={quotationAccountDivision} onChange={(e) => setQuotationAccountDivision(e.target.value)} disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '100%', maxWidth: '260px' }}>
               <option value="">選択してください</option>
               {ACCOUNT_DIVISIONS.map((d) => (
                 <option key={d.value} value={d.value}>{d.label}</option>
@@ -1230,6 +1239,7 @@ function RepairTaskContent() {
             <div />
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button
+                data-element-id="rp-quote-register-btn"
                 className="repair-btn"
                 onClick={handleAddQuotation}
                 disabled={!isStepEnabled(2) || isSubmitting || !selectedFileName || !quotationVendorName}
@@ -1250,31 +1260,31 @@ function RepairTaskContent() {
           </div>
 
           {/* 発注書の発行カード（顧客レンダリング準拠） */}
-          <div style={{ border: `1px solid ${COLORS.border}`, borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
+          <div data-element-id="rp-order-disposition-card" style={{ border: `1px solid ${COLORS.border}`, borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '12px 20px', background: orderDisposition === 'order' ? '#EBF5EE' : COLORS.disabledBg, borderRadius: '4px', flex: 1, minWidth: '200px' }}>
+              <label data-element-id="rp-disposition-order-radio" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '12px 20px', background: orderDisposition === 'order' ? '#EBF5EE' : COLORS.disabledBg, borderRadius: '4px', flex: 1, minWidth: '200px' }}>
                 <input type="radio" name="orderDisposition" checked={orderDisposition === 'order'} onChange={() => setOrderDisposition('order')} disabled={!isStepEnabled(2)} />
                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.primary }}>発注書の発行</span>
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '12px 20px', background: orderDisposition === 'reject' ? '#FCE4EC' : COLORS.disabledBg, borderRadius: '4px', flex: 1, minWidth: '200px' }}>
+              <label data-element-id="rp-disposition-reject-radio" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '12px 20px', background: orderDisposition === 'reject' ? '#FCE4EC' : COLORS.disabledBg, borderRadius: '4px', flex: 1, minWidth: '200px' }}>
                 <input type="radio" name="orderDisposition" checked={orderDisposition === 'reject'} onChange={() => setOrderDisposition('reject')} disabled={!isStepEnabled(2)} />
                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.error }}>申請却下・修理不能</span>
               </label>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="repair-btn" onClick={() => setPreviewTab('修理発注書')} disabled={!isStepEnabled(2) || orderDisposition !== 'order'} style={{ padding: '8px 16px', background: COLORS.disabledBg, color: COLORS.textMuted, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: 'bold' }}>プレビュー</button>
-                <button className="repair-btn" disabled={!isStepEnabled(2) || orderDisposition !== 'order'} style={{ padding: '8px 16px', background: COLORS.disabledBg, color: COLORS.textMuted, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: 'bold' }}>メール送信</button>
+                <button data-element-id="rp-order-preview-btn" className="repair-btn" onClick={() => setPreviewTab('修理発注書')} disabled={!isStepEnabled(2) || orderDisposition !== 'order'} style={{ padding: '8px 16px', background: COLORS.disabledBg, color: COLORS.textMuted, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: 'bold' }}>プレビュー</button>
+                <button data-element-id="rp-order-mail-btn" className="repair-btn" disabled={!isStepEnabled(2) || orderDisposition !== 'order'} style={{ padding: '8px 16px', background: COLORS.disabledBg, color: COLORS.textMuted, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: 'bold' }}>メール送信</button>
               </div>
             </div>
             {orderDisposition === 'order' && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
                   <label style={{ fontSize: '13px', fontWeight: 'bold' }}>決済日</label>
-                  <input type="date" value={settlementNo ? '' : ''} onChange={() => {}} disabled={!isStepEnabled(2)} placeholder="yyyy/mm/dd（任意）" style={{ ...inputStyle, width: '200px' }} />
+                  <input data-element-id="rp-settlement-date" type="date" value={settlementNo ? '' : ''} onChange={() => {}} disabled={!isStepEnabled(2)} placeholder="yyyy/mm/dd（任意）" style={{ ...inputStyle, width: '200px' }} />
                   <label style={{ fontSize: '13px', fontWeight: 'bold' }}>決済No,</label>
-                  <input type="text" value={settlementNo} onChange={(e) => setSettlementNo(e.target.value)} placeholder="院内の決済No,を入力（任意）" disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '260px' }} />
+                  <input data-element-id="rp-settlement-no" type="text" value={settlementNo} onChange={(e) => setSettlementNo(e.target.value)} placeholder="院内の決済No,を入力（任意）" disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '260px' }} />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <button className="repair-btn" onClick={handleStep2Order} disabled={!isStepEnabled(2) || isSubmitting} style={{ padding: '10px 28px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                  <button data-element-id="rp-order-register-btn" className="repair-btn" onClick={handleStep2Order} disabled={!isStepEnabled(2) || isSubmitting} style={{ padding: '10px 28px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
                     発注登録
                   </button>
                 </div>
@@ -1283,14 +1293,14 @@ function RepairTaskContent() {
             {orderDisposition === 'reject' && (
               <>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                  <button className="repair-btn" onClick={handleStep2Reject} disabled={!isStepEnabled(2) || isSubmitting} style={{ padding: '10px 24px', background: COLORS.error, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                  <button data-element-id="rp-reject-btn" className="repair-btn" onClick={handleStep2Reject} disabled={!isStepEnabled(2) || isSubmitting} style={{ padding: '10px 24px', background: COLORS.error, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
                     申請を却下し終了
                   </button>
-                  <button className="repair-btn" onClick={handleStep2Dispose} disabled={!isStepEnabled(2) || isSubmitting} style={{ padding: '10px 24px', background: '#4A4A4A', color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                  <button data-element-id="rp-dispose-btn" className="repair-btn" onClick={handleStep2Dispose} disabled={!isStepEnabled(2) || isSubmitting} style={{ padding: '10px 24px', background: '#4A4A4A', color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
                     対象品の廃棄申請へ
                   </button>
                 </div>
-                <div style={{ textAlign: 'right', fontSize: '11px', color: COLORS.textMuted, marginTop: '8px' }}>
+                <div data-element-id="rp-dispose-note" style={{ textAlign: 'right', fontSize: '11px', color: COLORS.textMuted, marginTop: '8px' }}>
                   廃棄品の更新が必要な場合は原本リストより更新申請を行ってください
                 </div>
               </>
@@ -1305,9 +1315,10 @@ function RepairTaskContent() {
           accentColor="#4A4A4A"
           enabled={isStepEnabled(3)}
           completed={3 < activeStep}
+          elementId="rp-step3-section"
         >
           {/* 作業日登録の案内バー（顧客レンダリング準拠: 灰の大きめ入力風ボックス） */}
-          <div style={{
+          <div data-element-id="rp-step3-guide" style={{
             padding: '16px 20px',
             background: COLORS.surfaceAlt,
             borderRadius: '4px',
@@ -1322,8 +1333,8 @@ function RepairTaskContent() {
           {/* 完了予定日 + 作業日登録 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '13px', fontWeight: 'bold' }}>完了予定日</span>
-            <input type="date" value={formData.deliveryDate} onChange={(e) => { updateFormData({ deliveryDate: e.target.value }); setIsDeliveryDateConfirmed(false); }} disabled={!isStepEnabled(3)} style={{ ...inputStyle, width: '200px' }} />
-            <button className="repair-btn" onClick={handleConfirmDeliveryDate} disabled={!isStepEnabled(3) || isSubmitting || !formData.deliveryDate} style={{ marginLeft: 'auto', padding: '10px 28px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+            <input data-element-id="rp-work-date" type="date" value={formData.deliveryDate} onChange={(e) => { updateFormData({ deliveryDate: e.target.value }); setIsDeliveryDateConfirmed(false); }} disabled={!isStepEnabled(3)} style={{ ...inputStyle, width: '200px' }} />
+            <button data-element-id="rp-work-date-register-btn" className="repair-btn" onClick={handleConfirmDeliveryDate} disabled={!isStepEnabled(3) || isSubmitting || !formData.deliveryDate} style={{ marginLeft: 'auto', padding: '10px 28px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
               作業日登録
             </button>
           </div>
@@ -1336,6 +1347,7 @@ function RepairTaskContent() {
           accentColor="#DA0000"
           enabled={isStepEnabled(4)}
           completed={4 < activeStep}
+          elementId="rp-step4-section"
         >
           {/* 案内バナー（顧客レンダリング準拠: 緑背景） */}
           <div style={{ padding: '12px 16px', background: '#EBF5EE', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', color: '#146E2E' }}>
@@ -1349,7 +1361,7 @@ function RepairTaskContent() {
                 <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '150px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>添付ファイル</th>
                 <td style={{ background: 'white', padding: '12px 16px', border: `1px solid ${COLORS.border}` }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                    <label style={{ padding: '6px 16px', background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(4) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(4) ? 1 : 0.6 }}>
+                    <label data-element-id="rp-doc-file-select" style={{ padding: '6px 16px', background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(4) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(4) ? 1 : 0.6 }}>
                       ファイルの選択
                       <input type="file" accept=".pdf,.jpg,.png" multiple disabled={!isStepEnabled(4)} onChange={(e) => { const files = Array.from(e.target.files || []); if (files.length > 0) setStep4DocFiles((prev) => [...prev, ...files.map(f => f.name)]); e.target.value = ''; }} style={{ display: 'none' }} />
                     </label>
@@ -1363,7 +1375,7 @@ function RepairTaskContent() {
               <tr>
                 <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '150px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>ドキュメント種別</th>
                 <td style={{ background: 'white', padding: '12px 16px', border: `1px solid ${COLORS.border}` }}>
-                  <div style={{ display: 'flex', gap: '48px' }}>
+                  <div data-element-id="rp-doc-type-group" style={{ display: 'flex', gap: '48px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {(['院内決済書類', '修理報告書', '検収書', 'その他'] as const).map((dt) => (
                         <label key={dt} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
@@ -1385,14 +1397,14 @@ function RepairTaskContent() {
                     </div>
                   </div>
                   <div style={{ marginTop: '10px' }}>
-                    <input type="text" value={step4DocOtherName} onChange={(e) => setStep4DocOtherName(e.target.value)} placeholder="その他ドキュメント名の入力" disabled={!isStepEnabled(4) || step4DocumentType !== 'その他'} style={{ ...inputStyle, width: '100%', maxWidth: '360px' }} />
+                    <input data-element-id="rp-doc-other-name" type="text" value={step4DocOtherName} onChange={(e) => setStep4DocOtherName(e.target.value)} placeholder="その他ドキュメント名の入力" disabled={!isStepEnabled(4) || step4DocumentType !== 'その他'} style={{ ...inputStyle, width: '100%', maxWidth: '360px' }} />
                   </div>
                 </td>
               </tr>
               <tr>
                 <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '150px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>保存形式</th>
                 <td style={{ background: 'white', padding: '12px 16px', border: `1px solid ${COLORS.border}` }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div data-element-id="rp-doc-save-format-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {(['電子取引', 'スキャナ保存', '未指定'] as const).map((sf) => (
                       <label key={sf} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
                         <input type="radio" name="step4SaveFormat" checked={step4SaveFormat === sf} onChange={() => setStep4SaveFormat(sf)} disabled={!isStepEnabled(4)} />
@@ -1408,9 +1420,9 @@ function RepairTaskContent() {
           {/* 日付 / ドキュメントNo, */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '13px', fontWeight: 'bold' }}>日付</span>
-            <input type="date" value={step4Date} onChange={(e) => setStep4Date(e.target.value)} disabled={!isStepEnabled(4)} style={{ ...inputStyle, width: '200px' }} />
+            <input data-element-id="rp-doc-date" type="date" value={step4Date} onChange={(e) => setStep4Date(e.target.value)} disabled={!isStepEnabled(4)} style={{ ...inputStyle, width: '200px' }} />
             <span style={{ fontSize: '13px', fontWeight: 'bold', marginLeft: '16px' }}>ドキュメントNo,</span>
-            <input type="text" value={step4DocNo} onChange={(e) => setStep4DocNo(e.target.value)} placeholder="登録ドキュメントのNo,を入力" disabled={!isStepEnabled(4)} style={{ ...inputStyle, width: '280px' }} />
+            <input data-element-id="rp-doc-no" type="text" value={step4DocNo} onChange={(e) => setStep4DocNo(e.target.value)} placeholder="登録ドキュメントのNo,を入力" disabled={!isStepEnabled(4)} style={{ ...inputStyle, width: '280px' }} />
           </div>
 
           {/* 実績金額（税別）/ 勘定科目（見積書を選択した場合に表示） */}
@@ -1418,10 +1430,10 @@ function RepairTaskContent() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '13px', fontWeight: 'bold' }}>実績金額（税別）</span>
               <span style={{ fontSize: '14px', fontWeight: 'bold' }}>¥</span>
-              <input type="number" value={step4ActualAmount} onChange={(e) => setStep4ActualAmount(e.target.value)} placeholder="0" disabled={!isStepEnabled(4)} style={{ ...inputStyle, width: '160px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }} />
+              <input data-element-id="rp-actual-amount" type="number" value={step4ActualAmount} onChange={(e) => setStep4ActualAmount(e.target.value)} placeholder="0" disabled={!isStepEnabled(4)} style={{ ...inputStyle, width: '160px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }} />
               <span style={{ fontSize: '12px', color: COLORS.textMuted }}>（税別）</span>
               <span style={{ fontSize: '13px', fontWeight: 'bold', marginLeft: '16px' }}>勘定科目</span>
-              <select value={step4AccountDivision} onChange={(e) => setStep4AccountDivision(e.target.value)} disabled={!isStepEnabled(4)} style={{ ...inputStyle, width: '240px' }}>
+              <select data-element-id="rp-doc-account" value={step4AccountDivision} onChange={(e) => setStep4AccountDivision(e.target.value)} disabled={!isStepEnabled(4)} style={{ ...inputStyle, width: '240px' }}>
                 <option value="">選択してください</option>
                 {ACCOUNT_DIVISIONS.map((d) => (
                   <option key={d.value} value={d.value}>{d.label}</option>
@@ -1432,10 +1444,10 @@ function RepairTaskContent() {
 
           {/* アクションボタン */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
-            <button className="repair-btn" onClick={handleAddDocument} disabled={!isStepEnabled(4) || isSubmitting} style={{ padding: '10px 28px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+            <button data-element-id="rp-doc-register-btn" className="repair-btn" onClick={handleAddDocument} disabled={!isStepEnabled(4) || isSubmitting} style={{ padding: '10px 28px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
               ドキュメント登録
             </button>
-            <button className="repair-btn" onClick={handleStep4Complete} disabled={!isStepEnabled(4) || isSubmitting} style={{ padding: '10px 28px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+            <button data-element-id="rp-final-complete-btn" className="repair-btn" onClick={handleStep4Complete} disabled={!isStepEnabled(4) || isSubmitting} style={{ padding: '10px 28px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
               {isSubmitting ? '登録中...' : '登録完了（タスク完了）'}
             </button>
           </div>
@@ -1446,6 +1458,7 @@ function RepairTaskContent() {
 
         {/* ドラッグハンドル */}
         <div
+          data-element-id="rp-drag-handle"
           onMouseDown={handleDragStart}
           style={{
             width: '8px',
@@ -1466,7 +1479,7 @@ function RepairTaskContent() {
         </div>
 
         {/* 右側: プレビューエリア（縦型タブ付き） */}
-        <div style={{
+        <div data-element-id="rp-preview-panel" style={{
           flex: 1,
           display: 'flex',
           flexDirection: 'row',
@@ -1479,7 +1492,7 @@ function RepairTaskContent() {
           {/* メインプレビューエリア (Figma 構造: top に 5 横タブ + Printer アイコン) */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {/* 5 横タブ + Printer */}
-            <div style={{
+            <div data-element-id="rp-preview-tabs" style={{
               display: 'flex',
               alignItems: 'stretch',
               background: COLORS.white,
@@ -1520,6 +1533,7 @@ function RepairTaskContent() {
                 );
               })}
               <button
+                data-element-id="rp-print-btn"
                 className="repair-btn"
                 aria-label="印刷"
                 title="印刷"
@@ -1565,6 +1579,7 @@ function RepairTaskContent() {
                   : '完了報告書他')}
               </span>
               <button
+                data-element-id="rp-pdf-output-btn"
                 className="repair-btn"
                 style={{
                   padding: '4px 12px',
@@ -1589,7 +1604,7 @@ function RepairTaskContent() {
             {/* 申請申請書プレビュー */}
             {previewTab === '申請申請書' && (
               /* 修理申請書プレビュー（ユーザーからの申請） */
-              <div style={{
+              <div data-element-id="rp-preview-application" style={{
                 background: 'white',
                 border: '1px solid #E1E1E1',
                 borderRadius: '4px',
@@ -1780,7 +1795,7 @@ function RepairTaskContent() {
               const today = new Date();
               const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
               return (
-                <div style={{
+                <div data-element-id="rp-preview-rfq" style={{
                   background: 'white',
                   border: '1px solid #E1E1E1',
                   borderRadius: '4px',
@@ -2039,7 +2054,7 @@ function RepairTaskContent() {
               // 発注用見積から金額を取得（仮データ）
               const orderQuotation = registeredQuotations.find(q => q.phase === '発注用');
               return (
-                <div style={{
+                <div data-element-id="rp-preview-order" style={{
                   background: 'white',
                   border: '1px solid #E1E1E1',
                   borderRadius: '4px',
@@ -2289,7 +2304,7 @@ function RepairTaskContent() {
 
             {/* 見積書：登録済み見積一覧（初期表示 or 一覧戻り） */}
             {previewTab === '見積書' && (previewQuotationIndex === null || previewQuotationIndex === -1) && (
-              <div style={{
+              <div data-element-id="rp-preview-quote" style={{
                 background: 'white',
                 border: '1px solid #E1E1E1',
                 borderRadius: '4px',
@@ -2409,7 +2424,7 @@ function RepairTaskContent() {
 
             {/* 完了報告書他：登録済みドキュメント一覧 */}
             {previewTab === '完了報告書他' && previewDocumentIndex === null && (
-              <div style={{
+              <div data-element-id="rp-preview-completion" style={{
                 background: 'white',
                 border: '1px solid #E1E1E1',
                 borderRadius: '4px',
