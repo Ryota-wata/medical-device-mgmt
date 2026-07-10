@@ -645,6 +645,13 @@ function RepairTaskContent() {
 
   // STEP④: 資産登録完了
   const handleStep4Complete = () => {
+    // A4 (顧客注釈): 完了登録（タスク完了）前に「本当に全てのドキュメントが登録されているか」を確認するアラート
+    const docCount = registeredDocuments.length;
+    const confirmMessage = docCount === 0
+      ? '登録済みのドキュメントがありません。\n必要なドキュメント（修理報告書・検収書・請求書 等）がすべて登録されているか確認してください。\n\nこのままタスクを完了しますか？'
+      : `登録済みドキュメントは ${docCount} 件です。\n必要なドキュメントがすべて登録されていることを確認しましたか？\n\nこのままタスクを完了しますか？`;
+    if (!confirm(confirmMessage)) return;
+
     setIsSubmitting(true);
     setTimeout(() => {
       // REQ-129: 貸出機器の場合、修理完了で「使用不可 → 貸出可」へ自動復帰
@@ -807,14 +814,8 @@ function RepairTaskContent() {
           overflow: 'auto',
           padding: '16px',
         }}>
-        {/* STEP①: 見積依頼 */}
-        <Section
-          step={1}
-          title="STEP①・見積依頼"
-          accentColor="#087CB6"
-          enabled={isStepEnabled(1)}
-          completed={1 < activeStep}
-        >
+        {/* 受付部署ブロック（顧客レンダリング準拠: STEP①見出しの外・上に独立カードで配置） */}
+        <div style={{ background: COLORS.white, border: `1px solid ${COLORS.borderLight}`, borderRadius: '8px', marginBottom: '16px', padding: '16px' }}>
           {/* 受付部署・担当者ヘッダー行（顧客レンダリング準拠） */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '16px', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -924,7 +925,16 @@ function RepairTaskContent() {
               </tr>
             </tbody>
           </table>
+        </div>
 
+        {/* STEP①: 見積依頼 */}
+        <Section
+          step={1}
+          title="STEP①・見積依頼"
+          accentColor="#087CB6"
+          enabled={isStepEnabled(1)}
+          completed={1 < activeStep}
+        >
           {/* 見積依頼セクション */}
           <>
               <div style={{
@@ -1151,7 +1161,7 @@ function RepairTaskContent() {
               <tbody>
                 <tr>
                   <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>添付ファイル</th>
-                  <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
+                  <td colSpan={3} style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <label style={{ padding: '6px 16px', background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(2) ? 1 : 0.6 }}>
                         ファイルの選択
@@ -1166,7 +1176,7 @@ function RepairTaskContent() {
                 </tr>
                 <tr>
                   <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>見積フェーズ</th>
-                  <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
+                  <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="quotationPhase" checked={formData.quotationPhase === '発注用'} onChange={() => updateFormData({ quotationPhase: '発注用' })} disabled={!isStepEnabled(2)} /> 修理発注登録用見積</label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="quotationPhase" checked={formData.quotationPhase === '参考'} onChange={() => updateFormData({ quotationPhase: '参考' })} disabled={!isStepEnabled(2)} /> 参考見積</label>
@@ -1174,7 +1184,7 @@ function RepairTaskContent() {
                     </div>
                   </td>
                   <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '100px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>保存形式</th>
-                  <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
+                  <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="saveFormat" checked={formData.saveFormat === '電子取引'} onChange={() => updateFormData({ saveFormat: '電子取引' })} disabled={!isStepEnabled(2)} /> 電子取引</label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="saveFormat" checked={formData.saveFormat === 'スキャナ保存'} onChange={() => updateFormData({ saveFormat: 'スキャナ保存' })} disabled={!isStepEnabled(2)} /> スキャナ保存</label>
@@ -1242,11 +1252,11 @@ function RepairTaskContent() {
           {/* 発注書の発行カード（顧客レンダリング準拠） */}
           <div style={{ border: `1px solid ${COLORS.border}`, borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '12px 20px', background: '#EBF5EE', borderRadius: '4px', flex: 1, minWidth: '200px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '12px 20px', background: orderDisposition === 'order' ? '#EBF5EE' : COLORS.disabledBg, borderRadius: '4px', flex: 1, minWidth: '200px' }}>
                 <input type="radio" name="orderDisposition" checked={orderDisposition === 'order'} onChange={() => setOrderDisposition('order')} disabled={!isStepEnabled(2)} />
                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.primary }}>発注書の発行</span>
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '12px 20px', borderRadius: '4px', flex: 1, minWidth: '200px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '12px 20px', background: orderDisposition === 'reject' ? '#FCE4EC' : COLORS.disabledBg, borderRadius: '4px', flex: 1, minWidth: '200px' }}>
                 <input type="radio" name="orderDisposition" checked={orderDisposition === 'reject'} onChange={() => setOrderDisposition('reject')} disabled={!isStepEnabled(2)} />
                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.error }}>申請却下・修理不能</span>
               </label>
@@ -1270,20 +1280,6 @@ function RepairTaskContent() {
                 </div>
               </>
             )}
-          </div>
-
-          {/* 申請却下・修理不能カード（顧客レンダリング準拠） */}
-          <div style={{ border: `1px solid ${COLORS.border}`, borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '12px 20px', background: COLORS.disabledBg, borderRadius: '4px', flex: 1, minWidth: '200px' }}>
-                <input type="radio" name="orderDisposition2" checked={orderDisposition === 'order'} onChange={() => setOrderDisposition('order')} disabled={!isStepEnabled(2)} />
-                <span style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.primary }}>発注書の発行</span>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '12px 20px', background: '#FCE4EC', borderRadius: '4px', flex: 1, minWidth: '200px' }}>
-                <input type="radio" name="orderDisposition2" checked={orderDisposition === 'reject'} onChange={() => setOrderDisposition('reject')} disabled={!isStepEnabled(2)} />
-                <span style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.error }}>申請却下・修理不能</span>
-              </label>
-            </div>
             {orderDisposition === 'reject' && (
               <>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
