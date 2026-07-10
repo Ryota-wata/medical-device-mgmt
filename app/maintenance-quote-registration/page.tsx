@@ -203,9 +203,9 @@ function ThLabelCell({ children, width = 'w-[180px]' }: { children: React.ReactN
 }
 
 /** 白背景データセル */
-function TdCell({ children }: { children: React.ReactNode }) {
+function TdCell({ children, colSpan }: { children: React.ReactNode; colSpan?: number }) {
   return (
-    <td className="px-3 py-2.5 border border-stroke-input bg-surface-card text-sm text-content-primary">
+    <td colSpan={colSpan} className="px-3 py-2.5 border border-stroke-input bg-surface-card text-sm text-content-primary">
       {children}
     </td>
   );
@@ -820,7 +820,7 @@ function MaintenanceQuoteRegistrationContent() {
               <tbody>
                 <tr>
                   <ThLabelCell>添付ファイル</ThLabelCell>
-                  <TdCell>
+                  <TdCell colSpan={3}>
                     <div className="flex items-center gap-2.5">
                       <label data-element-id="mqr-quote-file-label" className={`px-4 py-1.5 bg-stroke-card border border-stroke-input rounded-md text-sm whitespace-nowrap hover:bg-stroke-input transition-colors ${isStepEnabled(2) ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                         ファイルの選択
@@ -851,188 +851,191 @@ function MaintenanceQuoteRegistrationContent() {
                 <tr>
                   <ThLabelCell>見積フェーズ</ThLabelCell>
                   <TdCell>
-                    <div className="flex items-start gap-6">
-                      <div data-element-id="mqr-quote-phase-group" className="flex flex-col gap-1.5">
-                        <label className="flex items-center gap-1.5 cursor-pointer text-sm">
-                          <input
-                            type="radio"
-                            name="quotationPhase"
-                            checked={quotationPhase === '参考見積'}
-                            onChange={() => setQuotationPhase('参考見積')}
-                            disabled={!isStepEnabled(2)}
-                            className="accent-cta-primary"
-                          />
-                          参考見積
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-sm">
-                          <input
-                            type="radio"
-                            name="quotationPhase"
-                            checked={quotationPhase === '発注登録用見積'}
-                            onChange={() => setQuotationPhase('発注登録用見積')}
-                            disabled={!isStepEnabled(2)}
-                            className="accent-cta-primary"
-                          />
-                          発注登録用見積
-                        </label>
-                      </div>
-                      <div className="flex items-center gap-6 pl-6 border-l border-stroke-input">
-                        <span className="text-sm font-semibold text-content-primary">保存形式</span>
-                        <div data-element-id="mqr-save-format-group" className="flex flex-col gap-1.5">
-                          {(['電子取引', 'スキャナ保存', '未指定'] as const).map(fmt => (
-                            <label key={fmt} className="flex items-center gap-1.5 cursor-pointer text-sm">
-                              <input
-                                type="radio"
-                                name="saveFormat"
-                                checked={saveFormat === fmt}
-                                onChange={() => setSaveFormat(fmt)}
-                                disabled={!isStepEnabled(2)}
-                                className="accent-cta-primary"
-                              />
-                              {fmt}
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </TdCell>
-                </tr>
-                <tr>
-                  <ThLabelCell>業者名</ThLabelCell>
-                  <TdCell>
-                    <div className="flex items-center gap-6 flex-wrap">
-                      <select
-                        data-element-id="mqr-quote-vendor-select"
-                        value={selectedQuotationVendorId}
-                        onChange={(e) => setSelectedQuotationVendorId(e.target.value ? parseInt(e.target.value, 10) : '')}
-                        disabled={!isStepEnabled(2)}
-                        className={`${inputCls} w-[220px]`}
-                      >
-                        <option value="">選択してください</option>
-                        {filledVendors.map(v => (
-                          <option key={v.id} value={v.id}>{v.vendorName}</option>
-                        ))}
-                      </select>
-                      <span className="text-sm font-semibold text-content-primary">見積No,</span>
-                      <input
-                        data-element-id="mqr-quote-vendor-no"
-                        type="text"
-                        value={quotationVendorNo}
-                        onChange={(e) => setQuotationVendorNo(e.target.value)}
-                        placeholder="業者側の見積No.入力"
-                        disabled={!isStepEnabled(2)}
-                        className={`${inputCls} w-[240px]`}
-                      />
-                    </div>
-                  </TdCell>
-                </tr>
-                <tr>
-                  <ThLabelCell>見積日付</ThLabelCell>
-                  <TdCell>
-                    <div className="flex items-center gap-6 flex-wrap">
-                      <input
-                        data-element-id="mqr-quote-date"
-                        type="date"
-                        value={quotationDate}
-                        onChange={(e) => setQuotationDate(e.target.value)}
-                        disabled={!isStepEnabled(2)}
-                        className={`${inputCls} w-[170px] tabular-nums`}
-                      />
-                      <span className="text-sm font-semibold text-content-primary">見積金額（税別）</span>
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm font-bold">¥</span>
+                    <div data-element-id="mqr-quote-phase-group" className="flex flex-col gap-1.5">
+                      <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                         <input
-                          data-element-id="mqr-quote-amount"
-                          type="text"
-                          placeholder="0"
-                          value={quotationAmount}
-                          onChange={(e) => setQuotationAmount(e.target.value)}
+                          type="radio"
+                          name="quotationPhase"
+                          checked={quotationPhase === '参考見積'}
+                          onChange={() => setQuotationPhase('参考見積')}
                           disabled={!isStepEnabled(2)}
-                          className={`${inputCls} w-[150px] tabular-nums text-right`}
+                          className="accent-cta-primary"
                         />
-                        <span className="text-xs text-content-sub">（税別）</span>
-                      </div>
+                        参考見積
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+                        <input
+                          type="radio"
+                          name="quotationPhase"
+                          checked={quotationPhase === '発注登録用見積'}
+                          onChange={() => setQuotationPhase('発注登録用見積')}
+                          disabled={!isStepEnabled(2)}
+                          className="accent-cta-primary"
+                        />
+                        発注登録用見積
+                      </label>
                     </div>
                   </TdCell>
-                </tr>
-                <tr>
-                  <ThLabelCell>契約種別</ThLabelCell>
+                  <ThLabelCell>保存形式</ThLabelCell>
                   <TdCell>
-                    <div className="flex items-center gap-6 flex-wrap">
-                      <input
-                        data-element-id="mqr-quote-contract-type"
-                        type="text"
-                        value={formData.contractType}
-                        placeholder="自動入力"
-                        readOnly
-                        className={`${inputCls} w-[220px] bg-surface-screen`}
-                      />
-                      <span className="text-sm font-semibold text-content-primary">種別備考</span>
-                      <input
-                        data-element-id="mqr-quote-type-note"
-                        type="text"
-                        value={quotationTypeNote}
-                        onChange={(e) => setQuotationTypeNote(e.target.value)}
-                        placeholder="例）フルメンテナンス契約など"
-                        disabled={!isStepEnabled(2)}
-                        className={`${inputCls} w-[240px]`}
-                      />
-                    </div>
-                  </TdCell>
-                </tr>
-                <tr>
-                  <ThLabelCell>契約期間</ThLabelCell>
-                  <TdCell>
-                    <div className="flex items-center gap-2">
-                      <input
-                        data-element-id="mqr-quote-period-start"
-                        type="date"
-                        value={quotationPeriodStart}
-                        onChange={(e) => setQuotationPeriodStart(e.target.value)}
-                        disabled={!isStepEnabled(2)}
-                        className={`${inputCls} w-[170px] tabular-nums`}
-                      />
-                      <span>〜</span>
-                      <input
-                        data-element-id="mqr-quote-period-end"
-                        type="date"
-                        value={quotationPeriodEnd}
-                        onChange={(e) => setQuotationPeriodEnd(e.target.value)}
-                        disabled={!isStepEnabled(2)}
-                        className={`${inputCls} w-[170px] tabular-nums`}
-                      />
-                    </div>
-                  </TdCell>
-                </tr>
-                <tr>
-                  <ThLabelCell>勘定科目</ThLabelCell>
-                  <TdCell>
-                    <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <select
-                        data-element-id="mqr-account-division"
-                        value={quotationAccountDivision}
-                        onChange={(e) => setQuotationAccountDivision(e.target.value)}
-                        disabled={!isStepEnabled(2)}
-                        className={`${inputCls} w-[240px]`}
-                      >
-                        <option value="">選択してください</option>
-                        {ACCOUNT_DIVISIONS.map((d) => (
-                          <option key={d.value} value={d.value}>{d.label}</option>
-                        ))}
-                      </select>
-                      <button
-                        data-element-id="mqr-quote-register-btn"
-                        onClick={handleRegisterQuotation}
-                        disabled={!isStepEnabled(2) || !selectedQuotationFile}
-                        className={`h-9 px-5 rounded-md text-white text-sm font-bold transition-colors ${selectedQuotationFile ? 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer' : 'bg-content-sub cursor-not-allowed'}`}
-                      >
-                        見積書の登録
-                      </button>
+                    <div data-element-id="mqr-save-format-group" className="flex flex-col gap-1.5">
+                      {(['電子取引', 'スキャナ保存', '未指定'] as const).map(fmt => (
+                        <label key={fmt} className="flex items-center gap-1.5 cursor-pointer text-sm">
+                          <input
+                            type="radio"
+                            name="saveFormat"
+                            checked={saveFormat === fmt}
+                            onChange={() => setSaveFormat(fmt)}
+                            disabled={!isStepEnabled(2)}
+                            className="accent-cta-primary"
+                          />
+                          {fmt}
+                        </label>
+                      ))}
                     </div>
                   </TdCell>
                 </tr>
               </tbody>
             </table>
+
+            {/* 見積入力フォーム (顧客イメージ準拠: 枠なし2カラム素フォーム) */}
+            <div data-element-id="mqr-quote-form" className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mb-5 px-1">
+              {/* 業者名 */}
+              <div className="flex items-center gap-3">
+                <label className="w-20 shrink-0 text-sm font-semibold text-content-primary">業者名</label>
+                <select
+                  data-element-id="mqr-quote-vendor-select"
+                  value={selectedQuotationVendorId}
+                  onChange={(e) => setSelectedQuotationVendorId(e.target.value ? parseInt(e.target.value, 10) : '')}
+                  disabled={!isStepEnabled(2)}
+                  className={`${inputCls} flex-1 min-w-0`}
+                >
+                  <option value="">選択してください</option>
+                  {filledVendors.map(v => (
+                    <option key={v.id} value={v.id}>{v.vendorName}</option>
+                  ))}
+                </select>
+              </div>
+              {/* 見積No, */}
+              <div className="flex items-center gap-3">
+                <label className="shrink-0 whitespace-nowrap text-sm font-semibold text-content-primary">見積No,</label>
+                <input
+                  data-element-id="mqr-quote-vendor-no"
+                  type="text"
+                  value={quotationVendorNo}
+                  onChange={(e) => setQuotationVendorNo(e.target.value)}
+                  placeholder="業者側の見積No.入力"
+                  disabled={!isStepEnabled(2)}
+                  className={`${inputCls} flex-1 min-w-0`}
+                />
+              </div>
+              {/* 見積日付 */}
+              <div className="flex items-center gap-3">
+                <label className="w-20 shrink-0 text-sm font-semibold text-content-primary">見積日付</label>
+                <input
+                  data-element-id="mqr-quote-date"
+                  type="date"
+                  value={quotationDate}
+                  onChange={(e) => setQuotationDate(e.target.value)}
+                  disabled={!isStepEnabled(2)}
+                  className={`${inputCls} w-[170px] tabular-nums`}
+                />
+              </div>
+              {/* 見積金額（税別） */}
+              <div className="flex items-center gap-3">
+                <label className="shrink-0 whitespace-nowrap text-sm font-semibold text-content-primary">見積金額<span className="text-xs font-normal">（税別）</span></label>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-bold">¥</span>
+                  <input
+                    data-element-id="mqr-quote-amount"
+                    type="text"
+                    placeholder="0"
+                    value={quotationAmount}
+                    onChange={(e) => setQuotationAmount(e.target.value)}
+                    disabled={!isStepEnabled(2)}
+                    className={`${inputCls} w-[150px] tabular-nums text-right`}
+                  />
+                  <span className="text-xs text-content-sub">（税別）</span>
+                </div>
+              </div>
+              {/* 契約種別 */}
+              <div className="flex items-center gap-3">
+                <label className="w-20 shrink-0 text-sm font-semibold text-content-primary">契約種別</label>
+                <input
+                  data-element-id="mqr-quote-contract-type"
+                  type="text"
+                  value={formData.contractType}
+                  placeholder="自動入力"
+                  readOnly
+                  className={`${inputCls} flex-1 min-w-0 bg-surface-screen`}
+                />
+              </div>
+              {/* 種別備考 */}
+              <div className="flex items-center gap-3">
+                <label className="shrink-0 whitespace-nowrap text-sm font-semibold text-content-primary">種別備考</label>
+                <input
+                  data-element-id="mqr-quote-type-note"
+                  type="text"
+                  value={quotationTypeNote}
+                  onChange={(e) => setQuotationTypeNote(e.target.value)}
+                  placeholder="例）フルメンテナンス契約など"
+                  disabled={!isStepEnabled(2)}
+                  className={`${inputCls} flex-1 min-w-0`}
+                />
+              </div>
+              {/* 契約期間 (左カラム) */}
+              <div className="flex items-center gap-3">
+                <label className="w-20 shrink-0 text-sm font-semibold text-content-primary">契約期間</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    data-element-id="mqr-quote-period-start"
+                    type="date"
+                    value={quotationPeriodStart}
+                    onChange={(e) => setQuotationPeriodStart(e.target.value)}
+                    disabled={!isStepEnabled(2)}
+                    className={`${inputCls} w-[150px] tabular-nums`}
+                  />
+                  <span>〜</span>
+                  <input
+                    data-element-id="mqr-quote-period-end"
+                    type="date"
+                    value={quotationPeriodEnd}
+                    onChange={(e) => setQuotationPeriodEnd(e.target.value)}
+                    disabled={!isStepEnabled(2)}
+                    className={`${inputCls} w-[150px] tabular-nums`}
+                  />
+                </div>
+              </div>
+              {/* 契約期間の対 (右カラム 空) */}
+              <div className="hidden md:block" />
+              {/* 勘定科目 */}
+              <div className="flex items-center gap-3">
+                <label className="w-20 shrink-0 text-sm font-semibold text-content-primary">勘定科目</label>
+                <select
+                  data-element-id="mqr-account-division"
+                  value={quotationAccountDivision}
+                  onChange={(e) => setQuotationAccountDivision(e.target.value)}
+                  disabled={!isStepEnabled(2)}
+                  className={`${inputCls} flex-1 min-w-0`}
+                >
+                  <option value="">選択してください</option>
+                  {ACCOUNT_DIVISIONS.map((d) => (
+                    <option key={d.value} value={d.value}>{d.label}</option>
+                  ))}
+                </select>
+              </div>
+              {/* 見積書の登録 ボタン (右下) */}
+              <div className="flex items-end justify-end">
+                <button
+                  data-element-id="mqr-quote-register-btn"
+                  onClick={handleRegisterQuotation}
+                  disabled={!isStepEnabled(2) || !selectedQuotationFile}
+                  className={`h-9 px-5 rounded-md text-white text-sm font-bold transition-colors ${selectedQuotationFile ? 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer' : 'bg-content-sub cursor-not-allowed'}`}
+                >
+                  見積書の登録
+                </button>
+              </div>
+            </div>
 
             {/* 発注書の発行 / 申請を見送る (単一選択・選択に応じて下の入力/ボタンを切替) */}
             <div data-element-id="mqr-order-decision-section" className="mb-5 border border-stroke-input rounded-lg p-4">
