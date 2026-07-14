@@ -2,19 +2,18 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_SHIPユーザー管理.docx'
   ScreenLabel = 'SHIPユーザー管理'
-  CoverDateText = '2026年7月5日'
-  RevisionDateText = '2026/7/5'
+  CoverDateText = '2026年7月13日'
+  RevisionDateText = '2026/7/13'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
-    @{ Type = 'Paragraph'; Text = '本書は、SHIPユーザー管理画面で利用する API の設計内容を整理し、SHIPユーザーの基本情報、担当施設、施設別機能設定、施設別表示カラム設定を一貫して保守するための基準を定義する。画面パスはTBUのため、本書では API ベースパスを `/ship-user-management` として扱う。' },
+    @{ Type = 'Paragraph'; Text = '本書は、SHIPユーザー管理画面（`/ship-user-management`）で利用する API の設計内容を整理し、SHIPユーザーの基本情報、担当施設、施設別機能設定、施設別表示カラム設定を一貫して保守するための基準を定義する。' },
     @{ Type = 'Paragraph'; Text = '特に以下を明確にする。' },
     @{ Type = 'Bullets'; Items = @(
       'ユーザー管理APIとの管理対象分離',
       'SHIPユーザー作成・更新時の `account_type=''SHIP''` 固定ルール',
       'SHIPユーザーへ付与する担当施設と施設別機能・カラム設定の保存単位',
-      '未削除の全施設を担当施設候補とするルール',
-      '初回パスワード設定案内を認証基盤へ委譲する連携方式'
+      '未削除の全施設を担当施設候補とするルール'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = 'SHIPユーザー管理は、医療機器管理システムの共通管理機能として、`users.account_type=''SHIP''` の通常アカウントを作成・参照・更新・削除する画面である。病院ユーザーはユーザー管理画面（`/user-management`）で扱い、本 API の作成・編集・削除対象には含めない。' },
@@ -31,23 +30,21 @@
     ) },
     @{ Type = 'Heading2'; Text = '対象画面' },
     @{ Type = 'Table'; Headers = @('画面名', '画面パス', '利用目的'); Rows = @(
-      @('67. SHIPユーザー管理画面', 'TBU', 'SHIPユーザー一覧参照、SHIPユーザー新規作成、基本情報編集、担当施設・権限編集、初回設定案内再送、削除を行う')
+      @('67. SHIPユーザー管理画面', '`/ship-user-management`', 'SHIPユーザー一覧参照、SHIPユーザー新規作成、基本情報編集、担当施設・権限編集、削除を行う')
     ) },
 
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'API の位置づけ' },
-    @{ Type = 'Paragraph'; Text = '本 API 群は、SHIPユーザー管理画面の初期表示に必要なコンテキスト取得、一覧取得、詳細取得、施設候補取得、ユーザー作成、ユーザー基本情報更新、担当施設・権限更新、初回設定案内再送、削除を提供する。' },
+    @{ Type = 'Paragraph'; Text = '本 API 群は、SHIPユーザー管理画面の初期表示に必要なコンテキスト取得、一覧取得、詳細取得、施設候補取得、ユーザー作成、ユーザー基本情報更新、担当施設・権限更新、削除を提供する。' },
     @{ Type = 'Paragraph'; Text = 'ユーザー管理APIと同じ認可基盤・保存テーブルを利用するが、管理対象ユーザーは `account_type=''SHIP''` に固定する。病院ユーザーは `/user-management` 側の責務とする。' },
     @{ Type = 'Paragraph'; Text = 'APIを実行できるかの権限判定と、作成・編集対象のSHIPユーザーへ付与する施設別機能・カラム設定は別の概念として扱う。前者は実行ユーザーの `user_list_view`、`user_edit`、`user_facility_assignment_edit` で判定し、後者はリクエストの `facilityAssignments` を `user_facility_*` 系テーブルへ保存する。' },
     @{ Type = 'Heading2'; Text = '画面と API の関係' },
     @{ Type = 'Numbered'; Items = @(
       '画面初期表示時に `GET /ship-user-management/context` と `GET /ship-user-management/users` を呼び出す',
       '一覧のページ切替、絞り込み、ソート変更時に `GET /ship-user-management/users` を再呼び出す',
-      '編集モーダルで基本情報タブを開く時に `GET /ship-user-management/users/{userId}` を呼び出す',
-      '担当施設・権限タブを開く時に `GET /ship-user-management/users/{userId}/facility-assignments` を呼び出し、担当施設候補の検索時に `GET /ship-user-management/facilities` を呼び出す',
-      '新規作成モーダル保存時に `POST /ship-user-management/users` を呼び出す。初回設定案内を送る場合は続けて `POST /ship-user-management/users/{userId}/setup-invitation` を呼び出す',
-      '基本情報タブ保存時は `PUT /ship-user-management/users/{userId}/profile`、担当施設・権限タブ保存時は `PUT /ship-user-management/users/{userId}/facility-assignments` を呼び出す',
-      '初回設定案内の再送時は `POST /ship-user-management/users/{userId}/setup-invitation` を呼び出す',
+      '編集モーダル表示時に `GET /ship-user-management/users/{userId}` と `GET /ship-user-management/users/{userId}/facility-assignments` を呼び出し、担当施設候補の検索時に `GET /ship-user-management/facilities` を呼び出す',
+      '新規作成モーダル保存時に `POST /ship-user-management/users` を呼び出す',
+      '編集モーダルの基本情報保存時は `PUT /ship-user-management/users/{userId}/profile`、担当施設・権限設定保存時は `PUT /ship-user-management/users/{userId}/facility-assignments` を呼び出す',
       '削除確認時は `DELETE /ship-user-management/users/{userId}` を呼び出す'
     ) },
     @{ Type = 'Heading2'; Text = '使用テーブル' },
@@ -82,22 +79,22 @@
     @{ Type = 'Paragraph'; Text = '本API群で使用する API 実行用の `feature_code` は、ユーザー管理APIと同じ以下の3種類とする。SHIPユーザー管理で保存する `enabledFeatureCodes` / `enabledColumnCodes` は対象SHIPユーザーへ付与する業務権限であり、API実行可否の判定コードとは分けて扱う。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('ユーザー / 一覧', '`user_list_view`', '画面コンテキスト取得、一覧取得'),
-      @('ユーザー / 新規作成・編集', '`user_edit`', 'ユーザー基本情報取得、ユーザー基本情報更新、初回設定案内再送、削除、ユーザー新規作成の基本情報側'),
+      @('ユーザー / 新規作成・編集', '`user_edit`', 'ユーザー基本情報取得、ユーザー基本情報更新、削除、ユーザー新規作成の基本情報側'),
       @('担当施設・権限 / 編集', '`user_facility_assignment_edit`', 'ユーザー担当施設・権限詳細取得、施設候補取得、担当施設・権限更新、ユーザー新規作成の担当施設・権限設定側')
     ) },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
       @('画面コンテキスト取得 / 一覧取得', '`user_list_view`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '一覧参照と新規作成導線表示の前提'),
-      @('ユーザー基本情報取得 / ユーザー基本情報更新 / 初回設定案内再送 / 削除', '`user_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', 'PII を含む基本情報参照と基本情報変更系'),
+      @('ユーザー基本情報取得 / ユーザー基本情報更新 / 削除', '`user_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', 'PII を含む基本情報参照と基本情報変更系'),
       @('ユーザー担当施設・権限詳細取得 / 施設候補取得 / 担当施設・権限更新', '`user_facility_assignment_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '担当施設とユーザー施設別権限設定の参照・変更系'),
       @('ユーザー新規作成', '`user_edit` と `user_facility_assignment_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '新規ユーザーは基本情報と担当施設・権限設定を同時に持つ前提で作成する')
     ) },
     @{ Type = 'Heading2'; Text = '管理対象スコープ' },
     @{ Type = 'Bullets'; Items = @(
       '管理対象ユーザーは、`users.account_type = ''SHIP''` かつ `users.deleted_at IS NULL` の通常アカウントに限る',
-      '病院ユーザー（`account_type=''HOSPITAL''`）は一覧、詳細、更新、初回設定案内送信、削除の対象外とする',
-      '共有システム管理者アカウント自体は、一覧、詳細、基本情報更新、担当施設・権限更新、初回設定案内送信、削除の対象外とする',
+      '病院ユーザー（`account_type=''HOSPITAL''`）は一覧、詳細、更新、削除の対象外とする',
+      '共有システム管理者アカウント自体は、一覧、詳細、基本情報更新、担当施設・権限更新、削除の対象外とする',
       '担当施設候補は `facilities.deleted_at IS NULL` の未削除施設全件とし、協業グループ経由の他施設閲覧候補は担当施設候補へ含めない',
-      '詳細取得、更新、初回設定案内送信、削除で管理対象外ユーザーが指定された場合は、存在隠蔽のため 404 (`SHIP_USER_NOT_FOUND`) を返却する'
+      '詳細取得、更新、削除で管理対象外ユーザーが指定された場合は、存在隠蔽のため 404 (`SHIP_USER_NOT_FOUND`) を返却する'
     ) },
     @{ Type = 'Heading2'; Text = '担当施設・既定施設ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -134,8 +131,7 @@
       @('6', 'SHIPユーザー新規作成', 'POST', '/ship-user-management/users', 'SHIPユーザー基本情報、担当施設、施設別設定を登録する', '`user_edit` + `user_facility_assignment_edit`'),
       @('7', 'SHIPユーザー基本情報更新', 'PUT', '/ship-user-management/users/{userId}/profile', 'SHIPユーザー基本情報を更新する', '`user_edit`'),
       @('8', 'SHIPユーザー担当施設・権限更新', 'PUT', '/ship-user-management/users/{userId}/facility-assignments', '既定施設、担当施設、施設別機能・カラム設定を更新する', '`user_facility_assignment_edit`'),
-      @('9', '初回設定案内送信', 'POST', '/ship-user-management/users/{userId}/setup-invitation', '未利用SHIPユーザーへ初回パスワード設定案内を送信する', '`user_edit`'),
-      @('10', 'SHIPユーザー削除', 'DELETE', '/ship-user-management/users/{userId}', 'SHIPユーザーを論理削除し、担当施設設定とユーザー施設別設定を削除する', '`user_edit`')
+      @('9', 'SHIPユーザー削除', 'DELETE', '/ship-user-management/users/{userId}', 'SHIPユーザーを論理削除し、担当施設設定とユーザー施設別設定を削除する', '`user_edit`')
     ) },
 
     @{ Type = 'Heading1'; Text = '第5章 機能設計' },
@@ -155,7 +151,7 @@
           '`feature_catalogs` から `config_scope=FACILITY_USER` かつ `is_active=true` の機能をユーザー別設定候補として表示順で取得する',
           '`column_catalogs` から `is_active=true` のカラムを表示順で取得する',
           '各施設で提供設定が有効な `config_scope=''FACILITY_USER''` の機能コードと表示カラムコードを返却する',
-          '`canCreate`、`canEditProfile`、`canEditFacilityAssignments`、`canDelete`、`canSendSetupInvitation` は実行ユーザーの実効 feature_code から算出する',
+          '`canCreate`、`canEditProfile`、`canEditFacilityAssignments`、`canDelete` は実行ユーザーの実効 feature_code から算出する',
           '共有システム管理者アカウントは未削除施設であれば操作可として扱う'
         )
         ResponseTitle = 'レスポンス（200：ShipUserManagementContextResponse）'
@@ -176,8 +172,7 @@
               @('canCreate', 'boolean', '✓', '新規作成可否'),
               @('canEditProfile', 'boolean', '✓', '基本情報編集可否'),
               @('canEditFacilityAssignments', 'boolean', '✓', '担当施設・権限編集可否'),
-              @('canDelete', 'boolean', '✓', '削除可否'),
-              @('canSendSetupInvitation', 'boolean', '✓', '初回設定案内送信可否')
+              @('canDelete', 'boolean', '✓', '削除可否')
             )
           },
           @{
@@ -237,6 +232,7 @@
         ParametersRows = @(
           @('name', 'query', 'string', '-', 'ユーザー名の部分一致条件'),
           @('sectionName', 'query', 'string', '-', '部署の部分一致条件。`users.section_name` を対象とする'),
+          @('facilityId', 'query', 'int64', '-', '担当施設ID。対象SHIPユーザーの担当施設に含まれる場合に一致'),
           @('page', 'query', 'int32', '-', 'ページ番号。既定値 `1`'),
           @('pageSize', 'query', 'int32', '-', 'ページサイズ。既定値 `50`、上限 `200`'),
           @('sortBy', 'query', 'string', '-', '並び替え項目。`updatedAt` / `name` / `sectionName` / `positionName` / `emailAddress`'),
@@ -248,9 +244,10 @@
         )
         ProcessingLines = @(
           '`users.deleted_at IS NULL` かつ `users.account_type = ''SHIP''` のユーザーを対象にする',
-          'ユーザー名、部署で AND 条件検索する',
-          '一覧には所属部署、役職、ユーザー名、連絡先、メールアドレス、最終ログイン日時、更新日時を返却する',
-          '担当施設・権限は担当施設・権限詳細 API で取得する'
+          'ユーザー名、部署、担当施設IDで AND 条件検索する',
+          '担当施設IDが指定された場合は、`user_facility_assignments` に当該施設の有効割当を持つユーザーに絞り込む',
+          '一覧には所属部署、役職、ユーザー名、連絡先、メールアドレス、担当施設サマリ、更新日時を返却する',
+          '担当施設ごとの機能・カラム設定は担当施設・権限詳細 API で取得する'
         )
         ResponseTitle = 'レスポンス（200：ShipUserListResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -271,8 +268,17 @@
               @('name', 'string', '✓', 'ユーザー名'),
               @('phoneNumber', 'string', '-', '連絡先'),
               @('emailAddress', 'string', '✓', 'メールアドレス'),
-              @('lastLoginAt', 'string(datetime)', '-', '最終ログイン日時'),
+              @('assignedFacilities', 'ShipUserAssignedFacilitySummary[]', '✓', '一覧表示用の担当施設サマリ'),
               @('updatedAt', 'string(datetime)', '✓', '更新日時')
+            )
+          },
+          @{
+            Title = 'assignedFacilities要素（ShipUserAssignedFacilitySummary）'
+            Headers = @('フィールド', '型', '必須', '説明')
+            Rows = @(
+              @('facilityId', 'int64', '✓', '担当施設ID'),
+              @('facilityName', 'string', '✓', '担当施設名'),
+              @('isDefault', 'boolean', '✓', '既定施設の場合 true')
             )
           }
         )
@@ -303,7 +309,7 @@
         ProcessingLines = @(
           '対象 `users` が `deleted_at IS NULL` かつ `account_type = ''SHIP''` で存在することを確認する',
           '`HOSPITAL` または `SYSTEM_ADMIN` のユーザーIDが指定された場合は 404 (`SHIP_USER_NOT_FOUND`) を返却する',
-          '基本情報、アカウント状態、最終ログイン日時、集約更新トークンを返却する'
+          '基本情報、アカウント状態、集約更新トークンを返却する'
         )
         ResponseTitle = 'レスポンス（200：ShipUserProfileResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -316,7 +322,6 @@
           @('positionName', 'string', '-', '役職'),
           @('phoneNumber', 'string', '-', '連絡先'),
           @('isActive', 'boolean', '✓', 'アカウント有効フラグ'),
-          @('lastLoginAt', 'string(datetime)', '-', '最終ログイン日時'),
           @('updatedAt', 'string(datetime)', '✓', '集約更新トークン')
         )
         StatusRows = @(
@@ -459,8 +464,7 @@
           '指定施設がすべて `facilities.deleted_at IS NULL` であることを確認する',
           '`users` へ `account_type=''SHIP''` 固定で登録する。`facility_id` は `defaultFacilityId`、`establishment_id` は既定施設から導出する',
           '`user_facility_assignments` を作成し、既定施設を `assignment_type=''PRIMARY''` / `is_default=true`、その他を `SECONDARY` / `false` とする',
-          '施設提供設定の候補集合に対して、`enabledFeatureCodes` / `enabledColumnCodes` の現在値を `user_facility_feature_settings` / `user_facility_column_settings` へ保存する',
-          '平文パスワードやトークン文字列は返却しない。初回設定案内は専用 API で送信する'
+          '施設提供設定の候補集合に対して、`enabledFeatureCodes` / `enabledColumnCodes` の現在値を `user_facility_feature_settings` / `user_facility_column_settings` へ保存する'
         )
         ResponseTitle = 'レスポンス（201：ShipUserCreateResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -597,42 +601,6 @@
         )
       },
       @{
-        Title = '初回設定案内送信（/ship-user-management/users/{userId}/setup-invitation）'
-        Overview = '未利用SHIPユーザーに対して初回パスワード設定案内を送信する。トークン生成とメール送信は認証基盤へ委譲する。'
-        Method = 'POST'
-        Path = '/ship-user-management/users/{userId}/setup-invitation'
-        Auth = '要（Bearer）'
-        ParametersTitle = 'リクエストパラメータ'
-        ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
-        ParametersRows = @(
-          @('userId', 'path', 'int64', '✓', '対象ユーザーID')
-        )
-        PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について実効 `user_edit` が有効であること',
-          '共有システム管理者アカウントでは作業対象施設が未削除であること'
-        )
-        ProcessingLines = @(
-          '対象 `users` が `deleted_at IS NULL` かつ `account_type = ''SHIP''` で存在することを確認する',
-          '`last_login_at IS NOT NULL` の既利用ユーザーには送信しない。既利用ユーザーの再設定は認証 API の `/auth/password/forgot` を利用する',
-          '認証基盤内部サービスへ、旧未使用トークン無効化、新規招待トークン発行、メール送信を一括依頼し、成功時は 202 を返却する',
-          '平文パスワードや再設定トークン文字列は API レスポンスに含めない'
-        )
-        ResponseTitle = 'レスポンス（202：ShipUserSetupInvitationResponse）'
-        ResponseHeaders = @('フィールド', '型', '必須', '説明')
-        ResponseRows = @(
-          @('status', 'string', '✓', '受理状態。`ACCEPTED`'),
-          @('targetEmailAddress', 'string', '✓', '送信対象メールアドレス')
-        )
-        StatusRows = @(
-          @('202', '送信依頼受理', 'ShipUserSetupInvitationResponse'),
-          @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `user_edit` なし', 'ErrorResponse'),
-          @('404', '対象SHIPユーザーが存在しない', 'ErrorResponse'),
-          @('409', '対象ユーザーがすでに初回利用済みである', 'ErrorResponse'),
-          @('500', 'トークン発行または送信依頼に失敗', 'ErrorResponse')
-        )
-      },
-      @{
         Title = 'SHIPユーザー削除（/ship-user-management/users/{userId}）'
         Overview = '指定したSHIPユーザーを論理削除し、担当施設設定とユーザー施設別設定を削除する。自身の削除は認めない。'
         Method = 'DELETE'
@@ -675,14 +643,14 @@
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
       @('画面コンテキスト取得 / 一覧取得', '`user_list_view`', 'Bearer トークン上の作業対象施設に対して実効 `user_list_view` を持つこと', '一覧参照系'),
-      @('ユーザー基本情報取得 / ユーザー基本情報更新 / 初回設定案内送信 / 削除', '`user_edit`', 'Bearer トークン上の作業対象施設に対して実効 `user_edit` を持つこと', 'PII を含む基本情報参照と基本情報変更系'),
+      @('ユーザー基本情報取得 / ユーザー基本情報更新 / 削除', '`user_edit`', 'Bearer トークン上の作業対象施設に対して実効 `user_edit` を持つこと', 'PII を含む基本情報参照と基本情報変更系'),
       @('担当施設・権限詳細取得 / 施設候補取得 / 担当施設・権限更新', '`user_facility_assignment_edit`', 'Bearer トークン上の作業対象施設に対して実効 `user_facility_assignment_edit` を持つこと', '担当施設とユーザー施設別権限の変更系'),
       @('ユーザー新規作成', '`user_edit` と `user_facility_assignment_edit`', '同一作業対象施設に対して両 feature_code を持つこと', '新規作成は基本情報と担当施設・権限設定を同時に扱う')
     ) },
     @{ Type = 'Heading2'; Text = '一意性・整合性ルール' },
     @{ Type = 'Bullets'; Items = @(
       '管理対象ユーザーは `users.account_type = ''SHIP''` の通常ユーザーに限る',
-      '病院ユーザーと共有システム管理者アカウントは本 API の作成・編集・削除・初回設定案内対象に含めない',
+      '病院ユーザーと共有システム管理者アカウントは本 API の作成・編集・削除対象に含めない',
       '`users.email_address` は未削除ユーザー間で一意に保つ',
       '`user_facility_assignments` は `(user_id, facility_id)` を一意に保つ',
       '担当施設候補は未削除の全施設とする',
@@ -692,18 +660,15 @@
       '担当施設ごとのカラム設定は施設提供カラムの有効範囲内、かつ対応機能がユーザー側でも有効な場合だけ登録できる',
       '担当施設・権限更新成功時は `users.updated_at` も更新し、プロフィール更新との競合検知に使う'
     ) },
-    @{ Type = 'Heading2'; Text = '削除・招待ルール' },
+    @{ Type = 'Heading2'; Text = '削除ルール' },
     @{ Type = 'Bullets'; Items = @(
-      '実行ユーザー自身の削除は認めない',
-      '初回設定案内送信は `last_login_at IS NULL` の未利用ユーザーだけを対象とする',
-      '既利用ユーザーのパスワード再設定は `/auth/password/forgot` の責務とし、本 API では扱わない'
+      '実行ユーザー自身の削除は認めない'
     ) },
     @{ Type = 'Heading2'; Text = '実装前提・設計判断' },
     @{ Type = 'Bullets'; Items = @(
       '一覧 API は要約情報のみ返し、詳細情報は `GET /ship-user-management/users/{userId}` と `GET /ship-user-management/users/{userId}/facility-assignments` に分離する',
       '基本情報更新と担当施設・権限更新は API を分離し、`user_edit` と `user_facility_assignment_edit` の境界に一致させる',
       'SHIPユーザーの担当施設候補は未削除の全施設とし、選択中施設や設立母体による絞り込みは行わない',
-      '平文パスワードやトークン文字列はSHIPユーザー管理 API の入出力へ含めず、認証基盤へ委譲する',
       '競合検知は `users.updated_at` を集約更新トークンとして扱う方式を採用し、HTTP 条件付き更新ヘッダーは採用しない'
     ) },
 
@@ -722,8 +687,6 @@
       @('SHIP_USER_CONFLICT', '409', '他ユーザー更新により `lastKnownUpdatedAt` が不一致である'),
       @('FACILITY_PERMISSION_SCOPE_CONFLICT', '409', '施設提供設定または親子機能条件と矛盾する機能・カラム指定である'),
       @('SHIP_USER_SELF_DELETE_FORBIDDEN', '409', '実行ユーザー自身は削除できない'),
-      @('SHIP_USER_ALREADY_ACTIVATED', '409', '対象ユーザーはすでに初回利用済みである'),
-      @('INVITATION_DISPATCH_FAILED', '500', '初回設定案内の送信依頼に失敗した'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
     ) },
 
@@ -737,9 +700,7 @@
     ) },
     @{ Type = 'Heading2'; Text = '運用上の留意点' },
     @{ Type = 'Bullets'; Items = @(
-      '基本情報タブと担当施設・権限タブを同一モーダルに置く場合でも、バックエンド契約は分離したまま維持する',
-      '初回設定案内の再送履歴や配信状態を可視化する場合は、認証基盤または通知基盤側に監査テーブルを追加する',
-      'SHIPユーザー管理画面の正式パスが確定した場合は、画面要件、API候補、API設計書本文の画面パス表記を同時に更新する'
+      '編集モーダルは画面上は一体として表示するが、基本情報更新と担当施設・権限更新の API 契約は分離して維持する'
     ) }
   )
 }

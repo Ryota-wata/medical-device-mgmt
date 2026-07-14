@@ -68,7 +68,7 @@ Phase件数: `Phase1 32件` / `Phase2 1件`
 | 18 | 1 | 個別部署マスタ | `Fix/API設計書_個別部署マスタ.docx` | 19. `/hospital-facility-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み。個別部署マスタAPIの正本リソース名は `/hospital-facility-master/departments` |
 | 19 | 1 | SHIP部署マスタ | `Fix/API設計書_SHIP部署マスタ.docx` | 20. `/ship-department-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み。現行画面に一覧エクスポート操作はないため、旧API候補の `GET /ship-department-master/departments/export` は Phase1 対象外 |
 | 20 | 1 | ユーザー管理 | `Fix/API設計書_ユーザー管理.docx` | 21. `/user-management` | `Fix` | 管理対象は選択中施設に担当施設割当を持つ `account_type='HOSPITAL'` の病院ユーザーに限定する。新規作成時の `account_type` はサーバー側で `HOSPITAL` 固定とし、リクエストでは受け取らない。SHIPユーザーは別途SHIPユーザー管理画面/APIで扱う。ユーザー別機能設定候補は `config_scope='FACILITY_USER'` のみに限定し、`lending_in_use_used` を候補に含め、`normal_ship_request` は候補から除外する。ユーザー側でも `lending_checkout` OFF 時の `lending_in_use_used` ON を拒否する |
-| 20a | 1 | SHIPユーザー管理 | `Fix/API設計書_SHIPユーザー管理.docx` | 67. 画面パスTBU | `Fix` | 管理対象は `account_type='SHIP'` のSHIPユーザーに限定する。病院ユーザーはNo.20 ユーザー管理で扱う。新規作成時の `account_type` はサーバー側で `SHIP` 固定とし、リクエストでは受け取らない。担当施設候補は未削除の全施設とし、担当施設ごとに `config_scope='FACILITY_USER'` の機能・カラム設定を保持する。APIベースパスは `/ship-user-management` を候補として扱う |
+| 20a | 1 | SHIPユーザー管理 | `Fix/API設計書_SHIPユーザー管理.docx` | 67. `/ship-user-management` | `Fix` | 管理対象は `account_type='SHIP'` のSHIPユーザーに限定する。病院ユーザーはNo.21 ユーザー管理で扱う。新規作成時の `account_type` はサーバー側で `SHIP` 固定とし、リクエストでは受け取らない。担当施設候補は未削除の全施設とし、担当施設ごとに `config_scope='FACILITY_USER'` の機能・カラム設定を保持する。APIベースパスは `/ship-user-management` とする |
 | 21 | 1 | 業者マスタ | `Fix/API設計書_業者マスタ.docx` | 63. `/vendor-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み。現行画面に業者詳細表示操作・一覧エクスポート操作はないため、旧API候補の `GET /vendor-master/vendors/{vendorId}` と `GET /vendor-master/vendors/export` は Phase1 対象外 |
 
 ## タスク管理
