@@ -833,13 +833,14 @@ export default function RegistrationEditPage() {
   if (isMobile) {
     return (
       <div className="p-4 bg-[#FAFAFA] min-h-dvh">
-        <div className="mb-4 text-center text-lg font-bold text-[#4A4A4A]">
+        <div data-element-id="re-mobile-title" className="mb-4 text-center text-lg font-bold text-[#4A4A4A]">
           現有品調査内容修正
         </div>
-        <div className="text-red-600 mb-4 text-sm text-center">
+        <div data-element-id="re-mobile-message" className="text-red-600 mb-4 text-sm text-center">
           この画面はデスクトップ表示に最適化されています
         </div>
         <button
+          data-element-id="re-mobile-back-btn"
           onClick={handleBack}
           className="w-full py-3 bg-[#008C1D] text-white border-none rounded-lg cursor-pointer text-base"
         >
@@ -852,16 +853,17 @@ export default function RegistrationEditPage() {
   return (
     <div className="flex flex-col h-dvh bg-[#FAFAFA] overflow-hidden">
       {/* Header */}
-      <header className="bg-white border-b border-[#E1E1E1] px-6 py-4 flex justify-between items-center">
+      <header data-element-id="re-header" className="bg-white border-b border-[#E1E1E1] px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="bg-[#008C1D] text-white px-2 py-1 rounded font-bold text-sm">
+          <div data-element-id="re-ship-badge" className="bg-[#008C1D] text-white px-2 py-1 rounded font-bold text-sm">
             SHIP
           </div>
-          <h1 className="text-xl font-bold text-[#4A4A4A] m-0 text-balance">
+          <h1 data-element-id="re-title" className="text-xl font-bold text-[#4A4A4A] m-0 text-balance">
             現有品調査内容修正
           </h1>
         </div>
         <button
+          data-element-id="re-back-btn"
           onClick={handleBack}
           className="px-4 py-2 bg-white border border-[#E1E1E1] rounded cursor-pointer text-sm text-[#8A8A8A] hover:bg-[#FAFAFA]"
         >
@@ -870,9 +872,9 @@ export default function RegistrationEditPage() {
       </header>
 
       {/* Filter Header */}
-      <div className="bg-white px-6 py-4 border-b border-[#E1E1E1]">
+      <div data-element-id="re-filter-area" className="bg-white px-6 py-4 border-b border-[#E1E1E1]">
         <div className="flex gap-3 flex-wrap items-end">
-          <div className="flex-1 min-w-[120px]">
+          <div data-element-id="re-filter-building" className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="棟"
               value={filters.building}
@@ -883,7 +885,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div className="flex-1 min-w-[100px]">
+          <div data-element-id="re-filter-floor" className="flex-1 min-w-[100px]">
             <SearchableSelect
               label="階"
               value={filters.floor}
@@ -894,7 +896,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div className="flex-1 min-w-[120px]">
+          <div data-element-id="re-filter-department" className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="部門"
               value={filters.department}
@@ -905,7 +907,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div className="flex-1 min-w-[120px]">
+          <div data-element-id="re-filter-section" className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="部署"
               value={filters.section}
@@ -918,7 +920,7 @@ export default function RegistrationEditPage() {
 
           {/* REQ-025: 調査担当者の絞込みは不要 → 削除 */}
 
-          <div className="flex-1 min-w-[120px]">
+          <div data-element-id="re-filter-category" className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="Category"
               value={filters.category}
@@ -929,7 +931,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div className="flex-1 min-w-[150px]">
+          <div data-element-id="re-filter-large-class" className="flex-1 min-w-[150px]">
             <SearchableSelect
               label="大分類"
               value={filters.largeClass}
@@ -940,7 +942,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div className="flex-1 min-w-[150px]">
+          <div data-element-id="re-filter-medium-class" className="flex-1 min-w-[150px]">
             <SearchableSelect
               label="中分類"
               value={filters.mediumClass}
@@ -952,6 +954,7 @@ export default function RegistrationEditPage() {
           </div>
 
           <button
+            data-element-id="re-filter-clear-btn"
             onClick={handleClearFilters}
             className="px-4 py-2 bg-[#4A4A4A] text-white border-none rounded cursor-pointer text-sm hover:bg-[#4A4A4A]"
           >
@@ -962,17 +965,18 @@ export default function RegistrationEditPage() {
 
       {/* Linking Bar */}
       {linkingParent && (
-        <div className="bg-[#EBF5EE] border-b-2 border-[#008C1D]">
+        <div data-element-id="re-link-bar" className="bg-[#EBF5EE] border-b-2 border-[#008C1D]">
           {/* ヘッダー行 */}
           <div className="px-6 py-2.5 flex justify-between items-center bg-[#EBF5EE]">
             <div className="flex items-center gap-3">
-              <span className="bg-[#146E2E] text-white px-2.5 py-0.5 rounded text-xs font-semibold">紐付け登録モード</span>
-              <span className="font-semibold text-[#146E2E] text-sm">
+              <span data-element-id="re-link-badge" className="bg-[#146E2E] text-white px-2.5 py-0.5 rounded text-xs font-semibold">紐付け登録モード</span>
+              <span data-element-id="re-link-parent-info" className="font-semibold text-[#146E2E] text-sm">
                 本体: {linkingParent.item}
                 <span className="text-[#8A8A8A] font-normal ml-2">({linkingParent.sealNo})</span>
               </span>
             </div>
             <button
+              data-element-id="re-link-exit-btn"
               onClick={handleExitLinking}
               className="px-4 py-1.5 bg-white text-[#8A8A8A] border border-[#E1E1E1] rounded cursor-pointer text-[13px]"
             >
@@ -982,15 +986,16 @@ export default function RegistrationEditPage() {
           {/* 操作ガイド行 */}
           <div className="px-6 py-2.5 flex items-center gap-4 flex-wrap">
             {selectedRows.size === 0 ? (
-              <span className="text-[#146E2E] text-[13px]">
+              <span data-element-id="re-link-guide" className="text-[#146E2E] text-[13px]">
                 子にしたいレコードのチェックボックスを選択してください
               </span>
             ) : (
               <>
-                <span className="text-[#146E2E] text-[13px] font-semibold">
+                <span data-element-id="re-link-selected-count" className="text-[#146E2E] text-[13px] font-semibold">
                   {selectedRows.size}件選択中 — 種別を選んで紐付け:
                 </span>
                 <button
+                  data-element-id="re-link-as-detail-btn"
                   onClick={handleLinkAsDetail}
                   className="px-5 py-2 bg-[#4A4A4A] text-white border-none rounded cursor-pointer text-[13px] font-semibold"
                 >
@@ -1005,7 +1010,7 @@ export default function RegistrationEditPage() {
       {/* Table */}
       <div className="flex-1 min-h-0 p-6">
         <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] overflow-auto h-full">
-          <table className="w-full border-separate border-spacing-0 text-[13px]">
+          <table data-element-id="re-table" className="w-full border-separate border-spacing-0 text-[13px]">
             <thead>
               <tr>
                 {/* --- 通常カラム（sticky top のみ） --- */}
@@ -1036,6 +1041,7 @@ export default function RegistrationEditPage() {
                 ]).map(col => (
                   <th
                     key={col.key}
+                    data-element-id={`re-col-${col.key}`}
                     onClick={() => handleSort(col.key)}
                     className="px-2 py-3 border border-[#E1E1E1] whitespace-nowrap cursor-pointer select-none sticky top-0 z-[2] bg-[#FAFAFA] text-left text-[#4A4A4A] font-semibold text-xs"
                   >
@@ -1043,12 +1049,13 @@ export default function RegistrationEditPage() {
                   </th>
                 ))}
                 {/* 写真（REQ-028: 操作欄の左に sticky right で固定） */}
-                <th className="px-2 py-3 border border-[#E1E1E1] whitespace-nowrap sticky top-0 right-[288px] z-[3] bg-[#FAFAFA] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] text-left text-[#4A4A4A] font-semibold text-xs w-[64px] min-w-[64px]">写真</th>
+                <th className="px-2 py-3 border border-[#E1E1E1] whitespace-nowrap sticky top-0 right-[288px] z-[3] bg-[#FAFAFA] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] text-left text-[#4A4A4A] font-semibold text-xs w-[64px] min-w-[64px]" data-element-id="re-col-photo">写真</th>
                 {/* --- 操作（sticky top + right、固定幅） --- */}
-                <th className="px-2 py-3 border border-[#E1E1E1] whitespace-nowrap sticky top-0 right-[48px] z-[3] bg-[#FAFAFA] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] text-left text-[#4A4A4A] font-semibold text-xs w-[240px] min-w-[240px]">操作</th>
+                <th className="px-2 py-3 border border-[#E1E1E1] whitespace-nowrap sticky top-0 right-[48px] z-[3] bg-[#FAFAFA] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] text-left text-[#4A4A4A] font-semibold text-xs w-[240px] min-w-[240px]" data-element-id="re-col-action">操作</th>
                 {/* --- チェックボックス（sticky top + right） --- */}
                 <th className="px-2 py-3 border border-[#E1E1E1] text-center whitespace-nowrap sticky top-0 right-0 z-[3] bg-[#FAFAFA] w-12 min-w-[48px]">
                   <input
+                    data-element-id="re-select-all"
                     type="checkbox"
                     checked={selectedAll}
                     onChange={(e) => toggleSelectAll(e.target.checked)}
@@ -1062,6 +1069,9 @@ export default function RegistrationEditPage() {
                 const isLinkingTarget = linkingParentId !== null && row.id === linkingParentId;
                 const parentRow = isChild ? data.find(r => r.id === row.parentId) : null;
                 const rowBgColor = isLinkingTarget ? '#EBF5EE' : isChild ? '#FAFAFA' : 'white';
+                // ナンバリング用: 繰り返し行のうち先頭行だけを代表インスタンスとする
+                const isFirstRow = row.id === groupedData[0].id;
+                const firstRowId = (id: string) => (isFirstRow ? { 'data-element-id': id } : {});
                 return (
                 <tr key={row.id} style={{ backgroundColor: rowBgColor }}>
                   {/* ① QRコード */}
@@ -1079,43 +1089,23 @@ export default function RegistrationEditPage() {
                   <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.roomName}</td>
                   {/* ⑥ Category */}
                   <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.category}</td>
-                  {/* ⑥ 大分類 */}
+                  {/* ⑥ 大分類（手入力禁止: 資産マスタの選択でのみ設定する） */}
                   <td style={getFreeInputCellStyle('largeClass', editingRow === row.id && editingData ? editingData.largeClass : row.largeClass, row.masterId, { padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' })}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.largeClass || ''}
-                        onChange={(e) => setEditingData({ ...editingData, largeClass: e.target.value })}
-                        className="w-full p-1 border border-[#E1E1E1] rounded"
-                      />
-                    ) : row.largeClass}
+                    {editingRow === row.id && editingData ? editingData.largeClass : row.largeClass}
                   </td>
-                  {/* ⑥ 中分類 */}
+                  {/* ⑥ 中分類（手入力禁止: 資産マスタの選択でのみ設定する） */}
                   <td style={getFreeInputCellStyle('mediumClass', editingRow === row.id && editingData ? editingData.mediumClass : row.mediumClass, row.masterId, { padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' })}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.mediumClass || ''}
-                        onChange={(e) => setEditingData({ ...editingData, mediumClass: e.target.value })}
-                        className="w-full p-1 border border-[#E1E1E1] rounded"
-                      />
-                    ) : row.mediumClass}
+                    {editingRow === row.id && editingData ? editingData.mediumClass : row.mediumClass}
                   </td>
-                  {/* ⑥ 個体管理品目（REQ-026: 明細区分の前へ） */}
+                  {/* ⑥ 個体管理品目（REQ-026: 明細区分の前へ / 手入力禁止: 資産マスタの選択でのみ設定する） */}
                   <td style={getFreeInputCellStyle('item', editingRow === row.id && editingData ? editingData.item : row.item, row.masterId, { padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' })}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.item || ''}
-                        onChange={(e) => setEditingData({ ...editingData, item: e.target.value })}
-                        className="w-full p-1 border border-[#E1E1E1] rounded"
-                      />
-                    ) : row.item}
+                    {editingRow === row.id && editingData ? editingData.item : row.item}
                   </td>
                   {/* 明細区分 */}
                   <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap">
                     {editingRow === row.id && editingData ? (
                       <select
+                        data-element-id="re-edit-detail-type"
                         value={editingData.detailType}
                         onChange={(e) => {
                           const v = e.target.value as RegistrationData['detailType'];
@@ -1144,6 +1134,7 @@ export default function RegistrationEditPage() {
                           {/* 子行: インライン解除ボタン */}
                           {isChild && (
                             <button
+                              data-element-id="re-unlink-btn"
                               onClick={() => handleUnlinkSingle(row.id)}
                               aria-label={`${row.item}の紐付けを解除`}
                               className="w-[18px] h-[18px] p-0 border border-[#E1E1E1] rounded bg-[#FAFAFA] text-[#8A8A8A] text-[11px] leading-4 cursor-pointer inline-flex items-center justify-center shrink-0"
@@ -1161,6 +1152,7 @@ export default function RegistrationEditPage() {
                   <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A] text-xs">
                     {editingRow === row.id && editingData && editingData.detailType === '明細' ? (
                       <select
+                        data-element-id="re-edit-parent"
                         value={editingData.parentId ?? ''}
                         onChange={(e) => setEditingData({ ...editingData, parentId: e.target.value ? Number(e.target.value) : null })}
                         className="w-full p-1 border border-[#E1E1E1] rounded text-xs"
@@ -1181,6 +1173,7 @@ export default function RegistrationEditPage() {
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
+                        data-element-id="re-edit-manufacturer"
                         value={editingData.manufacturer || ''}
                         onChange={(e) => setEditingData({ ...editingData, manufacturer: e.target.value })}
                         className="w-full p-1 border border-[#E1E1E1] rounded"
@@ -1192,6 +1185,7 @@ export default function RegistrationEditPage() {
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
+                        data-element-id="re-edit-model"
                         value={editingData.model || ''}
                         onChange={(e) => setEditingData({ ...editingData, model: e.target.value })}
                         className="w-full p-1 border border-[#E1E1E1] rounded"
@@ -1203,6 +1197,7 @@ export default function RegistrationEditPage() {
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
+                        data-element-id="re-edit-quantity"
                         value={editingData.quantity ?? ''}
                         onChange={(e) => setEditingData({ ...editingData, quantity: e.target.value })}
                         className="w-full p-1 border border-[#E1E1E1] rounded text-right"
@@ -1214,6 +1209,7 @@ export default function RegistrationEditPage() {
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
+                        data-element-id="re-edit-width"
                         value={editingData.width || ''}
                         onChange={(e) => setEditingData({ ...editingData, width: e.target.value })}
                         className="w-full p-1 border border-[#E1E1E1] rounded"
@@ -1225,6 +1221,7 @@ export default function RegistrationEditPage() {
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
+                        data-element-id="re-edit-depth"
                         value={editingData.depth || ''}
                         onChange={(e) => setEditingData({ ...editingData, depth: e.target.value })}
                         className="w-full p-1 border border-[#E1E1E1] rounded"
@@ -1236,6 +1233,7 @@ export default function RegistrationEditPage() {
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
+                        data-element-id="re-edit-height"
                         value={editingData.height || ''}
                         onChange={(e) => setEditingData({ ...editingData, height: e.target.value })}
                         className="w-full p-1 border border-[#E1E1E1] rounded"
@@ -1247,6 +1245,7 @@ export default function RegistrationEditPage() {
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
+                        data-element-id="re-edit-asset-no"
                         value={editingData.assetNo || ''}
                         onChange={(e) => setEditingData({ ...editingData, assetNo: e.target.value })}
                         className="w-full p-1 border border-[#E1E1E1] rounded"
@@ -1258,6 +1257,7 @@ export default function RegistrationEditPage() {
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
+                        data-element-id="re-edit-equipment-no"
                         value={editingData.equipmentNo || ''}
                         onChange={(e) => setEditingData({ ...editingData, equipmentNo: e.target.value })}
                         className="w-full p-1 border border-[#E1E1E1] rounded"
@@ -1269,6 +1269,7 @@ export default function RegistrationEditPage() {
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
+                        data-element-id="re-edit-serial-no"
                         value={editingData.serialNo || ''}
                         onChange={(e) => setEditingData({ ...editingData, serialNo: e.target.value })}
                         className="w-full p-1 border border-[#E1E1E1] rounded"
@@ -1280,6 +1281,7 @@ export default function RegistrationEditPage() {
                     {editingRow === row.id && editingData ? (
                       <input
                         type="date"
+                        data-element-id="re-edit-purchase-date"
                         value={editingData.purchaseDate || ''}
                         onChange={(e) => setEditingData({ ...editingData, purchaseDate: e.target.value })}
                         className="w-full p-1 border border-[#E1E1E1] rounded"
@@ -1291,6 +1293,7 @@ export default function RegistrationEditPage() {
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
+                        data-element-id="re-edit-remarks"
                         value={editingData.remarks || ''}
                         onChange={(e) => setEditingData({ ...editingData, remarks: e.target.value })}
                         className="w-full p-1 border border-[#E1E1E1] rounded"
@@ -1304,6 +1307,7 @@ export default function RegistrationEditPage() {
                     style={{ backgroundColor: rowBgColor }}
                   >
                     <button
+                      {...firstRowId('re-photo-btn')}
                       onClick={() => handlePhotoClick(row)}
                       className="px-2 py-1 text-xs bg-[#EBF5EE] text-[#4A4A4A] border-none rounded cursor-pointer"
                     >
@@ -1318,18 +1322,21 @@ export default function RegistrationEditPage() {
                       {editingRow === row.id ? (
                         <>
                           <button
+                            data-element-id="re-open-asset-master-btn"
                             onClick={handleOpenAssetMaster}
                             className="px-2 py-1 text-xs bg-[#008C1D] text-white border-none rounded cursor-pointer whitespace-nowrap"
                           >
                             資産マスタを別ウィンドウで開く
                           </button>
                           <button
+                            data-element-id="re-save-btn"
                             onClick={handleSave}
                             className="px-2 py-1 text-xs bg-[#EBF5EE] text-[#4A4A4A] border-none rounded cursor-pointer"
                           >
                             保存
                           </button>
                           <button
+                            data-element-id="re-cancel-btn"
                             onClick={handleCancel}
                             className="px-2 py-1 text-xs bg-[#FDF1E5] text-[#4A4A4A] border-none rounded cursor-pointer"
                           >
@@ -1339,12 +1346,14 @@ export default function RegistrationEditPage() {
                       ) : (
                         <>
                           <button
+                            {...firstRowId('re-edit-btn')}
                             onClick={() => handleEdit(row.id)}
                             className="px-2 py-1 text-xs bg-[#EBF5EE] text-[#4A4A4A] border-none rounded cursor-pointer"
                           >
                             編集
                           </button>
                           <button
+                            {...firstRowId('re-confirm-btn')}
                             onClick={() => handleConfirm(row.id)}
                             disabled={!row.masterId}
                             className={`px-2 py-1 text-xs border-none rounded ${
@@ -1358,6 +1367,7 @@ export default function RegistrationEditPage() {
                           {/* 紐付け操作ボタン (Figma 133:6095 準拠) */}
                           {!isChild && (
                             <button
+                              {...firstRowId('re-set-parent-btn')}
                               onClick={() => handleSetParent(row.id)}
                               className={`px-2 py-1 text-xs rounded cursor-pointer font-medium whitespace-nowrap ${
                                 row.detailType === '本体'
@@ -1370,7 +1380,7 @@ export default function RegistrationEditPage() {
                           )}
                           {/* 子行: 親レコードへの参照 */}
                           {isChild && parentRow && (
-                            <span className="text-[11px] text-[#4A4A4A] whitespace-nowrap bg-[#EBF5EE] px-1.5 py-0.5 rounded">
+                            <span data-element-id="re-parent-ref" className="text-[11px] text-[#4A4A4A] whitespace-nowrap bg-[#EBF5EE] px-1.5 py-0.5 rounded">
                               親: {parentRow.sealNo}
                             </span>
                           )}
@@ -1384,6 +1394,7 @@ export default function RegistrationEditPage() {
                     style={{ backgroundColor: rowBgColor }}
                   >
                     <input
+                      {...firstRowId('re-row-checkbox')}
                       type="checkbox"
                       checked={selectedRows.has(row.id)}
                       onChange={() => toggleRowSelection(row.id)}
@@ -1399,8 +1410,9 @@ export default function RegistrationEditPage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-[#E1E1E1] px-6 py-4 flex justify-center gap-4">
+      <footer data-element-id="re-footer" className="bg-white border-t border-[#E1E1E1] px-6 py-4 flex justify-center gap-4">
         <button
+          data-element-id="re-bulk-confirm-btn"
           onClick={handleBulkConfirm}
           className="px-8 py-3 bg-[#008C1D] text-white border-none rounded-lg cursor-pointer text-base font-semibold hover:bg-[#008C1D]"
         >
@@ -1411,6 +1423,7 @@ export default function RegistrationEditPage() {
       {/* Photo Modal */}
       {isPhotoModalOpen && selectedRowForPhoto && (
         <div
+          data-element-id="re-photo-modal"
           className="fixed bg-white rounded-xl w-[600px] max-h-[80vh] shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex flex-col z-[1000]"
           style={{ top: modalPosition.y, left: modalPosition.x }}
         >
@@ -1418,8 +1431,9 @@ export default function RegistrationEditPage() {
             onMouseDown={handleMouseDown}
             className={`flex justify-between items-center px-6 py-4 border-b border-[#E1E1E1] select-none bg-[#FAFAFA] rounded-t-xl ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
           >
-            <h2 className="m-0 text-lg font-bold text-[#4A4A4A]">📷 写真一覧</h2>
+            <h2 data-element-id="re-photo-modal-title" className="m-0 text-lg font-bold text-[#4A4A4A]">📷 写真一覧</h2>
             <button
+              data-element-id="re-photo-modal-close-btn"
               onClick={handlePhotoModalClose}
               onMouseDown={(e) => e.stopPropagation()}
               className="px-3 py-1.5 bg-white border border-[#E1E1E1] rounded cursor-pointer text-sm text-[#8A8A8A]"
@@ -1430,10 +1444,11 @@ export default function RegistrationEditPage() {
 
           <div className="p-5 overflow-auto flex-1">
 
-            <div className="grid grid-cols-2 gap-3">
+            <div data-element-id="re-photo-grid" className="grid grid-cols-2 gap-3">
               {selectedRowForPhoto.photos.map((photo) => (
                 <div
                   key={photo.id}
+                  {...(selectedRowForPhoto.photos[0]?.id === photo.id ? { 'data-element-id': 're-photo-thumb' } : {})}
                   className={`rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ${
                     selectedPhoto === photo.id
                       ? 'border-[3px] border-[#4A4A4A]'
@@ -1447,9 +1462,13 @@ export default function RegistrationEditPage() {
                     className="w-full h-[120px] object-cover"
                   />
                   <div className="p-2">
-                    <div className="text-xs font-bold mb-1 text-[#4A4A4A]">{photo.filename}</div>
+                    <div
+                      {...(selectedRowForPhoto.photos[0]?.id === photo.id ? { 'data-element-id': 're-photo-filename' } : {})}
+                      className="text-xs font-bold mb-1 text-[#4A4A4A]"
+                    >{photo.filename}</div>
                     {selectedPhoto === photo.id && (
                       <button
+                        data-element-id="re-photo-delete-btn"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (confirm(`「${photo.filename}」を削除しますか?`)) {
@@ -1468,8 +1487,9 @@ export default function RegistrationEditPage() {
 
             {selectedPhoto && (
               <div className="mt-5">
-                <h3 className="text-base font-bold mb-3 text-[#4A4A4A]">拡大表示</h3>
+                <h3 data-element-id="re-photo-zoom-title" className="text-base font-bold mb-3 text-[#4A4A4A]">拡大表示</h3>
                 <img
+                  data-element-id="re-photo-zoom"
                   src={selectedRowForPhoto.photos.find(p => p.id === selectedPhoto)?.url}
                   alt="拡大写真"
                   className="w-full max-h-[300px] object-contain border border-[#E1E1E1] rounded-lg"

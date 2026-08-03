@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useState, useRef, useEffect, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
+import { useAuthStore } from '@/lib/stores';
 import { AssetMaster } from '@/lib/types/master';
 import { AssetFormModal } from '@/components/modals/AssetFormModal';
 import { exportAssetsToExcel, parseAssetsFromExcel, assignAssetIds, downloadAssetTemplate } from '@/lib/utils/excel-asset-master';
@@ -14,84 +15,121 @@ import { Pencil, Trash2, Plus, Download, Upload, MousePointerClick } from 'lucid
 
 const NOW = '2025-01-01T00:00:00Z';
 
-// Excelカラム順の定義（Row 4の順序）
-const ASSET_MASTER_COLUMNS: { key: string; label: string }[] = [
-  // JMDN分類・一般名称
-  { key: 'classificationCode', label: '類別コード' },
-  { key: 'jmdnCode', label: 'JMDNコード' },
-  { key: 'classificationName', label: '類別名称' },
-  { key: 'jmdnSubCategory', label: '中分類名' },
-  { key: 'generalName', label: '一般的名称' },
-  { key: 'tradeName', label: '販売名' },
-  { key: 'manufacturer', label: '製造販売業者等' },
-  { key: 'packageInsert', label: '添付文書' },
-  // 薬事
-  { key: 'pharmaceuticalAffairs', label: '薬事' },
-  // SHIP_Master
-  { key: 'assetMasterId', label: '資産マスタID' },
-  { key: 'category', label: 'カテゴリ' },
-  { key: 'largeClass', label: '大分類' },
-  { key: 'mediumClass', label: '中分類' },
-  { key: 'detailCategory', label: '明細区分' },
-  { key: 'item', label: '品目' },
-  { key: 'maker', label: 'メーカー' },
-  { key: 'model', label: '型式' },
-  // 設備情報
-  { key: 'drawingNo', label: '図面No.' },
-  { key: 'layoutReflection', label: 'レイアウト反映' },
-  { key: 'specialEquipment', label: '特殊設備' },
-  { key: 'masterStandardDrawing', label: 'Master標準図' },
-  { key: 'width', label: '幅(W)' },
-  { key: 'depth', label: '奥行(D)' },
-  { key: 'height', label: '高さ(H)' },
-  { key: 'powerConnection', label: '電源接続' },
-  { key: 'powerType', label: '電源種別' },
-  { key: 'powerConsumption', label: '消費電力' },
-  { key: 'waterSupplySize', label: '給水' },
-  { key: 'hotWaterSize', label: '給湯' },
-  { key: 'drainageSize', label: '排水' },
-  { key: 'exhaustSize', label: '排気サイズ' },
-  { key: 'exhaustVolume', label: '排気風量' },
-  { key: 'steamSize', label: '蒸気' },
-  { key: 'gas', label: 'ガス' },
-  { key: 'weight', label: '重量(kg)' },
-  { key: 'reinforcement', label: '補強' },
-  { key: 'mountAnchor', label: '架台・アンカー' },
-  { key: 'floorLowering', label: '床下げ' },
-  { key: 'equipmentRemarks', label: '設備備考' },
+// 資産マスタのカラム定義（顧客受領の資産マスタカラム表を正本とする）
+// scope: 'common' = 全ユーザーに表示する共有カラム / 'ship' = SHIP のドメインでログインした場合のみ表示する
+type AssetColumnScope = 'common' | 'ship';
+const ASSET_MASTER_COLUMNS: { key: string; label: string; scope: AssetColumnScope; group: string }[] = [
+  // 資産マスタ（基本項目）
+  { key: 'assetMasterId', label: '資産マスタID', scope: 'common', group: '資産マスタ（基本項目）' },
+  { key: 'category', label: 'カテゴリ', scope: 'common', group: '資産マスタ（基本項目）' },
+  { key: 'largeClass', label: '大分類', scope: 'common', group: '資産マスタ（基本項目）' },
+  { key: 'mediumClass', label: '中分類', scope: 'common', group: '資産マスタ（基本項目）' },
+  { key: 'detailCategory', label: '明細区分', scope: 'common', group: '資産マスタ（基本項目）' },
+  { key: 'item', label: '品目（個体管理品目名）', scope: 'common', group: '資産マスタ（基本項目）' },
+  { key: 'maker', label: 'メーカー（略称）', scope: 'common', group: '資産マスタ（基本項目）' },
+  { key: 'model', label: '型式', scope: 'common', group: '資産マスタ（基本項目）' },
+  // JMDN分類・一般名称・ドキュメント
+  { key: 'classificationCode', label: '類別コード', scope: 'common', group: 'JMDN分類・一般名称' },
+  { key: 'jmdnCode', label: 'JMDNコード', scope: 'common', group: 'JMDN分類・一般名称' },
+  { key: 'classificationName', label: '類別名称', scope: 'common', group: 'JMDN分類・一般名称' },
+  { key: 'jmdnSubCategory', label: '中分類名', scope: 'common', group: 'JMDN分類・一般名称' },
+  { key: 'generalName', label: '一般的名称', scope: 'common', group: 'JMDN分類・一般名称' },
+  { key: 'tradeName', label: '販売名', scope: 'common', group: 'JMDN分類・一般名称' },
+  { key: 'manufacturer', label: '製造販売業者等', scope: 'common', group: 'JMDN分類・一般名称' },
+  { key: 'packageInsert', label: '添付文書', scope: 'common', group: 'JMDN分類・一般名称' },
+  { key: 'catalogDocument', label: 'カタログ', scope: 'common', group: 'JMDN分類・一般名称' },
+  { key: 'operationManual', label: '操作マニュアル', scope: 'common', group: 'JMDN分類・一般名称' },
+  // JMDN/MEDIS/薬事
+  { key: 'janCode', label: 'JANコード(7〜13桁)', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'indicatorProductCode', label: 'インジケータ付商品コード', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'productNumber', label: '製品番号', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaClassNotification', label: 'クラス分類告示', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaClassification', label: 'クラス分類', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaInstallMgmt', label: '設置管理区分（機械のみ）', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaSpecificMaintenance', label: '特定保守管理区分', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'biologicalOrigin', label: '生物由来（機械、機器のみ）', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'reimbursementCategory', label: '償還請求区分（機器のみ）', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaMaintenanceNotification', label: '特定保守告示別表', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaInstallNotification', label: '設置管理告示別表', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaGeneralNameDef', label: '一般的名称定義', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaGhtfRule', label: 'GHTFルール', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaRepairCategory', label: '修理区分', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaQms316', label: 'QMS告示316号', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaOldGeneralNameCode', label: '旧一般的名称コード', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaOldGeneralName', label: '旧一般的名称', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaOldClassification', label: '旧クラス分類', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaOldRepairType', label: '旧修理種別', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'pmdaRevisionCount', label: '改正回数', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'certificationBodyCode', label: '認証機関コード', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'certificationNumber', label: '認証番号', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'certificationDate', label: '認証年月日', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'certificationTradeName', label: '販売名（認証）', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'certificationHolderName', label: '業者名_認証取得者', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'certificationHolderCorpNumber', label: '法人番号（認証取得者）', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'foreignAgentName', label: '業者名_選任外国製造医療機器等製造販売業者', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'foreignAgentCorpNumber', label: '法人番号（選任外国製造医療機器等製造販売業者）', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'transitionFromApproval', label: '承認からの移行認証', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'successionItem', label: '承継品目', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'successionDate', label: '承継年月日', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'successionBodyChange', label: '承継時認証機関変更', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'certificationArrangedDate', label: '認証整理日', scope: 'common', group: 'JMDN/MEDIS/薬事' },
+  { key: 'certificationRevokedDate', label: '認証取消日', scope: 'common', group: 'JMDN/MEDIS/薬事' },
   // 資産情報
-  { key: 'legalServiceLife', label: '耐用年数(法定)' },
-  { key: 'serviceLifePeriod', label: '耐用期間' },
-  { key: 'endOfService', label: 'EOS:販売終了' },
-  { key: 'endOfSupport', label: 'EOS:メンテ終了' },
-  { key: 'dedicatedConsumables', label: '専用消耗品' },
-  { key: 'catalogDocument', label: 'カタログ' },
-  { key: 'operationManual', label: '操作マニュアル' },
-  { key: 'otherDocument', label: 'その他PDF' },
-  // PMDA提供
-  { key: 'pmdaClassNotification', label: 'クラス分類告示' },
-  { key: 'pmdaMaintenanceNotification', label: '特定保守告示' },
-  { key: 'pmdaInstallNotification', label: '設置管理告示' },
-  { key: 'pmdaClassCode', label: '類別コード(PMDA)' },
-  { key: 'pmdaClassName', label: '類別名称(PMDA)' },
-  { key: 'pmdaSubCategory', label: '中分類名(PMDA)' },
-  { key: 'pmdaCode', label: 'コード(PMDA)' },
-  { key: 'pmdaGeneralName', label: '一般的名称(PMDA)' },
-  { key: 'pmdaGeneralNameDef', label: '一般的名称定義' },
-  { key: 'pmdaClassification', label: 'クラス分類' },
-  { key: 'pmdaGhtfRule', label: 'GHTFルール' },
-  { key: 'pmdaSpecificMaintenance', label: '特定保守' },
-  { key: 'pmdaInstallMgmt', label: '設置管理' },
-  { key: 'pmdaRepairCategory', label: '修理区分' },
-  { key: 'pmdaQms316', label: 'QMS告示316号' },
-  { key: 'pmdaOldGeneralNameCode', label: '旧一般的名称コード' },
-  { key: 'pmdaOldGeneralName', label: '旧一般的名称' },
-  { key: 'pmdaOldClassification', label: '旧クラス分類' },
-  { key: 'pmdaOldRepairType', label: '旧修理種別' },
-  { key: 'pmdaRevisionCount', label: '改正回数' },
-  { key: 'pmdaLastUpdated', label: '最終更新日' },
-  // 登録
-  { key: 'registrationStatus', label: '登録状況' },
+  { key: 'legalServiceLife', label: '耐用年数（法定）', scope: 'common', group: '資産情報' },
+  { key: 'serviceLifePeriod', label: '耐用期間（メーカー推奨）', scope: 'common', group: '資産情報' },
+  { key: 'endOfService', label: 'End of service：販売終了', scope: 'common', group: '資産情報' },
+  { key: 'endOfSupport', label: 'End of support：メンテ終了', scope: 'common', group: '資産情報' },
+  { key: 'dedicatedConsumables', label: '専用消耗品', scope: 'common', group: '資産情報' },
+  { key: 'applicationRelated', label: '申請関連', scope: 'common', group: '資産情報' },
+  { key: 'legalInspection', label: '法定点検', scope: 'common', group: '資産情報' },
+  { key: 'legalInspectionBasis', label: '法定点検根拠', scope: 'common', group: '資産情報' },
+  { key: 'inspectionRecordRetention', label: '点検記録保存期間', scope: 'common', group: '資産情報' },
+  { key: 'otherDocument', label: 'その他任意のPDFデータ他', scope: 'common', group: '資産情報' },
+  // SHIP固有: 設備情報
+  { key: 'drawingNo', label: '図面No,', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'layoutReflection', label: 'レイアウト反映', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'specialEquipment', label: '特殊設備（重設備）', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'masterStandardDrawing', label: 'Master標準図', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'width', label: '幅（W）', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'depth', label: '奥行（D）', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'height', label: '高さ（H）', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'powerConnection', label: '電源接続', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'powerType', label: '電源種別', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'powerConsumption', label: '消費電力', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'waterSupplySize', label: '給水', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'hotWaterSize', label: '給湯', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'drainageSize', label: '排水', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'exhaustSize', label: '排気', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'exhaustVolume', label: '排気風量', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'steamSize', label: '蒸気', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'gas', label: 'ガス', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'weight', label: '重量（kg）', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'reinforcement', label: '補強', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'mountAnchor', label: '架台・アンカー', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'floorLowering', label: '床下げ', scope: 'ship', group: '設備情報（SHIP）' },
+  { key: 'equipmentRemarks', label: '設備備考', scope: 'ship', group: '設備情報（SHIP）' },
+  // SHIP固有: リモデル分析カラム
+  { key: 'transportCategory', label: '搬送区分', scope: 'ship', group: 'リモデル分析（SHIP）' },
+  { key: 'movedAt', label: '移動日時', scope: 'ship', group: 'リモデル分析（SHIP）' },
+  { key: 'requestYearMonth', label: '要望年月', scope: 'ship', group: 'リモデル分析（SHIP）' },
+  { key: 'standardLeadTime', label: '標準納期', scope: 'ship', group: 'リモデル分析（SHIP）' },
+  { key: 'recommendedRenewalPeriod', label: '更新期間（SHRC推奨）', scope: 'ship', group: 'リモデル分析（SHIP）' },
+  { key: 'expectedRenewalPeriod', label: '想定更新期間', scope: 'ship', group: 'リモデル分析（SHIP）' },
+  { key: 'estimatedBudget', label: '予算金額（SHRC概算）', scope: 'ship', group: 'リモデル分析（SHIP）' },
+  { key: 'deviceRank', label: '医療機器ランク表示', scope: 'ship', group: 'リモデル分析（SHIP）' },
+  { key: 'serialInputNo', label: '通しNo(入力順)', scope: 'ship', group: 'リモデル分析（SHIP）' },
+  { key: 'masterListOrder', label: 'マスターリストの表示順', scope: 'ship', group: 'リモデル分析（SHIP）' },
+  { key: 'systemRegisteredAt', label: 'システム登録日', scope: 'ship', group: 'リモデル分析（SHIP）' },
+  { key: 'systemRegisteredBy', label: 'システム登録者', scope: 'ship', group: 'リモデル分析（SHIP）' },
+  // 受領表に定義がない現行カラム（PMDA照合結果・登録状況）
+  { key: 'pharmaceuticalAffairs', label: '薬事', scope: 'common', group: 'PMDA照合・登録状況' },
+  { key: 'pmdaClassCode', label: '類別コード（PMDA）', scope: 'common', group: 'PMDA照合・登録状況' },
+  { key: 'pmdaClassName', label: '類別名称（PMDA）', scope: 'common', group: 'PMDA照合・登録状況' },
+  { key: 'pmdaSubCategory', label: '中分類名（PMDA）', scope: 'common', group: 'PMDA照合・登録状況' },
+  { key: 'pmdaCode', label: 'JMDNコード（PMDA）', scope: 'common', group: 'PMDA照合・登録状況' },
+  { key: 'pmdaGeneralName', label: '一般的名称（PMDA）', scope: 'common', group: 'PMDA照合・登録状況' },
+  { key: 'pmdaLastUpdated', label: '最終更新日', scope: 'common', group: 'PMDA照合・登録状況' },
+  { key: 'registrationStatus', label: '登録状況', scope: 'common', group: 'PMDA照合・登録状況' },
 ];
 
 function ShipAssetMasterContent() {
@@ -99,6 +137,18 @@ function ShipAssetMasterContent() {
   const isSelectMode = searchParams.get('mode') === 'select';
   const { isMobile, isTablet } = useResponsive();
   const { assets, setAssets, addAsset, updateAsset, deleteAsset } = useMasterStore();
+  const { user } = useAuthStore();
+
+  // SHIP固有カラムは、認証時のドメインが SHIP の場合のみ表示する（資産マスタは全カラムを保持する）
+  const isShipDomain = (user?.email ?? '').toLowerCase().endsWith('@ship.com');
+  const visibleColumns = ASSET_MASTER_COLUMNS.filter(col => col.scope === 'common' || isShipDomain);
+  // グループヘッダーは表示中のカラムから算出する（カラムの増減とズレないように）
+  const columnGroups = visibleColumns.reduce<{ label: string; span: number }[]>((acc, col) => {
+    const last = acc[acc.length - 1];
+    if (last && last.label === col.group) last.span += 1;
+    else acc.push({ label: col.group, span: 1 });
+    return acc;
+  }, []).concat([{ label: '', span: 1 }]);
 
   // 顧客の全件資産マスタを遅延ロード（26MB JSONを初期バンドルに含めないため）
   const [isLoading, setIsLoading] = useState(false);
@@ -245,14 +295,6 @@ function ShipAssetMasterContent() {
     setImportPreview(null);
   };
 
-  const handleImportReplace = () => {
-    if (!importPreview) return;
-    const withIds = assignAssetIds(importPreview.assets, []);
-    setAssets(withIds);
-    setShowImportModal(false);
-    setImportPreview(null);
-  };
-
   const handleImportCancel = () => {
     setShowImportModal(false);
     setImportPreview(null);
@@ -262,7 +304,7 @@ function ShipAssetMasterContent() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#FAFAFA' }}>
       {/* 選択モードバナー */}
       {isSelectMode && (
-        <div style={{
+        <div data-element-id="sam-select-banner" style={{
           background: '#EBF5EE',
           color: '#146E2E',
           padding: '10px 20px',
@@ -278,6 +320,7 @@ function ShipAssetMasterContent() {
           <MousePointerClick size={16} aria-hidden />
           資産マスタを選択してください - 行をクリックすると選択されます
           <button
+            data-element-id="sam-select-cancel-btn"
             onClick={() => window.close()}
             style={{
               padding: '6px 12px',
@@ -308,6 +351,7 @@ function ShipAssetMasterContent() {
         showOriginalLabel={false}
       >
         <button
+          data-element-id="sam-export-btn"
           onClick={handleExport}
           className={`inline-flex items-center justify-center gap-1.5 h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-surface-card text-cta-primary-dark border border-cta-primary rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-surface-select transition-colors`}
         >
@@ -315,6 +359,7 @@ function ShipAssetMasterContent() {
           エクスポート
         </button>
         <button
+          data-element-id="sam-import-btn"
           onClick={() => fileInputRef.current?.click()}
           className={`inline-flex items-center justify-center gap-1.5 h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-surface-card text-cta-primary-dark border border-cta-primary rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-surface-select transition-colors`}
         >
@@ -322,6 +367,7 @@ function ShipAssetMasterContent() {
           インポート
         </button>
         <input
+          data-element-id="sam-file-input"
           ref={fileInputRef}
           type="file"
           accept=".xlsx,.xls"
@@ -329,6 +375,7 @@ function ShipAssetMasterContent() {
           onChange={handleFileSelect}
         />
         <button
+          data-element-id="sam-new-btn"
           onClick={() => setShowNewModal(true)}
           className={`inline-flex items-center justify-center gap-1.5 h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-cta-primary text-white border-0 rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-cta-primary-dark transition-colors`}
         >
@@ -338,7 +385,7 @@ function ShipAssetMasterContent() {
       </Header>
 
       {/* Filter Header */}
-      <div style={{
+      <div data-element-id="sam-filter-area" style={{
         background: 'white',
         padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px',
         borderBottom: '1px solid #E1E1E1',
@@ -352,6 +399,7 @@ function ShipAssetMasterContent() {
           </label>
           <input
             type="text"
+            data-element-id="sam-filter-category"
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
             placeholder="医療機器"
@@ -370,6 +418,7 @@ function ShipAssetMasterContent() {
           </label>
           <input
             type="text"
+            data-element-id="sam-filter-large-class"
             value={filterLargeClass}
             onChange={(e) => setFilterLargeClass(e.target.value)}
             placeholder="大分類で検索"
@@ -388,6 +437,7 @@ function ShipAssetMasterContent() {
           </label>
           <input
             type="text"
+            data-element-id="sam-filter-medium-class"
             value={filterMediumClass}
             onChange={(e) => setFilterMediumClass(e.target.value)}
             placeholder="中分類で検索"
@@ -406,6 +456,7 @@ function ShipAssetMasterContent() {
           </label>
           <input
             type="text"
+            data-element-id="sam-filter-item"
             value={filterItem}
             onChange={(e) => setFilterItem(e.target.value)}
             placeholder="品目で検索"
@@ -424,6 +475,7 @@ function ShipAssetMasterContent() {
           </label>
           <input
             type="text"
+            data-element-id="sam-filter-maker"
             value={filterMaker}
             onChange={(e) => setFilterMaker(e.target.value)}
             placeholder="メーカーで検索"
@@ -510,26 +562,17 @@ function ShipAssetMasterContent() {
         ) : (
           // テーブル表示 (PC/タブレット)
           <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', overflow: 'auto', flex: 1, minHeight: 0 }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
+              <table data-element-id="sam-table" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                   {/* グループヘッダー (Figma パレット内 #F1F1F1 で統一) */}
                   <tr>
-                    {([
-                      { label: 'JMDN分類・一般名称', span: 8 },
-                      { label: '薬事', span: 1 },
-                      { label: 'SHIP_Master', span: 8 },
-                      { label: '設備情報', span: 22 },
-                      { label: '資産情報', span: 8 },
-                      { label: 'PMDA提供', span: 21 },
-                      { label: '登録', span: 1 },
-                      { label: '', span: 1 },
-                    ] as const).map((g, i) => (
-                      <th key={i} colSpan={g.span} style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', fontWeight: 700, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{g.label}</th>
+                    {columnGroups.map((g, i) => (
+                      <th key={i} colSpan={g.span} {...(i === 0 ? { 'data-element-id': 'sam-group-header' } : {})} style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', fontWeight: 700, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{g.label}</th>
                     ))}
                   </tr>
                   {/* カラムヘッダー */}
                   <tr>
-                    {ASSET_MASTER_COLUMNS.map(col => (
+                    {visibleColumns.map(col => (
                       <th key={col.key} style={{ padding: '6px 8px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#4A4A4A', background: '#FAFAFA', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{col.label}</th>
                     ))}
                     <th style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', fontWeight: 600, color: '#4A4A4A', background: '#FAFAFA', border: '1px solid #E1E1E1', whiteSpace: 'nowrap', width: '88px' }}>操作</th>
@@ -542,12 +585,13 @@ function ShipAssetMasterContent() {
                       onClick={isSelectMode ? () => handleSelect(asset) : undefined}
                       style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA', cursor: isSelectMode ? 'pointer' : 'default', height: '34px' }}
                     >
-                      {ASSET_MASTER_COLUMNS.map(col => (
+                      {visibleColumns.map(col => (
                         <td key={col.key} style={{ padding: '6px 8px', fontSize: '11px', color: '#4A4A4A', whiteSpace: 'nowrap', border: '1px solid #E1E1E1', verticalAlign: 'middle' }}>{String((asset as unknown as Record<string, unknown>)[col.key] || '')}</td>
                       ))}
                       <td style={{ padding: '4px 6px', textAlign: 'center', whiteSpace: 'nowrap', border: '1px solid #E1E1E1', verticalAlign: 'middle' }}>
                         {isSelectMode ? (
                           <button
+                            {...(index === 0 ? { 'data-element-id': 'sam-select-btn' } : {})}
                             onClick={(e) => { e.stopPropagation(); handleSelect(asset); }}
                             style={{ padding: '4px 10px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
                           >
@@ -556,6 +600,7 @@ function ShipAssetMasterContent() {
                         ) : (
                           <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                             <button
+                              {...(index === 0 ? { 'data-element-id': 'sam-edit-btn' } : {})}
                               onClick={() => handleEdit(asset)}
                               aria-label={`${asset.item || '資産'} を編集`}
                               style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', background: 'transparent', color: '#146E2E', border: '1px solid #008C1D', borderRadius: '4px', cursor: 'pointer' }}
@@ -563,6 +608,7 @@ function ShipAssetMasterContent() {
                               <Pencil size={12} />
                             </button>
                             <button
+                              {...(index === 0 ? { 'data-element-id': 'sam-delete-btn' } : {})}
                               onClick={() => handleDelete(asset.id)}
                               aria-label={`${asset.item || '資産'} を削除`}
                               style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', background: 'transparent', color: '#DA0000', border: '1px solid #DA0000', borderRadius: '4px', cursor: 'pointer' }}
@@ -582,6 +628,7 @@ function ShipAssetMasterContent() {
         {allFilteredAssets.length > displayLimit && (
           <div style={{ textAlign: 'center', padding: '16px' }}>
             <button
+              data-element-id="sam-load-more-btn"
               onClick={() => setDisplayLimit(prev => prev + DISPLAY_LIMIT)}
               style={{ padding: '10px 24px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
             >
@@ -621,7 +668,7 @@ function ShipAssetMasterContent() {
         )}
       </main>
 
-      <footer style={{ padding: '12px 0', textAlign: 'center', fontSize: '12px', color: '#8A8A8A' }}>
+      <footer data-element-id="sam-footer" style={{ padding: '12px 0', textAlign: 'center', fontSize: '12px', color: '#8A8A8A' }}>
         &copy;Copyright 2024 SHIP HEALTHCARE HOLDINGS, INC.
       </footer>
 
@@ -657,7 +704,6 @@ function ShipAssetMasterContent() {
         errors={importPreview?.errors ?? []}
         onCancel={handleImportCancel}
         onAdd={handleImportAdd}
-        onReplace={handleImportReplace}
         onDownloadTemplate={downloadAssetTemplate}
       />
     </div>

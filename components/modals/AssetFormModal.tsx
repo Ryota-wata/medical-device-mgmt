@@ -64,14 +64,14 @@ export function AssetFormModal({
   if (!isOpen) return null;
 
   return (
-    <div style={styles.modal} onClick={onClose}>
+    <div data-element-id="asset-form-modal" style={styles.modal} onClick={onClose}>
       <div style={{...styles.modalContent, ...(isMobile && styles.modalContentMobile)}} onClick={(e) => e.stopPropagation()}>
         {/* モーダルヘッダー */}
         <div style={styles.modalHeader}>
-          <h2 style={styles.modalTitle}>
+          <h2 data-element-id="afm-title" style={styles.modalTitle}>
             {mode === 'create' ? 'SHIP資産マスタ新規作成' : 'SHIP資産マスタ編集'}
           </h2>
-          <button style={styles.closeButton} onClick={onClose}>×</button>
+          <button data-element-id="afm-close-btn" style={styles.closeButton} onClick={onClose}>×</button>
         </div>
 
         {/* フォームコンテンツ */}
@@ -87,6 +87,7 @@ export function AssetFormModal({
                     Category<span style={{ color: '#DA0000', marginLeft: '4px' }}>*</span>
                   </label>
                   <select
+                    data-element-id="afm-category"
                     style={styles.select}
                     value={formData.category}
                     onChange={(e) => handleChange('category', e.target.value)}
@@ -108,6 +109,7 @@ export function AssetFormModal({
                   <input
                     type="text"
                     style={styles.input}
+                    data-element-id="afm-large-class"
                     value={formData.largeClass}
                     onChange={(e) => handleChange('largeClass', e.target.value)}
                     placeholder="放射線関連機器"
@@ -125,6 +127,7 @@ export function AssetFormModal({
                   <input
                     type="text"
                     style={styles.input}
+                    data-element-id="afm-medium-class"
                     value={formData.mediumClass}
                     onChange={(e) => handleChange('mediumClass', e.target.value)}
                     placeholder="CT関連"
@@ -142,6 +145,7 @@ export function AssetFormModal({
                   <input
                     type="text"
                     style={styles.input}
+                    data-element-id="afm-item"
                     value={formData.item}
                     onChange={(e) => handleChange('item', e.target.value)}
                     placeholder="CTスキャナ"
@@ -159,6 +163,7 @@ export function AssetFormModal({
                   <input
                     type="text"
                     style={styles.input}
+                    data-element-id="afm-maker"
                     value={formData.maker}
                     onChange={(e) => handleChange('maker', e.target.value)}
                     placeholder="GEヘルスケア"
@@ -172,6 +177,7 @@ export function AssetFormModal({
                   <input
                     type="text"
                     style={styles.input}
+                    data-element-id="afm-model"
                     value={formData.model}
                     onChange={(e) => handleChange('model', e.target.value)}
                     placeholder="Revolution CT"
@@ -183,10 +189,10 @@ export function AssetFormModal({
 
             {/* フォームアクション */}
             <div style={{...styles.formActions, ...(isMobile && styles.formActionsMobile)}}>
-              <button type="button" style={{...styles.button, ...styles.cancelButton}} onClick={onClose}>
+              <button data-element-id="afm-cancel-btn" type="button" style={{...styles.button, ...styles.cancelButton}} onClick={onClose}>
                 キャンセル
               </button>
-              <button type="submit" style={{...styles.button, ...styles.submitButton}}>
+              <button data-element-id="afm-submit-btn" type="submit" style={{...styles.button, ...styles.submitButton}}>
                 {mode === 'create' ? '登録' : '更新'}
               </button>
             </div>
