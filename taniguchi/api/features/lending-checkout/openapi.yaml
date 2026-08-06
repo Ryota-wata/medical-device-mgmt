@@ -1,0 +1,777 @@
+openapi: 3.0.4
+info:
+  title: 貸出・返却 API API
+  version: '1.1'
+  description: 貸出・返却で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 貸出・返却
+    description: 貸出・返却 APIのAPI
+paths:
+  /lending-available/items:
+    get:
+      tags:
+        - 貸出・返却
+      operationId: getLendingAvailableItems
+      summary: 貸出可能機器一覧取得
+      description: 有効な貸出管理対象機器を貸出グループ名、品目、メーカー、型式単位で取得し、各機器のステータスと貸出可能台数を返す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: lending_checkout
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '500'
+      parameters:
+        - name: lendingGroupName
+          in: query
+          required: false
+          description: 貸出グループ名。未指定時は全グループ。画面の貸出グループ選択に連動する
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LendingAvailableItemsResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 lending_checkout なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：LendingAvailableItemsResponse）
+      x-word-response-subtable-titles:
+        - groups要素（LendingAvailableGroup）
+        - items要素（LendingAvailableItem）
+        - devices要素（LendingAvailableDevice）
+  /lending-checkout/items/{qrOrBarcode}:
+    get:
+      tags:
+        - 貸出・返却
+      operationId: getLendingCheckoutItemsByQrOrBarcode
+      summary: QR/バーコード貸出対象取得
+      description: QR/バーコードから有効な貸出対象機器を解決し、機器情報、現在ステータス、未返却履歴、返却予定日、実行可能アクション、lockVersion を返す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: lending_checkout
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: qrOrBarcode
+          in: path
+          required: true
+          description: 'qr_codes.qr_identifier 形式（例: R-07-00001）またはハイフンなし形式（例: R0700001）'
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LendingCheckoutItemResponse'
+        '400':
+          description: QR/バーコード形式不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 lending_checkout なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 有効な貸出対象機器が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：LendingCheckoutItemResponse）
+      x-word-response-subtable-titles:
+        - activeTransaction要素（LendingTransactionSummary）
+  /lending-checkout/devices/{lendingDeviceId}/lend:
+    post:
+      tags:
+        - 貸出・返却
+      operationId: postLendingCheckoutDevicesByLendingDeviceIdLend
+      summary: 貸出登録
+      description: 貸出可 の貸出管理対象機器について、貸出先部署と返却予定日を登録し、貸出履歴を作成して機器を 貸出中 にする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: lending_checkout
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: lendingDeviceId
+          in: path
+          required: true
+          description: 貸出管理機器ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostLendingCheckoutDevicesByLendingDeviceIdLendRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      responses:
+        '201':
+          description: 貸出登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LendingCheckoutActionResponse'
+        '400':
+          description: 貸出先部署未入力、返却予定日不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 lending_checkout なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象貸出機器が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ステータス競合、未返却履歴あり、遷移不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：LendingCheckoutActionResponse）
+      x-word-response-subtable-titles:
+        - item要素（LendingCheckoutItemResponse）
+  /lending-checkout/devices/{lendingDeviceId}/return:
+    post:
+      tags:
+        - 貸出・返却
+      operationId: postLendingCheckoutDevicesByLendingDeviceIdReturn
+      summary: 返却登録
+      description: 貸出中 または 使用済 の貸出管理対象機器について返却を登録し、未返却履歴を終端させる。使用後日常点検メニューの有無により貸出機器ステータスを 返却済 または 貸出可 に分岐する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: lending_checkout
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: lendingDeviceId
+          in: path
+          required: true
+          description: 貸出管理機器ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostLendingCheckoutDevicesByLendingDeviceIdReturnRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      responses:
+        '200':
+          description: 返却登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LendingCheckoutActionResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 実効権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象貸出機器が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ステータス競合、未返却履歴なし、遷移不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：LendingCheckoutActionResponse）
+      x-word-response-subtable-titles:
+        - item要素（LendingCheckoutItemResponse）
+  /lending-checkout/devices/{lendingDeviceId}/start-use:
+    post:
+      tags:
+        - 貸出・返却
+      operationId: postLendingCheckoutDevicesByLendingDeviceIdStartUse
+      summary: 使用開始登録
+      description: 貸出中 の貸出管理対象機器について使用開始を登録し、貸出機器と未返却履歴を 使用中 にする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: lending_checkout
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: lendingDeviceId
+          in: path
+          required: true
+          description: 貸出管理機器ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostLendingCheckoutDevicesByLendingDeviceIdStartUseRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      responses:
+        '200':
+          description: 使用開始登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LendingCheckoutActionResponse'
+        '400':
+          description: 返却予定日不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: lending_checkout または lending_in_use_used の実効権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象貸出機器が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ステータス競合、未返却履歴なし、遷移不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：LendingCheckoutActionResponse）
+      x-word-response-subtable-titles:
+        - item要素（LendingCheckoutItemResponse）
+  /lending-checkout/devices/{lendingDeviceId}/end-use:
+    post:
+      tags:
+        - 貸出・返却
+      operationId: postLendingCheckoutDevicesByLendingDeviceIdEndUse
+      summary: 使用終了登録
+      description: 使用中 の貸出管理対象機器について使用終了を登録し、貸出機器と未返却履歴を 使用済 にする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: lending_checkout
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: lendingDeviceId
+          in: path
+          required: true
+          description: 貸出管理機器ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostLendingCheckoutDevicesByLendingDeviceIdEndUseRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      responses:
+        '200':
+          description: 使用終了登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LendingCheckoutActionResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: lending_checkout または lending_in_use_used の実効権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象貸出機器が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ステータス競合、未返却履歴なし、遷移不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：LendingCheckoutActionResponse）
+      x-word-response-subtable-titles:
+        - item要素（LendingCheckoutItemResponse）
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    LendingAvailableItemsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - generatedAt
+        - groups
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+          description: レスポンス生成日時
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/LendingAvailableGroup'
+          description: 貸出グループ別の集計
+          x-word-subtable-title: groups要素（LendingAvailableGroup）
+    LendingAvailableGroup:
+      type: object
+      additionalProperties: false
+      required:
+        - lendingGroupName
+        - totalCount
+        - availableCount
+        - items
+      properties:
+        lendingGroupName:
+          type: string
+          description: 貸出グループ名
+        totalCount:
+          type: integer
+          format: int32
+          description: 貸出グループ内の有効貸出管理対象機器数
+        availableCount:
+          type: integer
+          format: int32
+          description: 貸出グループ内の 貸出可 台数。画面の貸出可能合計表示に使用する
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LendingAvailableItem'
+          description: 品目・メーカー・型式単位の集計
+          x-word-subtable-title: items要素（LendingAvailableItem）
+    LendingAvailableItem:
+      type: object
+      additionalProperties: false
+      required:
+        - itemName
+        - totalCount
+        - availableCount
+        - devices
+      properties:
+        itemName:
+          type: string
+          description: 品目名
+        makerName:
+          type: string
+          description: メーカー名
+        modelName:
+          type: string
+          description: 型式
+        totalCount:
+          type: integer
+          format: int32
+          description: 有効貸出管理対象機器数
+        availableCount:
+          type: integer
+          format: int32
+          description: 貸出可 の台数
+        devices:
+          type: array
+          items:
+            $ref: '#/components/schemas/LendingAvailableDevice'
+          description: 個別機器一覧
+          x-word-subtable-title: devices要素（LendingAvailableDevice）
+    LendingAvailableDevice:
+      type: object
+      additionalProperties: false
+      required:
+        - lendingDeviceId
+        - assetLedgerId
+        - itemName
+        - status
+        - canLend
+      properties:
+        lendingDeviceId:
+          type: integer
+          format: int64
+          description: lending_devices.lending_device_id
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: asset_ledgers.asset_ledger_id
+        qrCodeValue:
+          type: string
+          description: 表示用の代表 qr_codes.qr_identifier。未発行または全QR削除済みの場合は null。代表決定ルールは「QR代表値の扱い」に従う
+        itemName:
+          type: string
+          description: 品目名
+        makerName:
+          type: string
+          description: メーカー名
+        modelName:
+          type: string
+          description: 型式
+        status:
+          type: string
+          description: 貸出機器ステータス
+        canLend:
+          type: boolean
+          description: status='貸出可' の場合 true。貸出可能台数の集計対象判定であり、代表QRの有無では変更しない
+    LendingCheckoutItemResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - lendingDeviceId
+        - assetLedgerId
+        - itemName
+        - currentStatus
+        - lockVersion
+        - overdueDays
+        - returnAlertStatus
+        - afterUseDailyInspectionRequired
+        - allowedActions
+      properties:
+        lendingDeviceId:
+          type: integer
+          format: int64
+          description: 貸出・返却更新APIの正本ID
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 表示および資産台帳参照用ID
+        qrCodeValue:
+          type: string
+          description: >-
+            QR/バーコード解決時は入力に一致した qr_codes.qr_identifier。lendingDeviceId 起点の更新成功レスポンスでは表示用代表
+            qr_codes.qr_identifier、代表QRがない場合は null
+        itemName:
+          type: string
+          description: 品目名
+        makerName:
+          type: string
+          description: メーカー名
+        modelName:
+          type: string
+          description: 型式
+        managementNo:
+          type: string
+          description: asset_ledgers.management_no。画面のME管理No表示値として返す
+        lendingGroupName:
+          type: string
+          description: 貸出グループ名
+        lendingTypeName:
+          type: string
+          description: 貸出種別名
+        currentStatus:
+          type: string
+          description: 現在の lending_devices.status
+        lockVersion:
+          type: integer
+          format: int64
+          description: lending_devices.lock_version
+        activeTransaction:
+          $ref: '#/components/schemas/LendingTransactionSummary'
+          description: 未返却履歴。存在する場合のみ
+          x-word-subtable-title: activeTransaction要素（LendingTransactionSummary）
+        returnPeriodDays:
+          type: integer
+          format: int32
+          description: 返却予定日未指定時の既定日数
+        returnAlertDays:
+          type: integer
+          format: int32
+          description: 返却予定日前アラート日数
+        overdueDays:
+          type: integer
+          format: int32
+          description: 未返却履歴の dueOn から算出した超過日数
+        returnAlertStatus:
+          type: string
+          description: NONE / DUE_SOON / OVERDUE。未返却履歴の dueOn と returnAlertDays から算出するアラート状態
+        afterUseDailyInspectionRequired:
+          type: boolean
+          description: inspection_tasks.inspection_type='日常点検' かつ daily_menu_after_id IS NOT NULL の有効行がある場合 true
+        allowedActions:
+          type: array
+          items:
+            type: string
+          description: 実効権限と現在状態から実行可能な操作
+        primaryAction:
+          type: string
+          description: 画面で主ボタンとして表示する操作
+    LendingTransactionSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - lendingTransactionId
+        - lentOn
+        - lentDepartment
+        - transactionStatus
+      properties:
+        lendingTransactionId:
+          type: integer
+          format: int64
+          description: 未返却の貸出履歴ID
+        lentOn:
+          type: string
+          format: date
+          description: 貸出日
+        dueOn:
+          type: string
+          format: date
+          description: 返却予定日
+        returnedOn:
+          type: string
+          format: date
+          description: 未返却時 NULL
+        lentDepartment:
+          type: string
+          description: 貸出先部署
+        transactionStatus:
+          type: string
+          description: 貸出履歴ステータス
+    PostLendingCheckoutDevicesByLendingDeviceIdLendRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lentDepartment
+      properties:
+        lentDepartment:
+          type: string
+          description: 貸出先部署。担当者IDは受け取らない
+        dueOn:
+          type: string
+          format: date
+          description: 返却予定日。未指定時は returnPeriodDays から算出する
+        expectedStatus:
+          type: string
+          description: 貸出可。expectedLockVersion 未指定時は必須
+          x-word-required-label: 条件必須
+        expectedLockVersion:
+          type: integer
+          format: int64
+          description: 画面取得時点の lending_devices.lock_version。expectedStatus 未指定時は必須
+          x-word-required-label: 条件必須
+    LendingCheckoutActionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+        - completedAction
+        - completionTitle
+        - completionMessage
+      properties:
+        item:
+          $ref: '#/components/schemas/LendingCheckoutItemResponse'
+          description: 更新後の貸出対象機器状態
+          x-word-subtable-title: item要素（LendingCheckoutItemResponse）
+        completedAction:
+          type: string
+          description: CHECKOUT / RETURN / START_USE / END_USE。CHECKOUT は貸出する操作を表し、ステータス遷移定義の transition_action_code と一致させる
+        completionTitle:
+          type: string
+          description: 完了表示のタイトル
+        completionMessage:
+          type: string
+          description: 処理結果メッセージ。対象機器名、更新後ステータス、返却予定日または返却日を含める
+    PostLendingCheckoutDevicesByLendingDeviceIdReturnRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expectedStatus:
+          type: string
+          description: 貸出中 または 使用済。expectedLockVersion 未指定時は必須
+          x-word-required-label: 条件必須
+        expectedLockVersion:
+          type: integer
+          format: int64
+          description: 画面取得時点の lending_devices.lock_version。expectedStatus 未指定時は必須
+          x-word-required-label: 条件必須
+    PostLendingCheckoutDevicesByLendingDeviceIdStartUseRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        dueOn:
+          type: string
+          format: date
+          description: 返却予定日を使用開始時に変更する場合に指定
+        expectedStatus:
+          type: string
+          description: 貸出中。expectedLockVersion 未指定時は必須
+          x-word-required-label: 条件必須
+        expectedLockVersion:
+          type: integer
+          format: int64
+          description: 画面取得時点の lending_devices.lock_version。expectedStatus 未指定時は必須
+          x-word-required-label: 条件必須
+    PostLendingCheckoutDevicesByLendingDeviceIdEndUseRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expectedStatus:
+          type: string
+          description: 使用中。expectedLockVersion 未指定時は必須
+          x-word-required-label: 条件必須
+        expectedLockVersion:
+          type: integer
+          format: int64
+          description: 画面取得時点の lending_devices.lock_version。expectedStatus 未指定時は必須
+          x-word-required-label: 条件必須
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

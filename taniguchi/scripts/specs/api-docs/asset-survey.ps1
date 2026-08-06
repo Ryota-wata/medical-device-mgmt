@@ -14,11 +14,11 @@ $surveyDataEditPermissionLines = @(
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_現有品調査.docx'
   ScreenLabel = '現有品調査'
-  CoverDateText = '2026年6月18日'
-  CoverVersionText = '1.1'
-  RevisionVersionText = '1.1'
-  RevisionDateText = '2026/6/18'
-  RevisionSummaryText = '調査登録内容修正の本体・明細紐付けAPI追加と既存API仕様の明確化'
+  CoverDateText = '2026年7月22日'
+  CoverVersionText = '1.2'
+  RevisionVersionText = '1.2'
+  RevisionDateText = '2026/7/22'
+  RevisionSummaryText = '調査登録内容修正の明細区分全状態遷移対応、本体解除API追加、親子整合ルールの明確化'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -27,7 +27,7 @@ $surveyDataEditPermissionLines = @(
     @{ Type = 'Bullets'; Items = @(
       'オフライン利用前に必要なマスタパッケージ取得 I/F',
       'オフラインで収集した調査結果アップロード I/F',
-      '送信後データの一覧表示、修正、明細紐付け、写真参照/削除、確定 I/F',
+      '送信後データの一覧表示、修正、明細区分変更、写真参照/削除、確定 I/F',
       '現有品調査関連画面のうち API 対象とする画面範囲'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
@@ -51,7 +51,7 @@ $surveyDataEditPermissionLines = @(
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'APIの位置づけ' },
     @{ Type = 'Paragraph'; Text = '本API群は、オフライン調査に必要なマスタパッケージを端末へ配布し、端末に保持した調査結果をバックエンドへ取り込み、その後に未確定データをオンラインで修正・確定するための I/F を提供する。' },
-    @{ Type = 'Paragraph'; Text = '調査場所選択、現有品入力、履歴表示は PWA のローカル実装として扱い、これらの画面単位の個別APIは設けない。送信後データの一覧表示、インライン編集、明細紐付け、写真モーダル、確定のみ `/registration-edit` の API 対象とする。' },
+    @{ Type = 'Paragraph'; Text = '調査場所選択、現有品入力、履歴表示は PWA のローカル実装として扱い、これらの画面単位の個別APIは設けない。送信後データの一覧表示、インライン編集、明細区分変更、写真モーダル、確定のみ `/registration-edit` の API 対象とする。' },
     @{ Type = 'Heading2'; Text = '画面とAPIの関係' },
     @{ Type = 'Numbered'; Items = @(
       'マスタデータをダウンロード押下時にマスタパッケージ取得 API を呼び出す',
@@ -59,9 +59,7 @@ $surveyDataEditPermissionLines = @(
       '調査登録内容修正画面の初期表示・フィルタ変更時に調査レコード一覧取得 API を呼び出す',
       '写真枚数押下時に調査写真一覧取得 API を呼び出す',
       'インライン編集保存時に調査レコード更新 API を呼び出す',
-      '本体に設定押下時に調査レコード本体設定 API を呼び出す',
-      '明細として紐付ける押下時に調査レコード明細紐付け API を呼び出す',
-      '紐付け解除押下時に調査レコード明細紐付け解除 API を呼び出す',
+      '明細区分の保存時は変更前後の状態に応じて本体設定、本体解除、明細紐付け、紐付け解除の専用APIを呼び出す',
       '写真削除時に調査写真削除 API を呼び出す',
       '確定・一括確定押下時に調査レコード確定 API を呼び出す'
     ) },
@@ -93,7 +91,7 @@ $surveyDataEditPermissionLines = @(
     @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('現有品調査', '`existing_survey`', 'マスタパッケージ取得、調査結果アップロード'),
-      @('現調データ修正', '`survey_data_edit`', '送信後データ一覧、写真参照、更新、本体設定、明細紐付け、紐付け解除、写真削除、確定')
+      @('現調データ修正', '`survey_data_edit`', '送信後データ一覧、写真参照、更新、本体設定、本体解除、明細紐付け、紐付け解除、写真削除、確定')
     ) },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
       @('マスタパッケージ取得 / 調査結果アップロード', '`existing_survey`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at`', '通常アカウントは作業対象施設で `existing_survey` が実効有効であること。共有システム管理者は作業対象施設が未削除であること。現有品調査の準備・送信を行う'),
@@ -106,7 +104,7 @@ $surveyDataEditPermissionLines = @(
       '`localPhotoUuid` はファイル名・ファイルパス生成に使う入力であり、業務テーブルの正本カラムとしては保持しない',
       '`/asset-survey` 画面で行う QR 重複チェックは PWA 側責務とし、`POST /offline-prep/survey/upload` は重複チェック済みの `qrIdentifier` スナップショットを保存する',
       '`PUT /registration-edit/records/{recordId}` は通常の行編集項目のみを保存し、明細区分・親調査レコードIDの操作は専用APIで扱う',
-      '`POST /registration-edit/records/{recordId}/set-main`、`POST /registration-edit/records/{parentRecordId}/details/link`、`POST /registration-edit/records/{recordId}/details/unlink` は `asset_survey_records.detail_type` / `parent_asset_survey_record_id` を操作タイミングで更新する',
+      '`POST /registration-edit/records/{recordId}/set-main`、`POST /registration-edit/records/{recordId}/unset-main`、`POST /registration-edit/records/{parentRecordId}/details/link`、`POST /registration-edit/records/{recordId}/details/unlink` は `asset_survey_records.detail_type` / `parent_asset_survey_record_id` を操作タイミングで更新する',
       '`DELETE /registration-edit/records/{recordId}/photos/{photoId}` は `application_documents` のみ、`POST /registration-edit/records/confirm` は対象 `asset_survey_records` のみを更新する',
       '更新系 API は 1 回の呼び出しを 1 DB トランザクションで完結させる。写真削除 API は論理削除と代表写真付け替えに加えて Amazon S3 の DeleteObject を同一 API 処理内で実行し、DeleteObject 成功後に DB トランザクションを commit する'
     ) },
@@ -138,8 +136,9 @@ $surveyDataEditPermissionLines = @(
       @('調査レコード一覧取得', 'GET', '/registration-edit/records', '未確定の調査レコード一覧を取得する', '要'),
       @('調査写真一覧取得', 'GET', '/registration-edit/records/{recordId}/photos', '対象レコードの写真一覧を取得する', '要'),
       @('調査レコード更新', 'PUT', '/registration-edit/records/{recordId}', '調査レコードのインライン編集内容を保存する', '要'),
-      @('調査レコード本体設定', 'POST', '/registration-edit/records/{recordId}/set-main', '未設定の調査レコードを本体に設定する', '要'),
-      @('調査レコード明細紐付け', 'POST', '/registration-edit/records/{parentRecordId}/details/link', '選択した未設定の既存調査レコードを親本体の明細として一括紐付けする', '要'),
+      @('調査レコード本体設定', 'POST', '/registration-edit/records/{recordId}/set-main', '未設定または明細の調査レコードを本体に設定する', '要'),
+      @('調査レコード本体解除', 'POST', '/registration-edit/records/{recordId}/unset-main', '子明細を持たない本体の明細区分を未設定に戻す', '要'),
+      @('調査レコード明細紐付け', 'POST', '/registration-edit/records/{parentRecordId}/details/link', '選択した未設定または子明細を持たない本体の既存調査レコードを親本体の明細として一括紐付けする', '要'),
       @('調査レコード明細紐付け解除', 'POST', '/registration-edit/records/{recordId}/details/unlink', '明細行の親子紐付けを解除する', '要'),
       @('調査写真削除', 'DELETE', '/registration-edit/records/{recordId}/photos/{photoId}', '対象レコードの写真を削除する', '要'),
       @('調査レコード確定', 'POST', '/registration-edit/records/confirm', '選択したレコードを確定する', '要')
@@ -608,7 +607,7 @@ $surveyDataEditPermissionLines = @(
           '`shipAssetMasterId` を明示的に `null` で送信した場合は `ship_asset_master_id=NULL` とする。`shipAssetMasterId` 未送信で分類IDまたは分類表示値のいずれかを更新する場合も、旧資産マスタとの不整合を避けるため `ship_asset_master_id=NULL` とする',
           '個別の分類マスタIDを非 `null` で送信した場合は対応マスタが `is_active=true` であることと階層整合性を検証し、正規名称を `*_name` に保存する。上位IDの変更または `null` 指定で不整合になる下位IDは `NULL` にする',
           '分類IDを明示的に `null` で送信した場合、またはIDを送信せず対応する分類表示値だけを変更した場合は、対応IDを `NULL` として表示値を保存する。上位分類の自由記述化で不整合になる下位IDも `NULL` にする。各フィールドの未送信時は現在値を維持する',
-          '`detail_type` / `parent_asset_survey_record_id` は本APIでは更新しない。本体設定・明細紐付け・紐付け解除は専用APIで操作タイミングに永続化する',
+          '`detail_type` / `parent_asset_survey_record_id` は本APIでは更新しない。本体設定・本体解除・明細紐付け・紐付け解除は専用APIで操作タイミングに永続化する',
           'リクエストで未指定の項目は既存値を維持し、明示的に `null` を送った項目だけ対応カラムをクリアする',
           '更新成功時は `asset_survey_records.updated_at` を現在時刻へ更新する',
           '更新後の `asset_survey_records` を返却する'
@@ -620,7 +619,7 @@ $surveyDataEditPermissionLines = @(
             Rows = @(
               @('`asset_survey_records`', '`facility_location_id` / `building` / `floor` / `department_name` / `section_name` / `room_name`', '`facilityLocationId` が非 `null` なら正本スナップショット、明示 `null` ならIDを `NULL` にして送信済み表示値を保存する', '未送信フィールドは既存値を維持する'),
               @('`asset_survey_records`', '`ship_asset_master_id`', '`shipAssetMasterId` 指定時は有効なSHIP資産マスタID、明示 `null` または資産マスタ未指定の分類更新時は `NULL` を保存する', '分類組み合わせとの不整合を残さない'),
-              @('`asset_survey_records`', '`detail_type` / `parent_asset_survey_record_id`', '変更しない', '本体設定・明細紐付け・紐付け解除は専用APIで扱う'),
+              @('`asset_survey_records`', '`detail_type` / `parent_asset_survey_record_id`', '変更しない', '本体設定・本体解除・明細紐付け・紐付け解除は専用APIで扱う'),
               @('`asset_survey_records`', '`category_id` / `large_class_id` / `medium_class_id` / `asset_item_id` / `manufacturer_id` / `model_id` / `category_name` / `large_class_name` / `medium_class_name` / `asset_item_name` / `manufacturer_name` / `model_name`', '資産マスタ指定時は当該マスタの分類IDと正規名称、個別ID指定時は有効な対応マスタIDと正規名称を保存する', '明示 `null` はID解除、未送信は維持。親子不整合の下位IDはクリアする'),
               @('`asset_survey_records`', '`asset_no` / `equipment_no` / `serial_no` / `purchased_on` / `width_mm` / `depth_mm` / `height_mm` / `remarks`', 'リクエスト `assetNo` / `equipmentNo` / `serialNo` / `purchasedOn` / `widthMm` / `depthMm` / `heightMm` / `remarks` で上書きする', '未指定時は既存値を維持し、明示 `null` はクリアする'),
               @('`asset_survey_records`', '`updated_at`', '更新時点の日時へ更新する', 'インライン編集の最終更新時刻'),
@@ -646,7 +645,7 @@ $surveyDataEditPermissionLines = @(
       },
       @{
         Title = '調査レコード本体設定（/registration-edit/records/{recordId}/set-main）'
-        Overview = '明細区分が未設定の調査レコードを本体として設定する。通常のインライン編集保存とは独立し、操作押下時点で永続化する。'
+        Overview = '明細区分が未設定または明細の調査レコードを本体として設定する。明細から本体へ変更する場合は旧親との紐付けを解除する。通常のインライン編集保存とは独立し、操作押下時点で永続化する。'
         Method = 'POST'
         Path = '/registration-edit/records/{recordId}/set-main'
         Auth = '要（Bearer）'
@@ -659,17 +658,66 @@ $surveyDataEditPermissionLines = @(
         ProcessingLines = @(
           '対象 `asset_survey_records` を排他取得し、`deleted_at IS NULL`、`survey_status=''DRAFT''`、`facility_id` が Bearer トークン上の作業対象施設IDと一致することを検証する',
           '対象レコードの `facilities.deleted_at IS NULL` を検証する',
-          '対象レコードが明細行（`detail_type=''DETAIL''` または `parent_asset_survey_record_id IS NOT NULL`）の場合は本APIでは本体化せず 409 を返す',
-          '対象レコードが既に `detail_type=''MAIN''` の場合は冪等成功として扱い、値を変更せず最新行を返す',
+          '対象レコードが `detail_type=''MAIN''` かつ `parent_asset_survey_record_id IS NULL` の場合は冪等成功として扱い、値を変更せず最新行を返す',
+          '対象レコードが未設定（`detail_type IS NULL` かつ `parent_asset_survey_record_id IS NULL`）または明細（`detail_type=''DETAIL''` かつ `parent_asset_survey_record_id IS NOT NULL`）であることを検証する。不整合な組み合わせの場合は 409 を返す',
+          '対象レコードが明細の場合は現在の親本体を排他取得し、親が同一施設の `deleted_at IS NULL`、`survey_status=''DRAFT''`、`detail_type=''MAIN''`、`parent_asset_survey_record_id IS NULL` のレコードであることを検証する',
+          '対象レコードが明細の場合は旧親との紐付けを解除し、対象レコードを `detail_type=''MAIN''`、`parent_asset_survey_record_id=NULL`、`updated_at=現在時刻` へ同一トランザクション内で更新する',
           '対象レコードが未設定の場合は `detail_type=''MAIN''`、`parent_asset_survey_record_id=NULL`、`updated_at=現在時刻` へ更新する',
-          '本APIは 1 レコード更新を 1 DB トランザクションで完結する'
+          '本APIは対象レコードと必要な旧親のロック取得から更新までを 1 DB トランザクションで完結する'
         )
         ExtraTables = @(
           @{
             Title = '永続化マッピング'
             Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
             Rows = @(
-              @('`asset_survey_records`', '`detail_type`', '`MAIN` へ更新する', '未設定行を本体として扱う'),
+              @('`asset_survey_records`', '`detail_type`', '`MAIN` へ更新する', '未設定行を本体として扱い、明細行は旧親との紐付け解除後に本体化する'),
+              @('`asset_survey_records`', '`parent_asset_survey_record_id`', '`NULL` を設定する', '本体行は親を持たず、明細行は旧親との紐付けを解除する'),
+              @('`asset_survey_records`', '`updated_at`', '現在時刻へ更新する', '操作時点で永続化する')
+            )
+          }
+        )
+        ResponseTitle = 'レスポンス（200：RegistrationEditRecordResponse）'
+        ResponseHeaders = @('フィールド', '型', '必須', '説明')
+        ResponseRows = @(
+          @('item', 'RegistrationEditRecordSummary', '✓', '更新後の調査レコード')
+        )
+        StatusRows = @(
+          @('200', '本体設定成功、明細から本体への変更成功、または既に本体のため冪等成功', 'RegistrationEditRecordResponse'),
+          @('400', '入力不正', 'ErrorResponse'),
+          @('401', '未認証', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `survey_data_edit` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
+          @('404', '対象レコードが存在しない', 'ErrorResponse'),
+          @('409', '`REG_EDIT_409_HIERARCHY_CONFLICT`: 対象レコードの明細区分・親IDの組み合わせが不正、旧親が無効、または親子整合上本体化できない', 'ErrorResponse'),
+          @('409', '`REG_EDIT_409_ALREADY_CONFIRMED`: 対象レコードまたは旧親が確定済みのため更新できない', 'ErrorResponse'),
+          @('500', 'サーバー内部エラー', 'ErrorResponse')
+        )
+      },
+      @{
+        Title = '調査レコード本体解除（/registration-edit/records/{recordId}/unset-main）'
+        Overview = '子明細を持たない本体調査レコードを明細区分未設定へ戻す。通常のインライン編集保存とは独立し、操作押下時点で永続化する。'
+        Method = 'POST'
+        Path = '/registration-edit/records/{recordId}/unset-main'
+        Auth = '要（Bearer）'
+        ParametersTitle = 'リクエストパラメータ'
+        ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
+        ParametersRows = @(
+          @('recordId', 'path', 'int64', '✓', '未設定に戻す本体調査レコードID')
+        )
+        PermissionLines = $surveyDataEditPermissionLines
+        ProcessingLines = @(
+          '対象 `asset_survey_records` を排他取得し、`deleted_at IS NULL`、`survey_status=''DRAFT''`、`facility_id` が Bearer トークン上の作業対象施設IDと一致することを検証する',
+          '対象レコードの `facilities.deleted_at IS NULL` を検証する',
+          '対象レコードが `detail_type=''MAIN''` かつ `parent_asset_survey_record_id IS NULL` であることを検証する。未設定行、明細行、または不整合な組み合わせの場合は 409 を返す',
+          '対象レコードの有効な子明細（`parent_asset_survey_record_id=recordId`、`deleted_at IS NULL`）を排他取得し、1件でも存在する場合は階層不整合として 409 を返す',
+          '有効な子明細が存在しない場合、対象レコードを `detail_type=NULL`、`parent_asset_survey_record_id=NULL`、`updated_at=現在時刻` へ更新する',
+          '本APIは対象レコードと子明細のロック取得から更新までを 1 DB トランザクションで完結する'
+        )
+        ExtraTables = @(
+          @{
+            Title = '永続化マッピング'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`asset_survey_records`', '`detail_type`', '`NULL` へ更新する', '本体から未設定へ戻す'),
               @('`asset_survey_records`', '`parent_asset_survey_record_id`', '`NULL` を設定する', '本体行は親を持たない'),
               @('`asset_survey_records`', '`updated_at`', '現在時刻へ更新する', '操作時点で永続化する')
             )
@@ -681,18 +729,19 @@ $surveyDataEditPermissionLines = @(
           @('item', 'RegistrationEditRecordSummary', '✓', '更新後の調査レコード')
         )
         StatusRows = @(
-          @('200', '本体設定成功、または既に本体のため冪等成功', 'RegistrationEditRecordResponse'),
+          @('200', '本体解除成功', 'RegistrationEditRecordResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで作業対象施設に対する実効 `survey_data_edit` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
           @('404', '対象レコードが存在しない', 'ErrorResponse'),
-          @('409', '対象レコードが明細行、確定済み、または親子整合上本体化できない', 'ErrorResponse'),
+          @('409', '`REG_EDIT_409_HIERARCHY_CONFLICT`: 対象レコードが本体でない、子明細が存在する、または親子整合上未設定化できない', 'ErrorResponse'),
+          @('409', '`REG_EDIT_409_ALREADY_CONFIRMED`: 対象レコードが確定済みのため更新できない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
       @{
         Title = '調査レコード明細紐付け（/registration-edit/records/{parentRecordId}/details/link）'
-        Overview = '紐付け登録モードで選択した未設定の既存調査レコードを、指定した本体レコードの明細として一括紐付けする。新規調査レコードは作成しない。'
+        Overview = '紐付け登録モードで選択した未設定または子明細を持たない本体の既存調査レコードを、指定した本体レコードの明細として一括紐付けする。新規調査レコードは作成しない。'
         Method = 'POST'
         Path = '/registration-edit/records/{parentRecordId}/details/link'
         Auth = '要（Bearer）'
@@ -704,14 +753,15 @@ $surveyDataEditPermissionLines = @(
         RequestTitle = 'リクエスト（RegistrationEditDetailLinkRequest）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('childRecordIds', 'int64[]', '✓', '明細として紐付ける未設定の調査レコードID一覧。1件以上必須')
+          @('childRecordIds', 'int64[]', '✓', '明細として紐付ける未設定または子明細を持たない本体の調査レコードID一覧。1件以上必須')
         )
         PermissionLines = $surveyDataEditPermissionLines
         ProcessingLines = @(
           '`childRecordIds` が1件以上で、重複がないことを検証する',
           '親本体 `asset_survey_records` を排他取得し、`deleted_at IS NULL`、`survey_status=''DRAFT''`、`facility_id` が Bearer トークン上の作業対象施設IDと一致することを検証する',
           '親本体の `detail_type=''MAIN''` かつ `parent_asset_survey_record_id IS NULL` であることを検証する。未設定行を親にする場合は先に本体設定APIを実行する',
-          '子レコードを全件排他取得し、全件が `deleted_at IS NULL`、`survey_status=''DRAFT''`、親と同一 `facility_id`、`detail_type IS NULL`、`parent_asset_survey_record_id IS NULL` であることを検証する',
+          '子レコードを全件排他取得し、全件が `deleted_at IS NULL`、`survey_status=''DRAFT''`、親と同一 `facility_id`、かつ `detail_type IS NULL` / `parent_asset_survey_record_id IS NULL` または `detail_type=''MAIN''` / `parent_asset_survey_record_id IS NULL` であることを検証する',
+          '子候補が `detail_type=''MAIN''` の場合は、有効な子明細を持たないことを検証する。子明細が存在する場合は 409 を返す',
           '親本体自身が `childRecordIds` に含まれる場合は自己参照として 409 を返す',
           '子候補が他レコードから `parent_asset_survey_record_id` で参照されている場合は、子を持つ本体または中間親を明細化すると階層不整合になるため 409 を返す',
           '検証に成功した子レコード全件について `detail_type=''DETAIL''`、`parent_asset_survey_record_id=parentRecordId`、`updated_at=現在時刻` へ更新する',
@@ -723,7 +773,7 @@ $surveyDataEditPermissionLines = @(
             Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
             Rows = @(
               @('`asset_survey_records`', '親本体 `parentRecordId` の `detail_type` / `parent_asset_survey_record_id`', '変更しない', '親は既に `MAIN` / `NULL` であることを前提にする'),
-              @('`asset_survey_records`', '子 `childRecordIds[*]` の `detail_type`', '`DETAIL` へ更新する', '選択行を明細として扱う'),
+              @('`asset_survey_records`', '子 `childRecordIds[*]` の `detail_type`', '`DETAIL` へ更新する', '未設定行または子明細を持たない本体行を明細として扱う'),
               @('`asset_survey_records`', '子 `childRecordIds[*]` の `parent_asset_survey_record_id`', '`parentRecordId` を設定する', '親本体との紐付け'),
               @('`asset_survey_records`', '子 `childRecordIds[*]` の `updated_at`', '現在時刻へ更新する', '操作時点で永続化する')
             )
@@ -742,7 +792,8 @@ $surveyDataEditPermissionLines = @(
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで作業対象施設に対する実効 `survey_data_edit` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
           @('404', '親本体または子レコードが存在しない', 'ErrorResponse'),
-          @('409', '親が本体でない、子候補が未設定でない、自己参照、循環参照、子を持つ行の明細化、確定済み、または別施設混在により紐付け不可', 'ErrorResponse'),
+          @('409', '`REG_EDIT_409_HIERARCHY_CONFLICT`: 親が本体でない、子候補が未設定または子明細を持たない本体でない、自己参照、循環参照、子を持つ行の明細化、または別施設混在により紐付け不可', 'ErrorResponse'),
+          @('409', '`REG_EDIT_409_ALREADY_CONFIRMED`: 親または子候補が確定済みのため紐付けできない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -762,9 +813,10 @@ $surveyDataEditPermissionLines = @(
           '対象 `asset_survey_records` を排他取得し、`deleted_at IS NULL`、`survey_status=''DRAFT''`、`facility_id` が Bearer トークン上の作業対象施設IDと一致することを検証する',
           '対象レコードの `facilities.deleted_at IS NULL` を検証する',
           '対象レコードが `detail_type=''DETAIL''` かつ `parent_asset_survey_record_id IS NOT NULL` であることを検証する。未設定行や本体行の場合は 409 を返す',
+          '対象レコードの `parent_asset_survey_record_id` をもとに親本体を排他取得し、親本体が同一施設、`deleted_at IS NULL`、`detail_type=''MAIN''`、`parent_asset_survey_record_id IS NULL` であることを検証する。親本体が存在しない、削除済み、別施設、または本体でない場合は 409 を返す。親本体の `survey_status` は `DRAFT` を必須としない',
           '対象レコードが他レコードから親として参照されていないことを検証する',
           '対象レコードの `detail_type=NULL`、`parent_asset_survey_record_id=NULL`、`updated_at=現在時刻` へ更新する',
-          '本APIは 1 レコード更新を 1 DB トランザクションで完結する'
+          '本APIは対象レコードと親本体のロック取得から更新までを 1 DB トランザクションで完結する'
         )
         ExtraTables = @(
           @{
@@ -788,7 +840,8 @@ $surveyDataEditPermissionLines = @(
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで作業対象施設に対する実効 `survey_data_edit` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
           @('404', '対象レコードが存在しない', 'ErrorResponse'),
-          @('409', '対象レコードが明細行でない、確定済み、または親子整合上解除できない', 'ErrorResponse'),
+          @('409', '`REG_EDIT_409_HIERARCHY_CONFLICT`: 対象レコードが明細行でない、親本体が同一施設の有効な本体でない、または親子整合上解除できない', 'ErrorResponse'),
+          @('409', '`REG_EDIT_409_ALREADY_CONFIRMED`: 対象レコードが確定済みのため更新できない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -904,7 +957,7 @@ $surveyDataEditPermissionLines = @(
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
       @('マスタパッケージ取得 / 調査結果アップロード', '`existing_survey`', '通常アカウントは作業対象施設に対して実効 `existing_survey` を持つこと。共有システム管理者は作業対象施設が未削除であること', '現有品調査の準備・送信を行う'),
-      @('調査登録内容修正の一覧 / 写真参照 / 更新 / 本体設定 / 明細紐付け / 紐付け解除 / 写真削除 / 確定', '`survey_data_edit`', '通常アカウントは作業対象施設に対して実効 `survey_data_edit` を持つこと。共有システム管理者は作業対象施設が未削除であること', '送信後データの修正系処理を行う')
+      @('調査登録内容修正の一覧 / 写真参照 / 更新 / 本体設定 / 本体解除 / 明細紐付け / 紐付け解除 / 写真削除 / 確定', '`survey_data_edit`', '通常アカウントは作業対象施設に対して実効 `survey_data_edit` を持つこと。共有システム管理者は作業対象施設が未削除であること', '送信後データの修正系処理を行う')
     ) },
     @{ Type = 'Heading2'; Text = 'データ整合ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -913,15 +966,28 @@ $surveyDataEditPermissionLines = @(
       '`/registration-edit` の対象レコードは `asset_survey_records.deleted_at IS NULL` かつ `facility_id` が Bearer トークン上の作業対象施設IDと一致するものだけを扱う',
       '調査登録内容修正では、表示値スナップショットとマスタIDの両方を保持する前提で更新する',
       '調査登録内容修正の明細区分は `MAIN` / `DETAIL` / `NULL` を扱い、本画面では `ACCESSORY` を作成・更新しない',
-      '本体設定、明細紐付け、紐付け解除は通常の行編集保存とは独立した即時保存操作とし、対象 `asset_survey_records.detail_type` / `parent_asset_survey_record_id` を操作APIのトランザクション内で更新する',
-      '明細紐付けでは親・子とも同一施設、`survey_status=''DRAFT''`、`deleted_at IS NULL` であることを必須とし、子候補は未設定行に限定する。自己参照、循環参照、明細行を親にする操作、明細行または本体行を子候補にする操作、確定済み/削除済み/別施設レコードへの紐付けを禁止する',
-      '子を持つ本体行を明細化または紐付け解除する操作は階層不整合を招くため拒否する',
+      '本体設定、本体解除、明細紐付け、紐付け解除は通常の行編集保存とは独立した即時保存操作とし、対象 `asset_survey_records.detail_type` / `parent_asset_survey_record_id` を操作APIのトランザクション内で更新する',
+      '本体化（未設定→本体、明細→本体）、明細化（本体→明細）および明細紐付け（未設定→明細）では、更新対象と関係する親本体（明細→本体では旧親本体を含む）が同一施設、`survey_status=''DRAFT''`、`deleted_at IS NULL` であることを必須とする。子候補は未設定行または有効な子明細を持たない本体行に限定する。自己参照、循環参照、明細行を親にする操作、子明細を持つ本体行の明細化、確定済み/削除済み/別施設レコードへの紐付けを禁止する',
+      '本体から未設定への変更では、対象本体が `survey_status=''DRAFT''` であることを必須とし、有効な子明細が1件でも存在する場合は子明細の状態にかかわらず拒否する',
+      '明細の紐付け解除では、対象レコードが有効な `DETAIL` かつ `survey_status=''DRAFT''` であること、現在の親本体が同一施設、`deleted_at IS NULL`、`detail_type=''MAIN''` であることを必須とする。親本体の `survey_status=''DRAFT''` は必須としない',
+      '子明細を持つ本体行を未設定または明細へ変更する操作は階層不整合を招くため拒否する',
+      '明細区分の変更は次のAPIで行い、1件でも検証に失敗した場合は対象操作全体をロールバックする'
+    ) },
+    @{ Type = 'Table'; Headers = @('変更前', '変更後', 'API', '条件・備考'); Rows = @(
+      @('未設定', '本体', '`POST .../{recordId}/set-main`', '対象レコードを `MAIN` / 親ID `NULL` にする'),
+      @('明細', '本体', '`POST .../{recordId}/set-main`', '旧親との紐付け解除と本体化を同一トランザクションで行う'),
+      @('本体', '未設定', '`POST .../{recordId}/unset-main`', '有効な子明細が存在する場合は409'),
+      @('未設定', '明細', '`POST .../{parentRecordId}/details/link`', '親は同一施設の有効な本体'),
+      @('本体', '明細', '`POST .../{parentRecordId}/details/link`', '変更対象の本体に有効な子明細がないこと'),
+      @('明細', '未設定', '`POST .../{recordId}/details/unlink`', '対象明細はDRAFT、現在の親本体は同一施設の有効なMAIN。親本体のDRAFTは必須とせず、親IDをNULLにして未設定へ戻す')
+    ) },
+    @{ Type = 'Bullets'; Items = @(
       '接続状態表示、未送信件数、端末内一時保存の削除はクライアント側責務とし、本 API では管理しない'
     ) },
     @{ Type = 'Heading2'; Text = '実装前提' },
     @{ Type = 'Bullets'; Items = @(
       'API対象は `/offline-prep` と `/registration-edit` とし、`/survey-location` / `/asset-survey` / `/history` はPWAのフロントエンド実装として扱う',
-      '画面表示制御は `/auth/context` の `existing_survey` / `survey_data_edit` を参照して行い、`existing_survey` は `/offline-prep` と PWA 導線、`survey_data_edit` は `/registration-edit` の一覧・編集・本体設定・明細紐付け・紐付け解除・写真削除・確定ボタンを出し分ける',
+      '画面表示制御は `/auth/context` の `existing_survey` / `survey_data_edit` を参照して行い、`existing_survey` は `/offline-prep` と PWA 導線、`survey_data_edit` は `/registration-edit` の一覧・編集・本体設定・本体解除・明細紐付け・紐付け解除・写真削除・確定ボタンを出し分ける',
       'アップロード成功後に端末データを削除するかどうかはクライアント側で制御する'
     ) },
 

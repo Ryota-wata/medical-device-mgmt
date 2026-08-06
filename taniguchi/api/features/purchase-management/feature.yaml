@@ -1,0 +1,85 @@
+$schema: ../../feature.schema.json
+id: API-025
+slug: purchase-management
+title: 購入管理
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /quotation-data-box/purchase-management
+  - /quotation-data-box/rfq-process
+  - /quotation-data-box/ocr-confirm
+  - /quotation-data-box/category-registration
+  - /quotation-data-box/item-ai-matching
+  - /quotation-data-box/price-allocation
+  - /quotation-data-box/registration-confirm
+  - /quotation-management
+  - /quotation-data-box/order-registration
+  - /quotation-data-box/inspection-registration
+  - /quotation-data-box/asset-provisional-registration
+  - /quotation-data-box/asset-registration
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/purchase-management.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_購入管理.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-013
+  - API-014A
+  - API-021
+  - API-023
+  - API-024
+
+dbTables:
+  - purchase_applications
+  - applications
+  - purchase_application_details
+  - application_assets
+  - application_status_histories
+  - application_documents
+  - application_document_order_item_links
+  - edit_lists
+  - edit_list_facilities
+  - edit_list_work_locks
+  - edit_list_items
+  - asset_ledgers
+  - rfqs
+  - rfq_applications
+  - rfq_vendors
+  - quotations
+  - quotation_items
+  - quotation_item_application_links
+  - orders
+  - order_items
+  - individuals
+  - asset_categories
+  - asset_large_classes
+  - asset_medium_classes
+  - asset_items
+  - ship_asset_masters
+  - vendors
+  - users
+  - facilities
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+
+permissionCodes:
+  - normal_purchase
+  - normal_quotation
+  - normal_order
+  - normal_acceptance

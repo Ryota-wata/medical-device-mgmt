@@ -1,0 +1,1120 @@
+openapi: 3.0.4
+info:
+  title: 貸出管理 API API
+  version: '1.1'
+  description: 貸出管理で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 貸出管理
+    description: 貸出管理 APIのAPI
+paths:
+  /quotation-data-box/lending-management/context:
+    get:
+      tags:
+        - 貸出管理
+      operationId: getQuotationDataBoxLendingManagementContext
+      summary: 貸出管理コンテキスト取得
+      description: 貸出管理タブおよび資産一覧の貸出機器登録モーダルで使用する候補値、権限、選択資産の登録可否を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      x-feature-code: lending_management
+      parameters:
+        - name: assetLedgerIds
+          in: query
+          required: false
+          description: 貸出機器登録モーダル表示時の選択資産ID。未指定時は候補値のみ返す
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LendingManagementContextResponse'
+        '400':
+          description: 資産ID配列または入力条件が不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 lending_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：LendingManagementContextResponse）
+      x-word-response-subtable-titles:
+        - registrationPreview要素（RegistrationPreviewItem）
+      x-word-response-subtables:
+        - Title: registrationPreview要素（RegistrationPreviewItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetLedgerId
+              - int64
+              - ✓
+              - 資産台帳ID
+            - - qrCodeValue
+              - string
+              - '-'
+              - 代表QR識別子
+            - - itemName
+              - string
+              - ✓
+              - 品目名
+            - - makerName
+              - string
+              - '-'
+              - メーカー名
+            - - modelName
+              - string
+              - '-'
+              - 型式
+            - - placementDepartmentName
+              - string
+              - '-'
+              - 部署/設置部門表示
+            - - canRegister
+              - boolean
+              - ✓
+              - 有効な貸出管理対象がない場合 true
+            - - blockingLendingDeviceId
+              - int64
+              - '-'
+              - 重複登録を妨げる既存貸出管理機器ID
+  /quotation-data-box/lending-management/devices:
+    get:
+      tags:
+        - 貸出管理
+      operationId: getQuotationDataBoxLendingManagementDevices
+      summary: 貸出管理対象機器一覧取得
+      description: 貸出管理タブに表示する有効な貸出管理対象機器一覧を取得する。貸出日、返却予定日、超過日数、点検情報、貸出回数累計は関連テーブルから参照または算出する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      x-feature-code: lending_management
+      parameters:
+        - name: lendingGroupName
+          in: query
+          required: false
+          description: 貸出グループ名
+          schema:
+            type: string
+        - name: itemName
+          in: query
+          required: false
+          description: 品目名の部分一致
+          schema:
+            type: string
+        - name: makerName
+          in: query
+          required: false
+          description: メーカー名の部分一致
+          schema:
+            type: string
+        - name: modelName
+          in: query
+          required: false
+          description: 型式の部分一致
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: 貸出機器ステータス
+          schema:
+            type: string
+        - name: placementDepartmentName
+          in: query
+          required: false
+          description: 設置部署名の部分一致
+          schema:
+            type: string
+        - name: overdueOnly
+          in: query
+          required: false
+          description: 返却超過機器のみ表示する場合 true
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          required: false
+          description: ページ番号。未指定時 1
+          schema:
+            type: integer
+            format: int32
+        - name: pageSize
+          in: query
+          required: false
+          description: 1ページ件数。未指定時 50
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LendingManagementDeviceListResponse'
+        '400':
+          description: 検索条件またはページ指定が不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 lending_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：LendingManagementDeviceListResponse）
+      x-word-response-subtable-titles:
+        - items要素（LendingManagementDeviceSummary）
+      x-word-response-subtables:
+        - Title: items要素（LendingManagementDeviceSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - lendingDeviceId
+              - int64
+              - ✓
+              - lending_devices.lending_device_id。貸出管理APIの正本ID
+            - - assetLedgerId
+              - int64
+              - ✓
+              - asset_ledgers.asset_ledger_id
+            - - qrCodeValue
+              - string
+              - '-'
+              - 代表QR識別子。未発行または削除済みのみの場合は null
+            - - itemName
+              - string
+              - ✓
+              - asset_ledgers.asset_item_name
+            - - makerName
+              - string
+              - '-'
+              - asset_ledgers.manufacturer_name
+            - - modelName
+              - string
+              - '-'
+              - asset_ledgers.model_name
+            - - managementNo
+              - string
+              - '-'
+              - asset_ledgers.management_no。画面のME管理No表示値
+            - - lendingGroupName
+              - string
+              - ✓
+              - lending_devices.lending_group_name
+            - - lendingTypeName
+              - string
+              - '-'
+              - lending_devices.lending_type_name
+            - - currentStatus
+              - string
+              - ✓
+              - lending_devices.status
+            - - placementDepartmentName
+              - string
+              - '-'
+              - >-
+                設置部署表示。lending_devices.fixed_placement_department があれば優先し、なければ asset_ledgers.facility_location_id に紐づく
+                facility_locations.department_name / section_name を返す
+            - - lentOn
+              - date
+              - '-'
+              - 未返却の最新 lending_transactions.lent_on
+            - - dueOn
+              - date
+              - '-'
+              - 未返却の最新 lending_transactions.due_on
+            - - overdueDays
+              - int32
+              - ✓
+              - dueOn から算出した超過日数。未返却履歴または返却予定日がない場合は 0
+            - - returnAlertDays
+              - int32
+              - ✓
+              - lending_devices.return_alert_days
+            - - returnAlertStatus
+              - string
+              - ✓
+              - NONE / DUE_SOON / OVERDUE
+            - - dailyInspectionMenuName
+              - string
+              - '-'
+              - 有効な日常点検設定のメニュー名。使用前/使用中/使用後を画面表示用に連結する
+            - - lastDailyInspectionOn
+              - date
+              - '-'
+              - 対象資産の日常点検最終実施日。該当履歴がない場合は null
+            - - nextPeriodicInspectionOn
+              - date
+              - '-'
+              - 対象資産の定期点検予定日。該当設定がない場合は null
+            - - lendingCount
+              - int32
+              - ✓
+              - 当該 lending_device_id の貸出履歴累計件数
+            - - freeComment
+              - string
+              - '-'
+              - lending_devices.free_comment
+            - - lockVersion
+              - int64
+              - ✓
+              - lending_devices.lock_version
+            - - canEditSettings
+              - boolean
+              - ✓
+              - 実効権限と有効行であることから算出する設定保存可否
+            - - canRelease
+              - boolean
+              - ✓
+              - 現在状態と未返却履歴の有無から算出する貸出機解除可否
+    post:
+      tags:
+        - 貸出管理
+      operationId: postQuotationDataBoxLendingManagementDevices
+      summary: 貸出管理対象機器一括登録
+      description: 資産一覧で選択した資産を貸出管理対象機器として一括登録する。初期ステータスは 貸出可 とし、同一資産の有効行がある場合は全体を登録しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: lending_management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxLendingManagementDevicesRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LendingManagementRegisterResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 lending_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 登録対象資産を参照できない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 同一資産の有効な貸出管理対象機器が既に存在する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：LendingManagementRegisterResponse）
+      x-word-response-subtable-titles:
+        - createdItems要素（LendingManagementDeviceSummary）
+      x-word-response-subtables:
+        - Title: createdItems要素（LendingManagementDeviceSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - lendingDeviceId
+              - int64
+              - ✓
+              - lending_devices.lending_device_id。貸出管理APIの正本ID
+            - - assetLedgerId
+              - int64
+              - ✓
+              - asset_ledgers.asset_ledger_id
+            - - qrCodeValue
+              - string
+              - '-'
+              - 代表QR識別子。未発行または削除済みのみの場合は null
+            - - itemName
+              - string
+              - ✓
+              - asset_ledgers.asset_item_name
+            - - makerName
+              - string
+              - '-'
+              - asset_ledgers.manufacturer_name
+            - - modelName
+              - string
+              - '-'
+              - asset_ledgers.model_name
+            - - managementNo
+              - string
+              - '-'
+              - asset_ledgers.management_no。画面のME管理No表示値
+            - - lendingGroupName
+              - string
+              - ✓
+              - lending_devices.lending_group_name
+            - - lendingTypeName
+              - string
+              - '-'
+              - lending_devices.lending_type_name
+            - - currentStatus
+              - string
+              - ✓
+              - lending_devices.status
+            - - placementDepartmentName
+              - string
+              - '-'
+              - >-
+                設置部署表示。lending_devices.fixed_placement_department があれば優先し、なければ asset_ledgers.facility_location_id に紐づく
+                facility_locations.department_name / section_name を返す
+            - - lentOn
+              - date
+              - '-'
+              - 未返却の最新 lending_transactions.lent_on
+            - - dueOn
+              - date
+              - '-'
+              - 未返却の最新 lending_transactions.due_on
+            - - overdueDays
+              - int32
+              - ✓
+              - dueOn から算出した超過日数。未返却履歴または返却予定日がない場合は 0
+            - - returnAlertDays
+              - int32
+              - ✓
+              - lending_devices.return_alert_days
+            - - returnAlertStatus
+              - string
+              - ✓
+              - NONE / DUE_SOON / OVERDUE
+            - - dailyInspectionMenuName
+              - string
+              - '-'
+              - 有効な日常点検設定のメニュー名。使用前/使用中/使用後を画面表示用に連結する
+            - - lastDailyInspectionOn
+              - date
+              - '-'
+              - 対象資産の日常点検最終実施日。該当履歴がない場合は null
+            - - nextPeriodicInspectionOn
+              - date
+              - '-'
+              - 対象資産の定期点検予定日。該当設定がない場合は null
+            - - lendingCount
+              - int32
+              - ✓
+              - 当該 lending_device_id の貸出履歴累計件数
+            - - freeComment
+              - string
+              - '-'
+              - lending_devices.free_comment
+            - - lockVersion
+              - int64
+              - ✓
+              - lending_devices.lock_version
+            - - canEditSettings
+              - boolean
+              - ✓
+              - 実効権限と有効行であることから算出する設定保存可否
+            - - canRelease
+              - boolean
+              - ✓
+              - 現在状態と未返却履歴の有無から算出する貸出機解除可否
+  /quotation-data-box/lending-management/devices/{lendingDeviceId}:
+    patch:
+      tags:
+        - 貸出管理
+      operationId: patchQuotationDataBoxLendingManagementDevicesByLendingDeviceId
+      summary: 貸出設定変更
+      description: 貸出管理対象機器の貸出種別名、貸出グループ名、返却アラート発生日数、フリーコメントを更新する。現在ステータスは表示専用で更新対象に含めない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: lending_management
+      parameters:
+        - name: lendingDeviceId
+          in: path
+          required: true
+          description: 貸出管理機器ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchQuotationDataBoxLendingManagementDevicesByLendingDeviceIdRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LendingManagementUpdateResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 lending_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 有効な貸出管理対象機器を参照できない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ステータスまたは lockVersion 競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：LendingManagementUpdateResponse）
+      x-word-response-subtable-titles:
+        - item（LendingManagementDeviceSummary）
+      x-word-response-subtables:
+        - Title: item（LendingManagementDeviceSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - lendingDeviceId
+              - int64
+              - ✓
+              - lending_devices.lending_device_id。貸出管理APIの正本ID
+            - - assetLedgerId
+              - int64
+              - ✓
+              - asset_ledgers.asset_ledger_id
+            - - qrCodeValue
+              - string
+              - '-'
+              - 代表QR識別子。未発行または削除済みのみの場合は null
+            - - itemName
+              - string
+              - ✓
+              - asset_ledgers.asset_item_name
+            - - makerName
+              - string
+              - '-'
+              - asset_ledgers.manufacturer_name
+            - - modelName
+              - string
+              - '-'
+              - asset_ledgers.model_name
+            - - managementNo
+              - string
+              - '-'
+              - asset_ledgers.management_no。画面のME管理No表示値
+            - - lendingGroupName
+              - string
+              - ✓
+              - lending_devices.lending_group_name
+            - - lendingTypeName
+              - string
+              - '-'
+              - lending_devices.lending_type_name
+            - - currentStatus
+              - string
+              - ✓
+              - lending_devices.status
+            - - placementDepartmentName
+              - string
+              - '-'
+              - >-
+                設置部署表示。lending_devices.fixed_placement_department があれば優先し、なければ asset_ledgers.facility_location_id に紐づく
+                facility_locations.department_name / section_name を返す
+            - - lentOn
+              - date
+              - '-'
+              - 未返却の最新 lending_transactions.lent_on
+            - - dueOn
+              - date
+              - '-'
+              - 未返却の最新 lending_transactions.due_on
+            - - overdueDays
+              - int32
+              - ✓
+              - dueOn から算出した超過日数。未返却履歴または返却予定日がない場合は 0
+            - - returnAlertDays
+              - int32
+              - ✓
+              - lending_devices.return_alert_days
+            - - returnAlertStatus
+              - string
+              - ✓
+              - NONE / DUE_SOON / OVERDUE
+            - - dailyInspectionMenuName
+              - string
+              - '-'
+              - 有効な日常点検設定のメニュー名。使用前/使用中/使用後を画面表示用に連結する
+            - - lastDailyInspectionOn
+              - date
+              - '-'
+              - 対象資産の日常点検最終実施日。該当履歴がない場合は null
+            - - nextPeriodicInspectionOn
+              - date
+              - '-'
+              - 対象資産の定期点検予定日。該当設定がない場合は null
+            - - lendingCount
+              - int32
+              - ✓
+              - 当該 lending_device_id の貸出履歴累計件数
+            - - freeComment
+              - string
+              - '-'
+              - lending_devices.free_comment
+            - - lockVersion
+              - int64
+              - ✓
+              - lending_devices.lock_version
+            - - canEditSettings
+              - boolean
+              - ✓
+              - 実効権限と有効行であることから算出する設定保存可否
+            - - canRelease
+              - boolean
+              - ✓
+              - 現在状態と未返却履歴の有無から算出する貸出機解除可否
+    delete:
+      tags:
+        - 貸出管理
+      operationId: deleteQuotationDataBoxLendingManagementDevicesByLendingDeviceId
+      summary: 貸出機解除
+      description: 貸出管理対象機器を論理解除する。物理削除は行わず、解除済み行は通常一覧から除外する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: lending_management
+      parameters:
+        - name: lendingDeviceId
+          in: path
+          required: true
+          description: 貸出管理機器ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteQuotationDataBoxLendingManagementDevicesByLendingDeviceIdRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 解除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LendingManagementReleaseResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 lending_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 有効な貸出管理対象機器を参照できない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 解除不可状態または競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：LendingManagementReleaseResponse）
+      x-word-response-subtable-titles: []
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    LendingManagementContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - groupOptions
+        - statusOptions
+        - permissions.canRegister
+        - permissions.canUpdate
+        - permissions.canRelease
+        - defaultReturnAlertDays
+        - minReturnAlertDays
+        - maxReturnAlertDays
+      properties:
+        groupOptions:
+          type: array
+          items:
+            type: string
+          description: 既存貸出グループ名候補
+        statusOptions:
+          type: array
+          items:
+            type: string
+          description: 貸出機器ステータス候補
+        permissions.canRegister:
+          type: boolean
+          description: 貸出機器登録可否
+        permissions.canUpdate:
+          type: boolean
+          description: 貸出設定変更可否
+        permissions.canRelease:
+          type: boolean
+          description: 貸出機解除可否
+        defaultReturnAlertDays:
+          type: integer
+          format: int32
+          description: 返却アラート発生日数の初期値。7
+        minReturnAlertDays:
+          type: integer
+          format: int32
+          description: 返却アラート発生日数の下限。1
+        maxReturnAlertDays:
+          type: integer
+          format: int32
+          description: 返却アラート発生日数の上限。365
+        registrationPreview:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistrationPreviewItem'
+          description: assetLedgerIds 指定時の登録可否一覧
+          x-word-subtable-title: registrationPreview要素（RegistrationPreviewItem）
+    RegistrationPreviewItem:
+      type: object
+      additionalProperties: false
+      required:
+        - assetLedgerId
+        - itemName
+        - canRegister
+      properties:
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳ID
+        qrCodeValue:
+          type: string
+          description: 代表QR識別子
+        itemName:
+          type: string
+          description: 品目名
+        makerName:
+          type: string
+          description: メーカー名
+        modelName:
+          type: string
+          description: 型式
+        placementDepartmentName:
+          type: string
+          description: 部署/設置部門表示
+        canRegister:
+          type: boolean
+          description: 有効な貸出管理対象がない場合 true
+        blockingLendingDeviceId:
+          type: integer
+          format: int64
+          description: 重複登録を妨げる既存貸出管理機器ID
+    LendingManagementDeviceListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - totalCount
+        - page
+        - pageSize
+        - generatedAt
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LendingManagementDeviceSummary'
+          description: 一覧行
+          x-word-subtable-title: items要素（LendingManagementDeviceSummary）
+        totalCount:
+          type: integer
+          format: int32
+          description: 総件数
+        page:
+          type: integer
+          format: int32
+          description: ページ番号
+        pageSize:
+          type: integer
+          format: int32
+          description: 1ページ件数
+        generatedAt:
+          type: string
+          format: date-time
+          description: レスポンス生成日時
+    LendingManagementDeviceSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - lendingDeviceId
+        - assetLedgerId
+        - itemName
+        - lendingGroupName
+        - currentStatus
+        - overdueDays
+        - returnAlertDays
+        - returnAlertStatus
+        - lendingCount
+        - lockVersion
+        - canEditSettings
+        - canRelease
+      properties:
+        lendingDeviceId:
+          type: integer
+          format: int64
+          description: lending_devices.lending_device_id。貸出管理APIの正本ID
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: asset_ledgers.asset_ledger_id
+        qrCodeValue:
+          type: string
+          description: 代表QR識別子。未発行または削除済みのみの場合は null
+        itemName:
+          type: string
+          description: asset_ledgers.asset_item_name
+        makerName:
+          type: string
+          description: asset_ledgers.manufacturer_name
+        modelName:
+          type: string
+          description: asset_ledgers.model_name
+        managementNo:
+          type: string
+          description: asset_ledgers.management_no。画面のME管理No表示値
+        lendingGroupName:
+          type: string
+          description: lending_devices.lending_group_name
+        lendingTypeName:
+          type: string
+          description: lending_devices.lending_type_name
+        currentStatus:
+          type: string
+          description: lending_devices.status
+        placementDepartmentName:
+          type: string
+          description: >-
+            設置部署表示。lending_devices.fixed_placement_department があれば優先し、なければ asset_ledgers.facility_location_id に紐づく
+            facility_locations.department_name / section_name を返す
+        lentOn:
+          type: string
+          format: date
+          description: 未返却の最新 lending_transactions.lent_on
+        dueOn:
+          type: string
+          format: date
+          description: 未返却の最新 lending_transactions.due_on
+        overdueDays:
+          type: integer
+          format: int32
+          description: dueOn から算出した超過日数。未返却履歴または返却予定日がない場合は 0
+        returnAlertDays:
+          type: integer
+          format: int32
+          description: lending_devices.return_alert_days
+        returnAlertStatus:
+          type: string
+          description: NONE / DUE_SOON / OVERDUE
+        dailyInspectionMenuName:
+          type: string
+          description: 有効な日常点検設定のメニュー名。使用前/使用中/使用後を画面表示用に連結する
+        lastDailyInspectionOn:
+          type: string
+          format: date
+          description: 対象資産の日常点検最終実施日。該当履歴がない場合は null
+        nextPeriodicInspectionOn:
+          type: string
+          format: date
+          description: 対象資産の定期点検予定日。該当設定がない場合は null
+        lendingCount:
+          type: integer
+          format: int32
+          description: 当該 lending_device_id の貸出履歴累計件数
+        freeComment:
+          type: string
+          description: lending_devices.free_comment
+        lockVersion:
+          type: integer
+          format: int64
+          description: lending_devices.lock_version
+        canEditSettings:
+          type: boolean
+          description: 実効権限と有効行であることから算出する設定保存可否
+        canRelease:
+          type: boolean
+          description: 現在状態と未返却履歴の有無から算出する貸出機解除可否
+    PostQuotationDataBoxLendingManagementDevicesRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - assetLedgerIds
+        - lendingGroupName
+        - returnAlertDays
+      properties:
+        assetLedgerIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 登録対象資産台帳ID。1件以上
+        lendingGroupName:
+          type: string
+          description: 既存候補または新規入力の貸出グループ名。最大200文字
+        returnAlertDays:
+          type: integer
+          format: int32
+          description: 返却アラート発生日数。1〜365
+    LendingManagementRegisterResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - createdItems
+        - createdCount
+        - completionMessage
+      properties:
+        createdItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/LendingManagementDeviceSummary'
+          description: 作成された貸出管理対象機器
+          x-word-subtable-title: createdItems要素（LendingManagementDeviceSummary）
+        createdCount:
+          type: integer
+          format: int32
+          description: 作成件数
+        completionMessage:
+          type: string
+          description: 登録完了メッセージ
+    PatchQuotationDataBoxLendingManagementDevicesByLendingDeviceIdRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        lendingTypeName:
+          type: string
+          description: 貸出種別名。最大200文字。未指定時は既存値維持、明示 null はクリア
+        lendingGroupName:
+          type: string
+          description: 貸出グループ名。最大200文字。指定時は空文字不可
+        returnAlertDays:
+          type: integer
+          format: int32
+          description: 返却アラート発生日数。1〜365
+        freeComment:
+          type: string
+          description: フリーコメント。最大1000文字。未指定時は既存値維持、明示 null はクリア
+        expectedStatus:
+          type: string
+          description: 画面取得時の現在ステータス。expectedLockVersion 未指定時は必須
+          x-word-required-label: 条件必須
+        expectedLockVersion:
+          type: integer
+          format: int64
+          description: 画面取得時の lockVersion。expectedStatus 未指定時は必須
+          x-word-required-label: 条件必須
+    LendingManagementUpdateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+        - completionMessage
+      properties:
+        item:
+          $ref: '#/components/schemas/LendingManagementDeviceSummary'
+          description: 更新後の貸出管理対象機器
+          x-word-subtable-title: item（LendingManagementDeviceSummary）
+        completionMessage:
+          type: string
+          description: 設定保存完了メッセージ
+    DeleteQuotationDataBoxLendingManagementDevicesByLendingDeviceIdRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expectedStatus:
+          type: string
+          description: 画面取得時の現在ステータス。expectedLockVersion 未指定時は必須
+          x-word-required-label: 条件必須
+        expectedLockVersion:
+          type: integer
+          format: int64
+          description: 画面取得時の lockVersion。expectedStatus 未指定時は必須
+          x-word-required-label: 条件必須
+    LendingManagementReleaseResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - lendingDeviceId
+        - assetLedgerId
+        - releasedAt
+        - completionMessage
+      properties:
+        lendingDeviceId:
+          type: integer
+          format: int64
+          description: 解除した貸出管理機器ID
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳ID
+        releasedAt:
+          type: string
+          format: date-time
+          description: 解除日時
+        completionMessage:
+          type: string
+          description: 解除完了メッセージ
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

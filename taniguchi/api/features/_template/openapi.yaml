@@ -1,0 +1,21 @@
+openapi: 3.0.4
+info:
+  title: 機能名 API
+  version: 0.1.0
+  description: 機能名で利用するHTTP APIの外部I/F契約。
+servers:
+  - url: /api
+tags:
+  - name: FeatureName
+    description: 機能名
+security:
+  - BearerAuth: []
+paths: {}
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml
+

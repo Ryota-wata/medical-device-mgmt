@@ -1,0 +1,4426 @@
+openapi: 3.0.4
+info:
+  title: 資産一覧・資産詳細 API API
+  version: '1.1'
+  description: 資産一覧・資産詳細で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 資産一覧・資産詳細
+    description: 資産一覧・資産詳細 APIのAPI
+paths:
+  /asset-search-result/context:
+    get:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: getAssetSearchResultContext
+      summary: 一覧画面コンテキスト取得
+      description: 資産一覧画面の初期表示に必要な対象施設、フィルタ候補、列定義、現在の表示/非表示設定、操作可否を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: targetFacilityId
+          in: query
+          required: false
+          description: 参照対象施設ID。未指定時は作業対象施設。作業対象施設と異なる場合は他施設閲覧条件を満たす場合のみ許可する
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetSearchContextResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対するデータ閲覧権限なし、または通常アカウントの他施設閲覧条件不成立
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設または指定された参照対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetSearchContextResponse）
+      x-word-response-subtable-titles:
+        - actingFacility / targetFacility 要素（FacilityContext）
+        - accessibleFacilities要素（AccessibleFacility）
+        - filterOptions要素（AssetSearchFilterOptions）
+        - FilterOption要素
+        - managementDepartmentEditOptions要素（ManagementDepartmentOption）
+        - columnDefinitions要素（AssetSearchColumnDefinition）
+        - bookmarks要素（ColumnBookmarkSummary）
+        - permissions要素（AssetSearchPermissionContext）
+      x-word-response-subtables:
+        - Title: actingFacility / targetFacility 要素（FacilityContext）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - accessMode
+              - string
+              - ✓
+              - OWN / EXTERNAL_READONLY。共有システム管理者が作業対象施設以外を参照する場合も EXTERNAL_READONLY
+        - Title: accessibleFacilities要素（AccessibleFacility）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 対象施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - accessMode
+              - string
+              - ✓
+              - OWN / EXTERNAL_READONLY。EXTERNAL_READONLY は通常アカウントの協業グループ経由の他施設閲覧、または共有システム管理者が作業対象施設以外を参照する閲覧専用モード
+            - - isCurrentTarget
+              - boolean
+              - ✓
+              - 現在選択中施設かどうか
+        - Title: filterOptions要素（AssetSearchFilterOptions）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - managementDepartments
+              - FilterOption[]
+              - ✓
+              - 管理部署候補。検索用であり asset_ledgers.management_department_name を返す
+            - - installedDepartments
+              - FilterOption[]
+              - ✓
+              - 設置部署候補
+            - - categories
+              - FilterOption[]
+              - ✓
+              - Category 候補
+            - - largeClasses
+              - FilterOption[]
+              - ✓
+              - 大分類候補
+            - - mediumClasses
+              - FilterOption[]
+              - ✓
+              - 中分類候補
+            - - assetItems
+              - FilterOption[]
+              - ✓
+              - 品目候補
+        - Title: FilterOption要素
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - value
+              - string
+              - ✓
+              - 候補値。IDを使う項目も文字列化して返却する
+            - - label
+              - string
+              - ✓
+              - 画面表示名
+        - Title: managementDepartmentEditOptions要素（ManagementDepartmentOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - departmentId
+              - string
+              - ✓
+              - 施設側部署ID。facility_locations.department_id
+            - - departmentName
+              - string
+              - ✓
+              - 部署名。facility_locations.section_name
+            - - divisionId
+              - string
+              - '-'
+              - 施設側部門ID。facility_locations.division_id
+            - - divisionName
+              - string
+              - '-'
+              - 部門名。facility_locations.department_name
+            - - displayLabel
+              - string
+              - ✓
+              - 候補表示ラベル。section_name を基本とし、同一施設内で重複する場合は department_name / section_name
+        - Title: columnDefinitions要素（AssetSearchColumnDefinition）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - columnKey
+              - string
+              - ✓
+              - カラム識別子。facilityName などの固定列キーを用いる
+            - - columnLabel
+              - string
+              - ✓
+              - 画面表示名
+            - - groupCode
+              - string
+              - ✓
+              - 表示グループ。basic / commonMaster / location / identity / classification / specification / acquisition / other
+            - - isVisible
+              - boolean
+              - ✓
+              - 現在ユーザー設定で表示対象かどうか
+            - - isLocked
+              - boolean
+              - ✓
+              - 権限により現在ターゲット施設では表示不可かどうか
+        - Title: bookmarks要素（ColumnBookmarkSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - bookmarkId
+              - int64
+              - ✓
+              - ブックマークID
+            - - bookmarkName
+              - string
+              - ✓
+              - ブックマーク名
+            - - columnCount
+              - int32
+              - ✓
+              - 保存設定数
+            - - isDefault
+              - boolean
+              - ✓
+              - 既定ブックマークかどうか
+            - - createdAt
+              - datetime
+              - ✓
+              - 作成日時
+            - - updatedAt
+              - datetime
+              - ✓
+              - 更新日時
+        - Title: permissions要素（AssetSearchPermissionContext）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - canOpenOriginalApplications
+              - boolean
+              - ✓
+              - 新規・更新・増設・移動・廃棄申請ボタンを表示できるかどうか
+            - - canRegisterInspectionManagement
+              - boolean
+              - ✓
+              - 点検管理登録ボタンを表示できるかどうか
+            - - canRegisterMaintenanceContract
+              - boolean
+              - ✓
+              - 保守契約登録ボタンを表示できるかどうか
+            - - canRegisterLendingManagement
+              - boolean
+              - ✓
+              - 貸出登録ボタンを表示できるかどうか。登録可否、貸出グループ候補、保存仕様は「貸出管理 API 設計書」を参照する
+            - - canEditManagementDepartmentList
+              - boolean
+              - ✓
+              - 一覧の管理部署編集ボタンを表示し、一括保存できるかどうか
+            - - canEditAsset
+              - boolean
+              - ✓
+              - 資産詳細で編集モードへ遷移できるかどうか
+            - - canViewPrice
+              - boolean
+              - ✓
+              - 価格系項目が返却対象かどうか
+            - - canViewHistory
+              - boolean
+              - ✓
+              - 資産履歴タブを表示できるかどうか。現行仕様では original_list_view と同値
+  /asset-search-result/column-settings:
+    put:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: putAssetSearchResultColumnSettings
+      summary: 表示カラム設定保存
+      description: 現在の表示カラム設定をユーザー単位で保存する。保存対象は current settings のみとし、named bookmark は別 API で扱う。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutAssetSearchResultColumnSettingsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - columns要素（AssetSearchColumnSettingWriteModel）
+      x-word-request-subtables:
+        - Title: columns要素（AssetSearchColumnSettingWriteModel）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - columnKey
+              - string
+              - ✓
+              - 固定列キー
+            - - isVisible
+              - boolean
+              - ✓
+              - 表示フラグ
+      responses:
+        '200':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetSearchColumnSettingsResponse'
+        '400':
+          description: 不正なカラム設定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_list_view なし、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetSearchColumnSettingsResponse）
+  /asset-search-result/column-bookmarks:
+    get:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: getAssetSearchResultColumnBookmarks
+      summary: named bookmark 一覧取得
+      description: 保存済み named bookmark 一覧を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '500'
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColumnBookmarkListResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_list_view なし、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：ColumnBookmarkListResponse）
+      x-word-response-subtable-titles:
+        - items要素（ColumnBookmarkSummary）
+      x-word-response-subtables:
+        - Title: items要素（ColumnBookmarkSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - bookmarkId
+              - int64
+              - ✓
+              - ブックマークID
+            - - bookmarkName
+              - string
+              - ✓
+              - ブックマーク名
+            - - columnCount
+              - int32
+              - ✓
+              - 保存設定数
+            - - isDefault
+              - boolean
+              - ✓
+              - 既定ブックマークかどうか
+            - - createdAt
+              - datetime
+              - ✓
+              - 作成日時
+            - - updatedAt
+              - datetime
+              - ✓
+              - 更新日時
+    post:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: postAssetSearchResultColumnBookmarks
+      summary: named bookmark 保存
+      description: 現在の表示/非表示設定を named bookmark として保存する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostAssetSearchResultColumnBookmarksRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - columns要素（AssetSearchColumnSettingWriteModel）
+      x-word-request-subtables:
+        - Title: columns要素（AssetSearchColumnSettingWriteModel）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - columnKey
+              - string
+              - ✓
+              - 固定列キー
+            - - isVisible
+              - boolean
+              - ✓
+              - 表示フラグ
+      responses:
+        '201':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColumnBookmarkCreateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_list_view なし、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 同名 bookmark が既に存在する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：ColumnBookmarkCreateResponse）
+      x-word-response-subtable-titles:
+        - item要素（ColumnBookmarkSummary）
+      x-word-response-subtables:
+        - Title: item要素（ColumnBookmarkSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - bookmarkId
+              - int64
+              - ✓
+              - ブックマークID
+            - - bookmarkName
+              - string
+              - ✓
+              - ブックマーク名
+            - - columnCount
+              - int32
+              - ✓
+              - 保存設定数
+            - - isDefault
+              - boolean
+              - ✓
+              - 既定ブックマークかどうか
+            - - createdAt
+              - datetime
+              - ✓
+              - 作成日時
+            - - updatedAt
+              - datetime
+              - ✓
+              - 更新日時
+  /asset-search-result/column-bookmarks/{bookmarkId}:
+    delete:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: deleteAssetSearchResultColumnBookmarksByBookmarkId
+      summary: named bookmark 削除
+      description: 保存済み named bookmark を削除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: bookmarkId
+          in: path
+          required: true
+          description: ブックマークID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_list_view なし、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: bookmark が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204）
+      x-word-response-lines:
+        - 本文なし（204 No Content）
+  /asset-search-result/column-bookmarks/{bookmarkId}/apply:
+    post:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: postAssetSearchResultColumnBookmarksByBookmarkIdApply
+      summary: named bookmark 適用
+      description: 保存済み named bookmark を current settings に適用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: bookmarkId
+          in: path
+          required: true
+          description: ブックマークID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 適用成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ColumnBookmarkApplyResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_list_view なし、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: bookmark が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：ColumnBookmarkApplyResponse）
+      x-word-response-subtable-titles:
+        - appliedBookmark要素（ColumnBookmarkSummary）
+        - columnDefinitions要素（AssetSearchColumnDefinition）
+      x-word-response-subtables:
+        - Title: appliedBookmark要素（ColumnBookmarkSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - bookmarkId
+              - int64
+              - ✓
+              - ブックマークID
+            - - bookmarkName
+              - string
+              - ✓
+              - ブックマーク名
+            - - columnCount
+              - int32
+              - ✓
+              - 保存設定数
+            - - isDefault
+              - boolean
+              - ✓
+              - 既定ブックマークかどうか
+            - - createdAt
+              - datetime
+              - ✓
+              - 作成日時
+            - - updatedAt
+              - datetime
+              - ✓
+              - 更新日時
+        - Title: columnDefinitions要素（AssetSearchColumnDefinition）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - columnKey
+              - string
+              - ✓
+              - カラム識別子。facilityName などの固定列キーを用いる
+            - - columnLabel
+              - string
+              - ✓
+              - 画面表示名
+            - - groupCode
+              - string
+              - ✓
+              - 表示グループ。basic / commonMaster / location / identity / classification / specification / acquisition / other
+            - - isVisible
+              - boolean
+              - ✓
+              - 現在ユーザー設定で表示対象かどうか
+            - - isLocked
+              - boolean
+              - ✓
+              - 権限により現在ターゲット施設では表示不可かどうか
+  /asset-search-result/assets:
+    get:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: getAssetSearchResultAssets
+      summary: 資産一覧取得
+      description: 参照対象施設の資産一覧を検索・絞り込み取得する。品目は紐付け先SHIP資産マスタ由来、メーカー名・型式は空でない資産固有値を優先し、空の場合は紐付け先資産マスタ名称へフォールバックして返却・検索する。権限で許可されていない項目は返却しない。他施設閲覧時は閲覧専用で返却する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: targetFacilityId
+          in: query
+          required: false
+          description: 参照対象施設ID。未指定時は作業対象施設。作業対象施設と異なる場合は他施設閲覧条件を満たす場合のみ許可する
+          schema:
+            type: integer
+            format: int64
+        - name: managementDepartmentName
+          in: query
+          required: false
+          description: 管理部署の部分一致条件
+          schema:
+            type: string
+        - name: installedDepartmentName
+          in: query
+          required: false
+          description: 設置部署名の部分一致条件
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          required: false
+          description: Category ID
+          schema:
+            type: integer
+            format: int64
+        - name: largeClassName
+          in: query
+          required: false
+          description: 大分類名
+          schema:
+            type: string
+        - name: mediumClassName
+          in: query
+          required: false
+          description: 中分類名
+          schema:
+            type: string
+        - name: assetItemId
+          in: query
+          required: false
+          description: 品目ID
+          schema:
+            type: integer
+            format: int64
+        - name: keyword
+          in: query
+          required: false
+          description: キーワード検索
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          description: 既定ソート順の続き位置を表す continuation token
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          required: false
+          description: 取得件数。1-500、既定値 100
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetSearchResultResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対するデータ閲覧権限なし、または通常アカウントの他施設閲覧条件不成立
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設または指定された参照対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetSearchResultResponse）
+      x-word-response-subtable-titles:
+        - targetFacility要素（FacilityContext）
+        - columnDefinitions要素（AssetSearchColumnDefinition）
+        - items要素（AssetSearchResultItem）
+      x-word-response-subtables:
+        - Title: targetFacility要素（FacilityContext）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - accessMode
+              - string
+              - ✓
+              - OWN / EXTERNAL_READONLY。共有システム管理者が作業対象施設以外を参照する場合も EXTERNAL_READONLY
+        - Title: columnDefinitions要素（AssetSearchColumnDefinition）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - columnKey
+              - string
+              - ✓
+              - カラム識別子。facilityName などの固定列キーを用いる
+            - - columnLabel
+              - string
+              - ✓
+              - 画面表示名
+            - - groupCode
+              - string
+              - ✓
+              - 表示グループ。basic / commonMaster / location / identity / classification / specification / acquisition / other
+            - - isVisible
+              - boolean
+              - ✓
+              - 現在ユーザー設定で表示対象かどうか
+            - - isLocked
+              - boolean
+              - ✓
+              - 権限により現在ターゲット施設では表示不可かどうか
+        - Title: items要素（AssetSearchResultItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetId
+              - int64
+              - ✓
+              - 資産台帳ID
+            - - facilityId
+              - int64
+              - ✓
+              - 設置施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - qrIdentifier
+              - string
+              - '-'
+              - QR識別子
+            - - assetNo
+              - string
+              - '-'
+              - 固定資産番号
+            - - managementNo
+              - string
+              - '-'
+              - 管理機器番号
+            - - managementDepartmentId
+              - string
+              - '-'
+              - 資産管理部署ID。asset_ledgers.management_department_id。legacy 未解決データ、未設定、または一覧編集不可の返却文脈では null
+            - - managementDepartmentName
+              - string
+              - '-'
+              - 資産管理部署。asset_ledgers.management_department_name の表示値
+            - - building
+              - string
+              - '-'
+              - 棟
+            - - floor
+              - string
+              - '-'
+              - 階
+            - - shipDivisionName
+              - string
+              - '-'
+              - SHIP部門名
+            - - shipDepartmentName
+              - string
+              - '-'
+              - SHIP部署名
+            - - roomCategory1
+              - string
+              - '-'
+              - 諸室区分①
+            - - roomCategory2
+              - string
+              - '-'
+              - 諸室区分②
+            - - roomName
+              - string
+              - '-'
+              - 室名称
+            - - installationLocation
+              - string
+              - '-'
+              - 設置場所
+            - - categoryId
+              - int64
+              - ✓
+              - Category ID
+            - - categoryName
+              - string
+              - ✓
+              - Category 名
+            - - largeClassName
+              - string
+              - ✓
+              - 大分類
+            - - mediumClassName
+              - string
+              - ✓
+              - 中分類
+            - - assetItemId
+              - int64
+              - '-'
+              - 品目ID
+            - - assetItemName
+              - string
+              - ✓
+              - 紐付け先SHIP資産マスタ由来の品目。有効な紐付けがない既存データのみ台帳スナップショットへフォールバックする
+            - - assetName
+              - string
+              - ✓
+              - 個体管理名称
+            - - manufacturerName
+              - string
+              - '-'
+              - 空でない資産固有メーカー名を優先し、空の場合は紐付け先SHIP資産マスタのメーカー名へフォールバックした表示値
+            - - modelName
+              - string
+              - '-'
+              - 空でない資産固有型式を優先し、空の場合は紐付け先SHIP資産マスタの型式へフォールバックした表示値
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - unit
+              - string
+              - '-'
+              - 単位
+            - - serialNo
+              - string
+              - '-'
+              - シリアル番号
+            - - widthMm
+              - string
+              - '-'
+              - W
+            - - depthMm
+              - string
+              - '-'
+              - D
+            - - heightMm
+              - string
+              - '-'
+              - H
+            - - contractName
+              - string
+              - '-'
+              - 契約・見積名称
+            - - contractNo
+              - string
+              - '-'
+              - 契約番号
+            - - quotationNo
+              - string
+              - '-'
+              - 見積番号
+            - - contractDate
+              - date
+              - '-'
+              - 契約・発注日
+            - - deliveryDate
+              - date
+              - '-'
+              - 納品日
+            - - inspectionDate
+              - date
+              - '-'
+              - 検収日
+            - - isLeased
+              - boolean
+              - ✓
+              - リース品フラグ
+            - - isRentedOut
+              - boolean
+              - ✓
+              - 借用/貸出中フラグ
+            - - leaseStartOn
+              - date
+              - '-'
+              - リース開始日
+            - - leaseEndOn
+              - date
+              - '-'
+              - リース終了日
+            - - acquisitionCost
+              - decimal
+              - '-'
+              - 取得価格。価格表示権限がない場合は返却しない
+            - - assetInfo
+              - string
+              - '-'
+              - 資産情報
+            - - legalServiceLife
+              - string
+              - '-'
+              - 耐用年数（法定）
+            - - recommendedServiceLife
+              - string
+              - '-'
+              - 使用年数（メーカー推奨）
+            - - endOfServiceOn
+              - date
+              - '-'
+              - End of service
+            - - endOfSupportOn
+              - date
+              - '-'
+              - End of support
+            - - primaryPhotoUrl
+              - string
+              - '-'
+              - カード表示用の代表写真の認可済みURL。S3オブジェクトキーは返却しない
+            - - updatedAt
+              - datetime
+              - ✓
+              - 更新日時
+  /asset-search-result/assets/management-departments:
+    put:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: putAssetSearchResultAssetsManagementDepartments
+      summary: 一覧管理部署一括更新
+      description: 一覧の管理部署編集モードで変更した管理部署を一括保存する。対象全件を同一トランザクションで更新し、1件でも競合または候補不整合があれば全件ロールバックする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutAssetSearchResultAssetsManagementDepartmentsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - items要素（AssetManagementDepartmentUpdateItem）
+      x-word-request-subtables:
+        - Title: items要素（AssetManagementDepartmentUpdateItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetId
+              - int64
+              - ✓
+              - 更新対象の資産台帳ID
+            - - managementDepartmentId
+              - string
+              - ✓
+              - 設定する施設側部署ID。対象施設の active facility_locations.department_id から選択する
+            - - lastKnownUpdatedAt
+              - datetime
+              - ✓
+              - 一覧取得時点の updatedAt。競合検知に使用する
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetManagementDepartmentBulkUpdateResponse'
+        '400':
+          description: 入力不正、候補不正、または対象資産重複指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_list_view + management_department_edit なし、または作業対象施設以外の資産に対する管理部署編集指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、削除済み、または資産・管理部署候補が存在しない/対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetManagementDepartmentBulkUpdateResponse）
+      x-word-response-subtable-titles:
+        - items要素（AssetManagementDepartmentUpdateResult）
+      x-word-response-subtables:
+        - Title: items要素（AssetManagementDepartmentUpdateResult）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetId
+              - int64
+              - ✓
+              - 更新した資産台帳ID
+            - - managementDepartmentId
+              - string
+              - ✓
+              - 更新後の施設側部署ID
+            - - managementDepartmentName
+              - string
+              - ✓
+              - 更新後の管理部署表示名
+            - - updatedAt
+              - datetime
+              - ✓
+              - 更新後の資産更新日時
+  /asset-search-result/assets/export:
+    get:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: getAssetSearchResultAssetsExport
+      summary: 一覧結果エクスポート
+      description: 現在の検索条件に一致する一覧結果を Excel または PDF として出力する。品目・メーカー名・型式は資産一覧取得と同じ有効表示値を使用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: targetFacilityId
+          in: query
+          required: false
+          description: 参照対象施設ID。未指定時は作業対象施設。作業対象施設と異なる場合は他施設閲覧条件を満たす場合のみ許可する
+          schema:
+            type: integer
+            format: int64
+        - name: managementDepartmentName
+          in: query
+          required: false
+          description: 管理部署の部分一致条件
+          schema:
+            type: string
+        - name: installedDepartmentName
+          in: query
+          required: false
+          description: 設置部署名の部分一致条件
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          required: false
+          description: Category ID
+          schema:
+            type: integer
+            format: int64
+        - name: largeClassName
+          in: query
+          required: false
+          description: 大分類名
+          schema:
+            type: string
+        - name: mediumClassName
+          in: query
+          required: false
+          description: 中分類名
+          schema:
+            type: string
+        - name: assetItemId
+          in: query
+          required: false
+          description: 品目ID
+          schema:
+            type: integer
+            format: int64
+        - name: keyword
+          in: query
+          required: false
+          description: キーワード検索
+          schema:
+            type: string
+        - name: format
+          in: query
+          required: true
+          description: xlsx または pdf
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 出力成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 不正な出力形式、または検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対するデータ閲覧権限なし、または通常アカウントの他施設閲覧条件不成立
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設または指定された参照対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200）
+      x-word-response-lines:
+        - 成功時は application/vnd.openxmlformats-officedocument.spreadsheetml.sheet または application/pdf のバイナリを返却する
+        - 価格項目は一覧取得 API と同じ権限条件を満たさない限り出力に含めない
+  /asset-detail/assets/by-qr:
+    get:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: getAssetDetailAssetsByQr
+      summary: QRコード直接遷移解決
+      description: 施設IDとQR識別子から資産詳細画面の対象資産を解決する。他施設QRの場合、通常アカウントは他施設閲覧条件を満たす場合のみ、共有システム管理者は作業対象施設およびQRの施設が未削除の場合に閲覧専用で解決する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: facilityId
+          in: query
+          required: true
+          description: QRコードが属する施設ID
+          schema:
+            type: integer
+            format: int64
+        - name: qrIdentifier
+          in: query
+          required: true
+          description: QR識別子。画面遷移URL上の qr_identifier を受けて API では camelCase で扱う
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 解決成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetByQrResolveResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対するデータ閲覧権限なし、または通常アカウントの他施設閲覧条件不成立
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: QRの施設が存在しない、削除済み、またはQRコード・資産が存在しない/対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetByQrResolveResponse）
+      x-word-response-subtable-titles:
+        - targetFacility要素（FacilityContext）
+      x-word-response-subtables:
+        - Title: targetFacility要素（FacilityContext）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - accessMode
+              - string
+              - ✓
+              - OWN / EXTERNAL_READONLY。共有システム管理者が作業対象施設以外のQRを解決する場合も EXTERNAL_READONLY
+  /asset-detail/assets/{assetId}:
+    get:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: getAssetDetailAssetsByAssetId
+      summary: 資産詳細取得
+      description: 指定した資産の詳細情報、写真一覧、QR情報を取得する。品目は紐付け先SHIP資産マスタ由来、メーカー名・型式は空でない資産固有値を優先し、空の場合は紐付け先資産マスタ名称へフォールバックして返却する。他施設閲覧時は閲覧専用で返却する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: 資産台帳ID
+          schema:
+            type: integer
+            format: int64
+        - name: targetFacilityId
+          in: query
+          required: false
+          description: 参照対象施設ID。未指定時は作業対象施設。作業対象施設と異なる場合は他施設閲覧条件を満たす場合のみ許可する
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDetailResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対するデータ閲覧権限なし、または通常アカウントの他施設閲覧条件不成立
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設または参照対象施設が存在しない、削除済み、または資産が存在しない/対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetDetailResponse）
+      x-word-response-subtable-titles:
+        - asset要素（AssetDetailModel）
+        - photos要素（AssetPhotoSummary）
+        - qrInfo要素（AssetQrInfo）
+      x-word-response-subtables:
+        - Title: asset要素（AssetDetailModel）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetId
+              - int64
+              - ✓
+              - 資産台帳ID
+            - - facilityId
+              - int64
+              - ✓
+              - 設置施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - facilityLocationId
+              - int64
+              - '-'
+              - 施設ロケーションID
+            - - qrIdentifier
+              - string
+              - '-'
+              - QR識別子
+            - - assetNo
+              - string
+              - '-'
+              - 固定資産番号
+            - - managementNo
+              - string
+              - '-'
+              - 管理機器番号
+            - - managementDepartmentId
+              - string
+              - '-'
+              - 資産管理部署ID。asset_ledgers.management_department_id。legacy 未解決データ、未設定、または編集不可の返却文脈では null
+            - - managementDepartmentName
+              - string
+              - '-'
+              - 資産管理部署。asset_ledgers.management_department_name の表示値
+            - - equipmentNo
+              - string
+              - '-'
+              - ME番号
+            - - shipAssetMasterId
+              - int64
+              - '-'
+              - SHIP資産マスタID
+            - - categoryId
+              - int64
+              - ✓
+              - Category ID
+            - - categoryName
+              - string
+              - ✓
+              - Category 名
+            - - largeClassName
+              - string
+              - ✓
+              - 大分類
+            - - mediumClassName
+              - string
+              - ✓
+              - 中分類
+            - - assetItemId
+              - int64
+              - '-'
+              - 品目ID
+            - - assetItemName
+              - string
+              - ✓
+              - 紐付け先SHIP資産マスタ由来の品目。有効な紐付けがない既存データのみ台帳スナップショットへフォールバックする
+            - - manufacturerId
+              - int64
+              - '-'
+              - メーカーID
+            - - manufacturerName
+              - string
+              - '-'
+              - 空でない資産固有メーカー名を優先し、空の場合は紐付け先SHIP資産マスタのメーカー名へフォールバックした表示値
+            - - modelId
+              - int64
+              - '-'
+              - 型式ID
+            - - modelName
+              - string
+              - '-'
+              - 空でない資産固有型式を優先し、空の場合は紐付け先SHIP資産マスタの型式へフォールバックした表示値
+            - - assetName
+              - string
+              - ✓
+              - 個体管理名称
+            - - detailType
+              - string
+              - '-'
+              - 明細区分
+            - - building
+              - string
+              - '-'
+              - 棟
+            - - floor
+              - string
+              - '-'
+              - 階
+            - - shipDivisionName
+              - string
+              - '-'
+              - SHIP部門名
+            - - shipDepartmentName
+              - string
+              - '-'
+              - SHIP部署名
+            - - roomCategory1
+              - string
+              - '-'
+              - 諸室区分①
+            - - roomCategory2
+              - string
+              - '-'
+              - 諸室区分②
+            - - roomName
+              - string
+              - '-'
+              - 室名称
+            - - installationLocation
+              - string
+              - '-'
+              - 設置場所
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - unit
+              - string
+              - '-'
+              - 単位
+            - - serialNo
+              - string
+              - '-'
+              - シリアル番号
+            - - widthMm
+              - string
+              - '-'
+              - W
+            - - depthMm
+              - string
+              - '-'
+              - D
+            - - heightMm
+              - string
+              - '-'
+              - H
+            - - assetInfo
+              - string
+              - '-'
+              - 資産情報
+            - - purchasedOn
+              - date
+              - '-'
+              - 購入日
+            - - isLeased
+              - boolean
+              - ✓
+              - リース品フラグ
+            - - isRentedOut
+              - boolean
+              - ✓
+              - 借用/貸出中フラグ
+            - - leaseStartOn
+              - date
+              - '-'
+              - リース開始日
+            - - leaseEndOn
+              - date
+              - '-'
+              - リース終了日
+            - - contractName
+              - string
+              - '-'
+              - 契約・見積名称
+            - - contractNo
+              - string
+              - '-'
+              - 契約番号
+            - - quotationNo
+              - string
+              - '-'
+              - 見積番号
+            - - contractDate
+              - date
+              - '-'
+              - 契約・発注日
+            - - deliveryDate
+              - date
+              - '-'
+              - 納品日
+            - - inspectionDate
+              - date
+              - '-'
+              - 検収日
+            - - acquisitionCost
+              - decimal
+              - '-'
+              - 取得価格。価格表示権限がない場合は返却しない
+            - - legalServiceLife
+              - string
+              - '-'
+              - 耐用年数（法定）
+            - - recommendedServiceLife
+              - string
+              - '-'
+              - 使用年数（メーカー推奨）
+            - - endOfServiceOn
+              - date
+              - '-'
+              - End of service
+            - - endOfSupportOn
+              - date
+              - '-'
+              - End of support
+            - - lastInventoryDate
+              - date
+              - '-'
+              - 最終棚卸日
+            - - updatedAt
+              - datetime
+              - ✓
+              - 競合検知用更新日時
+        - Title: photos要素（AssetPhotoSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - photoId
+              - int64
+              - ✓
+              - 写真ID。application_documents.application_document_id を返す
+            - - fileName
+              - string
+              - ✓
+              - 表示用ファイル名
+            - - fileUrl
+              - string
+              - ✓
+              - 画像表示用の認可済みURL。S3オブジェクトキーは返却しない
+            - - takenAt
+              - datetime
+              - '-'
+              - 撮影日時
+            - - isPrimary
+              - boolean
+              - ✓
+              - 代表写真かどうか
+            - - sourceOwnerType
+              - string
+              - ✓
+              - ASSET_LEDGER / ASSET_SURVEY_RECORD
+        - Title: qrInfo要素（AssetQrInfo）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - qrCodeId
+              - int64
+              - ✓
+              - QRコードID
+            - - qrIdentifier
+              - string
+              - ✓
+              - QR識別子
+            - - issueType
+              - string
+              - ✓
+              - NEW / REISSUE
+            - - labelTemplateKey
+              - string
+              - ✓
+              - ラベルテンプレート識別子
+            - - freeEntryText
+              - string
+              - '-'
+              - ラベルフリー記入項目
+            - - issuedAt
+              - datetime
+              - ✓
+              - 最終発行日時
+            - - printStatus
+              - string
+              - ✓
+              - 印刷状態
+            - - printedAt
+              - datetime
+              - '-'
+              - 最終印刷日時
+    put:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: putAssetDetailAssetsByAssetId
+      summary: 資産原本更新
+      description: 作業対象施設資産の原本情報を更新する。識別・管理情報、設置情報、分類情報、仕様情報、ライフサイクル情報を責務別ペイロードで受け付ける。LINKED分類で同じ資産マスタを維持する場合は既存の資産固有メーカー名・型式を保持し、別マスタへ変更した場合は新しいマスタ名称を初期値とする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: 資産台帳ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutAssetDetailAssetsByAssetIdRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - identity要素（AssetIdentityUpdateModel）
+        - location要素（AssetLocationUpdateModel）
+        - classification要素（AssetClassificationUpdateModel）
+        - specification要素（AssetSpecificationUpdateModel）
+        - lifecycle要素（AssetLifecycleUpdateModel）
+      x-word-request-subtables:
+        - Title: identity要素（AssetIdentityUpdateModel）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetNo
+              - string
+              - '-'
+              - 固定資産番号
+            - - managementDepartmentId
+              - string
+              - '-'
+              - 資産管理部署ID。指定時は対象施設の active facility_locations.department_id（非NULL）として検証する
+            - - managementDepartmentName
+              - string
+              - '-'
+              - 資産管理部署名。managementDepartmentId を省略した互換更新時のみ使用し、対象施設で一意に解決できる active 部署名であること
+        - Title: location要素（AssetLocationUpdateModel）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityLocationId
+              - int64
+              - '-'
+              - 施設ロケーションID
+            - - building
+              - string
+              - '-'
+              - 棟の表示値
+            - - floor
+              - string
+              - '-'
+              - 階の表示値
+            - - shipDivisionName
+              - string
+              - '-'
+              - SHIP部門名
+            - - shipDepartmentName
+              - string
+              - '-'
+              - SHIP部署名
+            - - roomCategory1
+              - string
+              - '-'
+              - 諸室区分①
+            - - roomCategory2
+              - string
+              - '-'
+              - 諸室区分②
+            - - roomName
+              - string
+              - '-'
+              - 室名称
+            - - installationLocation
+              - string
+              - '-'
+              - 設置場所
+        - Title: classification要素（AssetClassificationUpdateModel）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - classificationMode
+              - string
+              - ✓
+              - LINKED / MANUAL
+            - - shipAssetMasterId
+              - int64
+              - '-'
+              - LINKED 時に参照するSHIP資産マスタID。同じIDなら既存の資産固有メーカー名・型式を保持し、変更時は新マスタ名称を初期値にする
+            - - categoryId
+              - int64
+              - '-'
+              - MANUAL 時の Category ID。LINKED 時に指定した場合は SHIP資産マスタと一致すること
+            - - assetItemId
+              - int64
+              - '-'
+              - 品目ID
+            - - manufacturerId
+              - int64
+              - '-'
+              - メーカーID
+            - - modelId
+              - int64
+              - '-'
+              - 型式ID
+            - - assetName
+              - string
+              - ✓
+              - 個体管理名称
+        - Title: specification要素（AssetSpecificationUpdateModel）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - managementNo
+              - string
+              - '-'
+              - 管理機器番号
+            - - equipmentNo
+              - string
+              - '-'
+              - ME番号
+            - - serialNo
+              - string
+              - '-'
+              - シリアル番号
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - unit
+              - string
+              - '-'
+              - 単位
+            - - widthMm
+              - string
+              - '-'
+              - W
+            - - depthMm
+              - string
+              - '-'
+              - D
+            - - heightMm
+              - string
+              - '-'
+              - H
+            - - assetInfo
+              - string
+              - '-'
+              - 資産情報
+        - Title: lifecycle要素（AssetLifecycleUpdateModel）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - purchasedOn
+              - date
+              - '-'
+              - 購入日
+            - - contractName
+              - string
+              - '-'
+              - 契約・見積名称
+            - - contractNo
+              - string
+              - '-'
+              - 契約番号
+            - - quotationNo
+              - string
+              - '-'
+              - 見積番号
+            - - contractDate
+              - date
+              - '-'
+              - 契約・発注日
+            - - deliveryDate
+              - date
+              - '-'
+              - 納品日
+            - - inspectionDate
+              - date
+              - '-'
+              - 検収日
+            - - isLeased
+              - boolean
+              - ✓
+              - リース品フラグ
+            - - isRentedOut
+              - boolean
+              - ✓
+              - 借用/貸出中フラグ
+            - - leaseStartOn
+              - date
+              - '-'
+              - リース開始日
+            - - leaseEndOn
+              - date
+              - '-'
+              - リース終了日
+            - - acquisitionCost
+              - decimal
+              - '-'
+              - 取得価格。更新時も価格権限を必須とする
+            - - legalServiceLife
+              - string
+              - '-'
+              - 耐用年数（法定）
+            - - recommendedServiceLife
+              - string
+              - '-'
+              - 使用年数（メーカー推奨）
+            - - endOfServiceOn
+              - date
+              - '-'
+              - End of service
+            - - endOfSupportOn
+              - date
+              - '-'
+              - End of support
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDetailUpdateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: >-
+            通常アカウントで作業対象施設に対する実効 original_list_view + original_list_edit なし、価格更新時の original_price_column
+            なし、または作業対象施設以外の資産に対する変更操作指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、削除済み、または資産が存在しない/対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 競合または SHIP資産マスタ整合エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetDetailUpdateResponse）
+      x-word-response-subtable-titles:
+        - asset要素（AssetDetailModel）
+      x-word-response-subtables:
+        - Title: asset要素（AssetDetailModel）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetId
+              - int64
+              - ✓
+              - 資産台帳ID
+            - - facilityId
+              - int64
+              - ✓
+              - 設置施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - facilityLocationId
+              - int64
+              - '-'
+              - 施設ロケーションID
+            - - qrIdentifier
+              - string
+              - '-'
+              - QR識別子
+            - - assetNo
+              - string
+              - '-'
+              - 固定資産番号
+            - - managementNo
+              - string
+              - '-'
+              - 管理機器番号
+            - - managementDepartmentId
+              - string
+              - '-'
+              - 資産管理部署ID。asset_ledgers.management_department_id。legacy 未解決データ、未設定、または編集不可の返却文脈では null
+            - - managementDepartmentName
+              - string
+              - '-'
+              - 資産管理部署。asset_ledgers.management_department_name の表示値
+            - - equipmentNo
+              - string
+              - '-'
+              - ME番号
+            - - shipAssetMasterId
+              - int64
+              - '-'
+              - SHIP資産マスタID
+            - - categoryId
+              - int64
+              - ✓
+              - Category ID
+            - - categoryName
+              - string
+              - ✓
+              - Category 名
+            - - largeClassName
+              - string
+              - ✓
+              - 大分類
+            - - mediumClassName
+              - string
+              - ✓
+              - 中分類
+            - - assetItemId
+              - int64
+              - '-'
+              - 品目ID
+            - - assetItemName
+              - string
+              - ✓
+              - 紐付け先SHIP資産マスタ由来の品目。有効な紐付けがない既存データのみ台帳スナップショットへフォールバックする
+            - - manufacturerId
+              - int64
+              - '-'
+              - メーカーID
+            - - manufacturerName
+              - string
+              - '-'
+              - 空でない資産固有メーカー名を優先し、空の場合は紐付け先SHIP資産マスタのメーカー名へフォールバックした表示値
+            - - modelId
+              - int64
+              - '-'
+              - 型式ID
+            - - modelName
+              - string
+              - '-'
+              - 空でない資産固有型式を優先し、空の場合は紐付け先SHIP資産マスタの型式へフォールバックした表示値
+            - - assetName
+              - string
+              - ✓
+              - 個体管理名称
+            - - detailType
+              - string
+              - '-'
+              - 明細区分
+            - - building
+              - string
+              - '-'
+              - 棟
+            - - floor
+              - string
+              - '-'
+              - 階
+            - - shipDivisionName
+              - string
+              - '-'
+              - SHIP部門名
+            - - shipDepartmentName
+              - string
+              - '-'
+              - SHIP部署名
+            - - roomCategory1
+              - string
+              - '-'
+              - 諸室区分①
+            - - roomCategory2
+              - string
+              - '-'
+              - 諸室区分②
+            - - roomName
+              - string
+              - '-'
+              - 室名称
+            - - installationLocation
+              - string
+              - '-'
+              - 設置場所
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - unit
+              - string
+              - '-'
+              - 単位
+            - - serialNo
+              - string
+              - '-'
+              - シリアル番号
+            - - widthMm
+              - string
+              - '-'
+              - W
+            - - depthMm
+              - string
+              - '-'
+              - D
+            - - heightMm
+              - string
+              - '-'
+              - H
+            - - assetInfo
+              - string
+              - '-'
+              - 資産情報
+            - - purchasedOn
+              - date
+              - '-'
+              - 購入日
+            - - isLeased
+              - boolean
+              - ✓
+              - リース品フラグ
+            - - isRentedOut
+              - boolean
+              - ✓
+              - 借用/貸出中フラグ
+            - - leaseStartOn
+              - date
+              - '-'
+              - リース開始日
+            - - leaseEndOn
+              - date
+              - '-'
+              - リース終了日
+            - - contractName
+              - string
+              - '-'
+              - 契約・見積名称
+            - - contractNo
+              - string
+              - '-'
+              - 契約番号
+            - - quotationNo
+              - string
+              - '-'
+              - 見積番号
+            - - contractDate
+              - date
+              - '-'
+              - 契約・発注日
+            - - deliveryDate
+              - date
+              - '-'
+              - 納品日
+            - - inspectionDate
+              - date
+              - '-'
+              - 検収日
+            - - acquisitionCost
+              - decimal
+              - '-'
+              - 取得価格。価格表示権限がない場合は返却しない
+            - - legalServiceLife
+              - string
+              - '-'
+              - 耐用年数（法定）
+            - - recommendedServiceLife
+              - string
+              - '-'
+              - 使用年数（メーカー推奨）
+            - - endOfServiceOn
+              - date
+              - '-'
+              - End of service
+            - - endOfSupportOn
+              - date
+              - '-'
+              - End of support
+            - - lastInventoryDate
+              - date
+              - '-'
+              - 最終棚卸日
+            - - updatedAt
+              - datetime
+              - ✓
+              - 競合検知用更新日時
+  /asset-detail/assets/{assetId}/history:
+    get:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: getAssetDetailAssetsByAssetIdHistory
+      summary: 資産履歴取得
+      description: 指定資産に紐づく申請履歴、点検結果、貸出/返却履歴を共通イベント形式でページング取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: 資産台帳ID
+          schema:
+            type: integer
+            format: int64
+        - name: targetFacilityId
+          in: query
+          required: false
+          description: 参照対象施設ID。未指定時は作業対象施設。作業対象施設と異なる場合は他施設閲覧条件を満たす場合のみ許可する
+          schema:
+            type: integer
+            format: int64
+        - name: cursor
+          in: query
+          required: false
+          description: 既定ソート順の続き位置を表す continuation token
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          required: false
+          description: 取得件数。1-500、既定値 100
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetHistoryResponse'
+        '400':
+          description: cursor / pageSize 不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対する履歴閲覧権限なし、または通常アカウントの他施設閲覧条件不成立
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設または参照対象施設が存在しない、削除済み、または資産が存在しない/対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetHistoryResponse）
+      x-word-response-subtable-titles:
+        - items要素（AssetHistoryItem）
+      x-word-response-subtables:
+        - Title: items要素（AssetHistoryItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - eventId
+              - string
+              - ✓
+              - >-
+                履歴イベント識別子。APPLICATION_STATUS:{application_status_history_id} / INSPECTION_RESULT:{inspection_result_id}
+                / LENDING_TRANSACTION:{lending_transaction_id}
+            - - eventType
+              - string
+              - ✓
+              - APPLICATION_STATUS / INSPECTION_RESULT / LENDING_TRANSACTION
+            - - occurredAt
+              - datetime
+              - ✓
+              - イベント発生日時
+            - - title
+              - string
+              - ✓
+              - 一覧表示用タイトル。申請は 申請No.{application_no}、点検は 点検結果、貸出は 貸出 / 返却 を基本とする
+            - - statusLabel
+              - string
+              - '-'
+              - 状態表示ラベル。申請は遷移先ステータス、点検は総合判定、貸出は取引ステータスを返す
+            - - actorName
+              - string
+              - '-'
+              - 処理者/実施者名。履歴ソースに名称スナップショットがない場合は null
+            - - sourceId
+              - int64
+              - ✓
+              - 元レコードID
+            - - sourcePath
+              - string
+              - '-'
+              - 関連画面ルート。/quotation-data-box / /inspection-result / /lending-checkout。導線を出さない場合は null
+            - - summary
+              - string
+              - '-'
+              - 補足表示。申請コメント、点検種別と備考、貸出先部署や返却予定日などを source 種別ごとに返す
+  /asset-detail/assets/{assetId}/photos:
+    post:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: postAssetDetailAssetsByAssetIdPhotos
+      summary: 資産写真追加
+      description: 指定資産へ写真を追加する。複数枚を一度に受け付ける。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '502'
+        - '500'
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: 資産台帳ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostAssetDetailAssetsByAssetIdPhotosRequest'
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - photos要素（AssetPhotoCreateModel）
+      x-word-request-subtables:
+        - Title: photos要素（AssetPhotoCreateModel）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - filePartName
+              - string
+              - ✓
+              - multipart 内の写真ファイルパート名
+            - - fileName
+              - string
+              - ✓
+              - 表示用ファイル名
+            - - contentType
+              - string
+              - ✓
+              - MIME Type
+            - - takenAt
+              - datetime
+              - '-'
+              - 撮影日時
+            - - isPrimary
+              - boolean
+              - '-'
+              - 代表写真指定
+      responses:
+        '201':
+          description: 追加成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetPhotoCreateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_list_view + original_list_edit なし、または作業対象施設以外の資産に対する変更操作指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、削除済み、または資産が存在しない/対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 への資産写真保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：AssetPhotoCreateResponse）
+      x-word-response-subtable-titles:
+        - items要素（AssetPhotoSummary）
+      x-word-response-subtables:
+        - Title: items要素（AssetPhotoSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - photoId
+              - int64
+              - ✓
+              - 写真ID。application_documents.application_document_id を返す
+            - - fileName
+              - string
+              - ✓
+              - 表示用ファイル名
+            - - fileUrl
+              - string
+              - ✓
+              - 画像表示用の認可済みURL。S3オブジェクトキーは返却しない
+            - - takenAt
+              - datetime
+              - '-'
+              - 撮影日時
+            - - isPrimary
+              - boolean
+              - ✓
+              - 代表写真かどうか
+            - - sourceOwnerType
+              - string
+              - ✓
+              - ASSET_LEDGER / ASSET_SURVEY_RECORD
+  /asset-detail/assets/{assetId}/photos/{photoId}:
+    delete:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: deleteAssetDetailAssetsByAssetIdPhotosByPhotoId
+      summary: 資産写真削除
+      description: 指定した資産写真を論理削除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: 資産台帳ID
+          schema:
+            type: integer
+            format: int64
+        - name: photoId
+          in: path
+          required: true
+          description: 写真ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_list_view + original_list_edit なし、または作業対象施設以外の資産に対する変更操作指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、削除済み、または資産・写真が存在しない/対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204）
+      x-word-response-lines:
+        - 本文なし（204 No Content）
+  /asset-detail/assets/{assetId}/documents:
+    get:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: getAssetDetailAssetsByAssetIdDocuments
+      summary: 資産ドキュメント一覧取得
+      description: 指定資産に紐づく登録ドキュメント一覧を取得する。他施設閲覧時は閲覧専用で一覧のみ返却する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: 資産台帳ID
+          schema:
+            type: integer
+            format: int64
+        - name: targetFacilityId
+          in: query
+          required: false
+          description: 参照対象施設ID。未指定時は作業対象施設。作業対象施設と異なる場合は他施設閲覧条件を満たす場合のみ許可する
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDocumentListResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対するデータ閲覧権限なし、または通常アカウントの他施設閲覧条件不成立
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設または参照対象施設が存在しない、削除済み、または資産が存在しない/対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetDocumentListResponse）
+      x-word-response-subtable-titles:
+        - items要素（AssetDocumentSummary）
+      x-word-response-subtables:
+        - Title: items要素（AssetDocumentSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentId
+              - int64
+              - ✓
+              - ドキュメントID。application_documents.application_document_id を返す
+            - - documentType
+              - string
+              - ✓
+              - 'ドキュメント種別。例: CONTRACT, DELIVERY_NOTE, INSPECTION_REPORT, OTHER'
+            - - title
+              - string
+              - '-'
+              - 表示タイトル
+            - - fileName
+              - string
+              - ✓
+              - 表示用ファイル名
+            - - documentDate
+              - date
+              - '-'
+              - 文書日付
+            - - downloadUrl
+              - string
+              - ✓
+              - ダウンロード/プレビュー用の認可済みURL。S3オブジェクトキーは返却しない
+            - - uploadedAt
+              - datetime
+              - ✓
+              - 登録日時
+    post:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: postAssetDetailAssetsByAssetIdDocuments
+      summary: 資産ドキュメント追加
+      description: 指定資産へドキュメントを追加する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '502'
+        - '500'
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: 資産台帳ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostAssetDetailAssetsByAssetIdDocumentsRequest'
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 追加成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDocumentCreateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_list_view + original_list_edit なし、または作業対象施設以外の資産に対する変更操作指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、削除済み、または資産が存在しない/対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 への資産ドキュメント保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：AssetDocumentCreateResponse）
+      x-word-response-subtable-titles:
+        - item要素（AssetDocumentSummary）
+      x-word-response-subtables:
+        - Title: item要素（AssetDocumentSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentId
+              - int64
+              - ✓
+              - ドキュメントID。application_documents.application_document_id を返す
+            - - documentType
+              - string
+              - ✓
+              - 'ドキュメント種別。例: CONTRACT, DELIVERY_NOTE, INSPECTION_REPORT, OTHER'
+            - - title
+              - string
+              - '-'
+              - 表示タイトル
+            - - fileName
+              - string
+              - ✓
+              - 表示用ファイル名
+            - - documentDate
+              - date
+              - '-'
+              - 文書日付
+            - - downloadUrl
+              - string
+              - ✓
+              - ダウンロード/プレビュー用の認可済みURL。S3オブジェクトキーは返却しない
+            - - uploadedAt
+              - datetime
+              - ✓
+              - 登録日時
+  /asset-detail/assets/{assetId}/documents/{documentId}:
+    delete:
+      tags:
+        - 資産一覧・資産詳細
+      operationId: deleteAssetDetailAssetsByAssetIdDocumentsByDocumentId
+      summary: 資産ドキュメント削除
+      description: 指定した資産ドキュメントを論理削除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_list_view
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: 資産台帳ID
+          schema:
+            type: integer
+            format: int64
+        - name: documentId
+          in: path
+          required: true
+          description: ドキュメントID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_list_view + original_list_edit なし、または作業対象施設以外の資産に対する変更操作指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、削除済み、または資産・ドキュメントが存在しない/対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204）
+      x-word-response-lines:
+        - 本文なし（204 No Content）
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    AssetSearchContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - actingFacility
+        - targetFacility
+        - accessibleFacilities
+        - filterOptions
+        - managementDepartmentEditOptions
+        - columnDefinitions
+        - bookmarks
+        - permissions
+        - totalCount
+      properties:
+        actingFacility:
+          $ref: '#/components/schemas/FacilityContext'
+          description: 作業対象施設
+          x-word-subtable-title: actingFacility / targetFacility 要素（FacilityContext）
+        targetFacility:
+          $ref: '#/components/schemas/FacilityContext'
+          description: 現在参照中の施設
+          x-word-omit-subtable: true
+        accessibleFacilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessibleFacility'
+          description: 施設切替候補として参照可能な施設一覧。通常アカウントでは作業対象施設を OWN として返却し、共有システム管理者では未削除の全施設を返却できる
+          x-word-subtable-title: accessibleFacilities要素（AccessibleFacility）
+        filterOptions:
+          $ref: '#/components/schemas/AssetSearchFilterOptions'
+          description: 検索候補
+          x-word-subtable-title: filterOptions要素（AssetSearchFilterOptions）
+        managementDepartmentEditOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ManagementDepartmentOption'
+          description: 一覧の管理部署編集候補。management_department_edit が有効な場合のみ返却する
+          x-word-subtable-title: managementDepartmentEditOptions要素（ManagementDepartmentOption）
+        columnDefinitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetSearchColumnDefinition'
+          description: 列定義と現在設定
+          x-word-subtable-title: columnDefinitions要素（AssetSearchColumnDefinition）
+        bookmarks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ColumnBookmarkSummary'
+          description: 保存済み named bookmark 一覧
+          x-word-subtable-title: bookmarks要素（ColumnBookmarkSummary）
+        permissions:
+          $ref: '#/components/schemas/AssetSearchPermissionContext'
+          description: 操作可否
+          x-word-subtable-title: permissions要素（AssetSearchPermissionContext）
+        totalCount:
+          type: integer
+          format: int32
+          description: 現在参照施設の対象資産件数
+        value:
+          type: string
+          description: 候補値。IDを使う項目も文字列化して返却する
+          x-word-omit-row: true
+          x-required-when: FilterOption要素
+          x-word-required-label: ✓
+        label:
+          type: string
+          description: 画面表示名
+          x-word-omit-row: true
+          x-required-when: FilterOption要素
+          x-word-required-label: ✓
+    FacilityContext:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+        - accessMode
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        facilityName:
+          type: string
+          description: 施設名
+        accessMode:
+          type: string
+          description: OWN / EXTERNAL_READONLY。共有システム管理者が作業対象施設以外のQRを解決する場合も EXTERNAL_READONLY
+    AccessibleFacility:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+        - accessMode
+        - isCurrentTarget
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID
+        facilityName:
+          type: string
+          description: 施設名
+        accessMode:
+          type: string
+          description: OWN / EXTERNAL_READONLY。EXTERNAL_READONLY は通常アカウントの協業グループ経由の他施設閲覧、または共有システム管理者が作業対象施設以外を参照する閲覧専用モード
+        isCurrentTarget:
+          type: boolean
+          description: 現在選択中施設かどうか
+    AssetSearchFilterOptions:
+      type: object
+      additionalProperties: false
+      required:
+        - managementDepartments
+        - installedDepartments
+        - categories
+        - largeClasses
+        - mediumClasses
+        - assetItems
+      properties:
+        managementDepartments:
+          type: array
+          items:
+            type: string
+          description: 管理部署候補。検索用であり asset_ledgers.management_department_name を返す
+        installedDepartments:
+          type: array
+          items:
+            type: string
+          description: 設置部署候補
+        categories:
+          type: array
+          items:
+            type: string
+          description: Category 候補
+        largeClasses:
+          type: array
+          items:
+            type: string
+          description: 大分類候補
+        mediumClasses:
+          type: array
+          items:
+            type: string
+          description: 中分類候補
+        assetItems:
+          type: array
+          items:
+            type: string
+          description: 品目候補
+    ManagementDepartmentOption:
+      type: object
+      additionalProperties: false
+      required:
+        - departmentId
+        - departmentName
+        - displayLabel
+      properties:
+        departmentId:
+          type: string
+          description: 施設側部署ID。facility_locations.department_id
+        departmentName:
+          type: string
+          description: 部署名。facility_locations.section_name
+        divisionId:
+          type: string
+          description: 施設側部門ID。facility_locations.division_id
+        divisionName:
+          type: string
+          description: 部門名。facility_locations.department_name
+        displayLabel:
+          type: string
+          description: 候補表示ラベル。section_name を基本とし、同一施設内で重複する場合は department_name / section_name
+    AssetSearchColumnDefinition:
+      type: object
+      additionalProperties: false
+      required:
+        - columnKey
+        - columnLabel
+        - groupCode
+        - isVisible
+        - isLocked
+      properties:
+        columnKey:
+          type: string
+          description: カラム識別子。facilityName などの固定列キーを用いる
+        columnLabel:
+          type: string
+          description: 画面表示名
+        groupCode:
+          type: string
+          description: 表示グループ。basic / commonMaster / location / identity / classification / specification / acquisition / other
+        isVisible:
+          type: boolean
+          description: 現在ユーザー設定で表示対象かどうか
+        isLocked:
+          type: boolean
+          description: 権限により現在ターゲット施設では表示不可かどうか
+    ColumnBookmarkSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - bookmarkId
+        - bookmarkName
+        - columnCount
+        - isDefault
+        - createdAt
+        - updatedAt
+      properties:
+        bookmarkId:
+          type: integer
+          format: int64
+          description: ブックマークID
+        bookmarkName:
+          type: string
+          description: ブックマーク名
+        columnCount:
+          type: integer
+          format: int32
+          description: 保存設定数
+        isDefault:
+          type: boolean
+          description: 既定ブックマークかどうか
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    AssetSearchPermissionContext:
+      type: object
+      additionalProperties: false
+      required:
+        - canOpenOriginalApplications
+        - canRegisterInspectionManagement
+        - canRegisterMaintenanceContract
+        - canRegisterLendingManagement
+        - canEditManagementDepartmentList
+        - canEditAsset
+        - canViewPrice
+        - canViewHistory
+      properties:
+        canOpenOriginalApplications:
+          type: boolean
+          description: 新規・更新・増設・移動・廃棄申請ボタンを表示できるかどうか
+        canRegisterInspectionManagement:
+          type: boolean
+          description: 点検管理登録ボタンを表示できるかどうか
+        canRegisterMaintenanceContract:
+          type: boolean
+          description: 保守契約登録ボタンを表示できるかどうか
+        canRegisterLendingManagement:
+          type: boolean
+          description: 貸出登録ボタンを表示できるかどうか。登録可否、貸出グループ候補、保存仕様は「貸出管理 API 設計書」を参照する
+        canEditManagementDepartmentList:
+          type: boolean
+          description: 一覧の管理部署編集ボタンを表示し、一括保存できるかどうか
+        canEditAsset:
+          type: boolean
+          description: 資産詳細で編集モードへ遷移できるかどうか
+        canViewPrice:
+          type: boolean
+          description: 価格系項目が返却対象かどうか
+        canViewHistory:
+          type: boolean
+          description: 資産履歴タブを表示できるかどうか。現行仕様では original_list_view と同値
+    PutAssetSearchResultColumnSettingsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - columns
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetSearchColumnSettingWriteModel'
+          description: 保存対象の表示/非表示設定一覧
+          x-word-subtable-title: columns要素（AssetSearchColumnSettingWriteModel）
+    AssetSearchColumnSettingsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - savedAt
+      properties:
+        savedAt:
+          type: string
+          format: date-time
+          description: 保存日時
+    AssetSearchColumnSettingWriteModel:
+      type: object
+      additionalProperties: false
+      required:
+        - columnKey
+        - isVisible
+      properties:
+        columnKey:
+          type: string
+          description: 固定列キー
+        isVisible:
+          type: boolean
+          description: 表示フラグ
+    ColumnBookmarkListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: bookmark 件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ColumnBookmarkSummary'
+          description: bookmark 一覧
+          x-word-subtable-title: items要素（ColumnBookmarkSummary）
+    PostAssetSearchResultColumnBookmarksRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - bookmarkName
+        - columns
+      properties:
+        bookmarkName:
+          type: string
+          description: ブックマーク名
+        isDefault:
+          type: boolean
+          description: 既定 bookmark として保存するかどうか。未指定時は false
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetSearchColumnSettingWriteModel'
+          description: 保存対象の表示/非表示設定一覧
+          x-word-subtable-title: columns要素（AssetSearchColumnSettingWriteModel）
+    ColumnBookmarkCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/ColumnBookmarkSummary'
+          description: 保存した bookmark
+          x-word-subtable-title: item要素（ColumnBookmarkSummary）
+    ColumnBookmarkApplyResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - appliedBookmark
+        - columnDefinitions
+        - savedAt
+      properties:
+        appliedBookmark:
+          $ref: '#/components/schemas/ColumnBookmarkSummary'
+          description: 適用した bookmark
+          x-word-subtable-title: appliedBookmark要素（ColumnBookmarkSummary）
+        columnDefinitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetSearchColumnDefinition'
+          description: 適用後の current settings
+          x-word-subtable-title: columnDefinitions要素（AssetSearchColumnDefinition）
+        savedAt:
+          type: string
+          format: date-time
+          description: 適用日時
+    AssetSearchResultResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - targetFacility
+        - canViewPrice
+        - columnDefinitions
+        - pageSize
+        - items
+        - totalCount
+      properties:
+        targetFacility:
+          $ref: '#/components/schemas/FacilityContext'
+          description: 現在参照した施設
+          x-word-subtable-title: targetFacility要素（FacilityContext）
+        canViewPrice:
+          type: boolean
+          description: 価格項目を返却したかどうか
+        columnDefinitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetSearchColumnDefinition'
+          description: 現在ターゲット施設に対して有効な列定義
+          x-word-subtable-title: columnDefinitions要素（AssetSearchColumnDefinition）
+        pageSize:
+          type: integer
+          format: int32
+          description: 今回返却したページサイズ
+        nextCursor:
+          type: string
+          description: 次ページ取得用 continuation token。末尾到達時は null
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetSearchResultItem'
+          description: 検索結果一覧
+          x-word-subtable-title: items要素（AssetSearchResultItem）
+        totalCount:
+          type: integer
+          format: int32
+          description: 検索結果件数
+    AssetSearchResultItem:
+      type: object
+      additionalProperties: false
+      required:
+        - assetId
+        - facilityId
+        - facilityName
+        - categoryId
+        - categoryName
+        - largeClassName
+        - mediumClassName
+        - assetItemName
+        - assetName
+        - quantity
+        - isLeased
+        - isRentedOut
+        - updatedAt
+      properties:
+        assetId:
+          type: integer
+          format: int64
+          description: 資産台帳ID
+        facilityId:
+          type: integer
+          format: int64
+          description: 設置施設ID
+        facilityName:
+          type: string
+          description: 施設名
+        qrIdentifier:
+          type: string
+          description: QR識別子
+        assetNo:
+          type: string
+          description: 固定資産番号
+        managementNo:
+          type: string
+          description: 管理機器番号
+        managementDepartmentId:
+          type: string
+          description: 資産管理部署ID。asset_ledgers.management_department_id。legacy 未解決データ、未設定、または一覧編集不可の返却文脈では null
+        managementDepartmentName:
+          type: string
+          description: 資産管理部署。asset_ledgers.management_department_name の表示値
+        building:
+          type: string
+          description: 棟
+        floor:
+          type: string
+          description: 階
+        shipDivisionName:
+          type: string
+          description: SHIP部門名
+        shipDepartmentName:
+          type: string
+          description: SHIP部署名
+        roomCategory1:
+          type: string
+          description: 諸室区分①
+        roomCategory2:
+          type: string
+          description: 諸室区分②
+        roomName:
+          type: string
+          description: 室名称
+        installationLocation:
+          type: string
+          description: 設置場所
+        categoryId:
+          type: integer
+          format: int64
+          description: Category ID
+        categoryName:
+          type: string
+          description: Category 名
+        largeClassName:
+          type: string
+          description: 大分類
+        mediumClassName:
+          type: string
+          description: 中分類
+        assetItemId:
+          type: integer
+          format: int64
+          description: 品目ID
+        assetItemName:
+          type: string
+          description: 紐付け先SHIP資産マスタ由来の品目。有効な紐付けがない既存データのみasset_ledgers.asset_item_nameへフォールバックする
+        assetName:
+          type: string
+          description: 個体管理名称
+        manufacturerName:
+          type: string
+          description: 空でないasset_ledgers.manufacturer_nameを優先し、空の場合は紐付け先SHIP資産マスタのメーカー名へフォールバックした表示値
+        modelName:
+          type: string
+          description: 空でないasset_ledgers.model_nameを優先し、空の場合は紐付け先SHIP資産マスタの型式へフォールバックした表示値
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+        unit:
+          type: string
+          description: 単位
+        serialNo:
+          type: string
+          description: シリアル番号
+        widthMm:
+          type: string
+          description: W
+        depthMm:
+          type: string
+          description: D
+        heightMm:
+          type: string
+          description: H
+        contractName:
+          type: string
+          description: 契約・見積名称
+        contractNo:
+          type: string
+          description: 契約番号
+        quotationNo:
+          type: string
+          description: 見積番号
+        contractDate:
+          type: string
+          format: date
+          description: 契約・発注日
+        deliveryDate:
+          type: string
+          format: date
+          description: 納品日
+        inspectionDate:
+          type: string
+          format: date
+          description: 検収日
+        isLeased:
+          type: boolean
+          description: リース品フラグ
+        isRentedOut:
+          type: boolean
+          description: 借用/貸出中フラグ
+        leaseStartOn:
+          type: string
+          format: date
+          description: リース開始日
+        leaseEndOn:
+          type: string
+          format: date
+          description: リース終了日
+        acquisitionCost:
+          type: number
+          description: 取得価格。価格表示権限がない場合は返却しない
+        assetInfo:
+          type: string
+          description: 資産情報
+        legalServiceLife:
+          type: string
+          description: 耐用年数（法定）
+        recommendedServiceLife:
+          type: string
+          description: 使用年数（メーカー推奨）
+        endOfServiceOn:
+          type: string
+          format: date
+          description: End of service
+        endOfSupportOn:
+          type: string
+          format: date
+          description: End of support
+        primaryPhotoUrl:
+          type: string
+          description: カード表示用の代表写真の認可済みURL。S3オブジェクトキーは返却しない
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PutAssetSearchResultAssetsManagementDepartmentsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetManagementDepartmentUpdateItem'
+          description: 一覧上で変更した管理部署更新対象
+          x-word-subtable-title: items要素（AssetManagementDepartmentUpdateItem）
+    AssetManagementDepartmentBulkUpdateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - updatedCount
+        - items
+      properties:
+        updatedCount:
+          type: integer
+          format: int32
+          description: 更新件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetManagementDepartmentUpdateResult'
+          description: 更新結果一覧
+          x-word-subtable-title: items要素（AssetManagementDepartmentUpdateResult）
+    AssetManagementDepartmentUpdateItem:
+      type: object
+      additionalProperties: false
+      required:
+        - assetId
+        - managementDepartmentId
+        - lastKnownUpdatedAt
+      properties:
+        assetId:
+          type: integer
+          format: int64
+          description: 更新対象の資産台帳ID
+        managementDepartmentId:
+          type: string
+          description: 設定する施設側部署ID。対象施設の active facility_locations.department_id から選択する
+        lastKnownUpdatedAt:
+          type: string
+          format: date-time
+          description: 一覧取得時点の updatedAt。競合検知に使用する
+    AssetManagementDepartmentUpdateResult:
+      type: object
+      additionalProperties: false
+      required:
+        - assetId
+        - managementDepartmentId
+        - managementDepartmentName
+        - updatedAt
+      properties:
+        assetId:
+          type: integer
+          format: int64
+          description: 更新した資産台帳ID
+        managementDepartmentId:
+          type: string
+          description: 更新後の施設側部署ID
+        managementDepartmentName:
+          type: string
+          description: 更新後の管理部署表示名
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新後の資産更新日時
+    AssetByQrResolveResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - assetId
+        - qrCodeId
+        - targetFacility
+      properties:
+        assetId:
+          type: integer
+          format: int64
+          description: 資産台帳ID
+        qrCodeId:
+          type: integer
+          format: int64
+          description: QRコードID
+        targetFacility:
+          $ref: '#/components/schemas/FacilityContext'
+          description: 詳細表示対象施設
+          x-word-subtable-title: targetFacility要素（FacilityContext）
+    AssetDetailResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - asset
+        - photos
+        - canEdit
+        - canViewPrice
+        - canViewHistory
+      properties:
+        asset:
+          $ref: '#/components/schemas/AssetDetailModel'
+          description: 資産詳細本体
+          x-word-subtable-title: asset要素（AssetDetailModel）
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetPhotoSummary'
+          description: 写真一覧
+          x-word-subtable-title: photos要素（AssetPhotoSummary）
+        qrInfo:
+          $ref: '#/components/schemas/AssetQrInfo'
+          description: QR情報。未発行時は null
+          x-word-subtable-title: qrInfo要素（AssetQrInfo）
+        canEdit:
+          type: boolean
+          description: 編集モードへ遷移できるかどうか
+        canViewPrice:
+          type: boolean
+          description: 価格項目が返却対象かどうか
+        canViewHistory:
+          type: boolean
+          description: 履歴タブを表示できるかどうか
+    AssetDetailModel:
+      type: object
+      additionalProperties: false
+      required:
+        - assetId
+        - facilityId
+        - facilityName
+        - categoryId
+        - categoryName
+        - largeClassName
+        - mediumClassName
+        - assetItemName
+        - assetName
+        - quantity
+        - isLeased
+        - isRentedOut
+        - updatedAt
+      properties:
+        assetId:
+          type: integer
+          format: int64
+          description: 資産台帳ID
+        facilityId:
+          type: integer
+          format: int64
+          description: 設置施設ID
+        facilityName:
+          type: string
+          description: 施設名
+        facilityLocationId:
+          type: integer
+          format: int64
+          description: 施設ロケーションID
+        qrIdentifier:
+          type: string
+          description: QR識別子
+        assetNo:
+          type: string
+          description: 固定資産番号
+        managementNo:
+          type: string
+          description: 管理機器番号
+        managementDepartmentId:
+          type: string
+          description: 資産管理部署ID。asset_ledgers.management_department_id。legacy 未解決データ、未設定、または編集不可の返却文脈では null
+        managementDepartmentName:
+          type: string
+          description: 資産管理部署。asset_ledgers.management_department_name の表示値
+        equipmentNo:
+          type: string
+          description: ME番号
+        shipAssetMasterId:
+          type: integer
+          format: int64
+          description: SHIP資産マスタID
+        categoryId:
+          type: integer
+          format: int64
+          description: Category ID
+        categoryName:
+          type: string
+          description: Category 名
+        largeClassName:
+          type: string
+          description: 大分類
+        mediumClassName:
+          type: string
+          description: 中分類
+        assetItemId:
+          type: integer
+          format: int64
+          description: 品目ID
+        assetItemName:
+          type: string
+          description: 紐付け先SHIP資産マスタ由来の品目。有効な紐付けがない既存データのみasset_ledgers.asset_item_nameへフォールバックする
+        manufacturerId:
+          type: integer
+          format: int64
+          description: メーカーID
+        manufacturerName:
+          type: string
+          description: 空でないasset_ledgers.manufacturer_nameを優先し、空の場合は紐付け先SHIP資産マスタのメーカー名へフォールバックした表示値
+        modelId:
+          type: integer
+          format: int64
+          description: 型式ID
+        modelName:
+          type: string
+          description: 空でないasset_ledgers.model_nameを優先し、空の場合は紐付け先SHIP資産マスタの型式へフォールバックした表示値
+        assetName:
+          type: string
+          description: 個体管理名称
+        detailType:
+          type: string
+          description: 明細区分
+        building:
+          type: string
+          description: 棟
+        floor:
+          type: string
+          description: 階
+        shipDivisionName:
+          type: string
+          description: SHIP部門名
+        shipDepartmentName:
+          type: string
+          description: SHIP部署名
+        roomCategory1:
+          type: string
+          description: 諸室区分①
+        roomCategory2:
+          type: string
+          description: 諸室区分②
+        roomName:
+          type: string
+          description: 室名称
+        installationLocation:
+          type: string
+          description: 設置場所
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+        unit:
+          type: string
+          description: 単位
+        serialNo:
+          type: string
+          description: シリアル番号
+        widthMm:
+          type: string
+          description: W
+        depthMm:
+          type: string
+          description: D
+        heightMm:
+          type: string
+          description: H
+        assetInfo:
+          type: string
+          description: 資産情報
+        purchasedOn:
+          type: string
+          format: date
+          description: 購入日
+        isLeased:
+          type: boolean
+          description: リース品フラグ
+        isRentedOut:
+          type: boolean
+          description: 借用/貸出中フラグ
+        leaseStartOn:
+          type: string
+          format: date
+          description: リース開始日
+        leaseEndOn:
+          type: string
+          format: date
+          description: リース終了日
+        contractName:
+          type: string
+          description: 契約・見積名称
+        contractNo:
+          type: string
+          description: 契約番号
+        quotationNo:
+          type: string
+          description: 見積番号
+        contractDate:
+          type: string
+          format: date
+          description: 契約・発注日
+        deliveryDate:
+          type: string
+          format: date
+          description: 納品日
+        inspectionDate:
+          type: string
+          format: date
+          description: 検収日
+        acquisitionCost:
+          type: number
+          description: 取得価格。価格表示権限がない場合は返却しない
+        legalServiceLife:
+          type: string
+          description: 耐用年数（法定）
+        recommendedServiceLife:
+          type: string
+          description: 使用年数（メーカー推奨）
+        endOfServiceOn:
+          type: string
+          format: date
+          description: End of service
+        endOfSupportOn:
+          type: string
+          format: date
+          description: End of support
+        lastInventoryDate:
+          type: string
+          format: date
+          description: 最終棚卸日
+        updatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用更新日時
+    AssetPhotoSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - photoId
+        - fileName
+        - fileUrl
+        - isPrimary
+        - sourceOwnerType
+      properties:
+        photoId:
+          type: integer
+          format: int64
+          description: 写真ID。application_documents.application_document_id を返す
+        fileName:
+          type: string
+          description: 表示用ファイル名
+        fileUrl:
+          type: string
+          description: 画像表示用の認可済みURL。S3オブジェクトキーは返却しない
+        takenAt:
+          type: string
+          format: date-time
+          description: 撮影日時
+        isPrimary:
+          type: boolean
+          description: 代表写真かどうか
+        sourceOwnerType:
+          type: string
+          description: ASSET_LEDGER / ASSET_SURVEY_RECORD
+    AssetQrInfo:
+      type: object
+      additionalProperties: false
+      required:
+        - qrCodeId
+        - qrIdentifier
+        - issueType
+        - labelTemplateKey
+        - issuedAt
+        - printStatus
+      properties:
+        qrCodeId:
+          type: integer
+          format: int64
+          description: QRコードID
+        qrIdentifier:
+          type: string
+          description: QR識別子
+        issueType:
+          type: string
+          description: NEW / REISSUE
+        labelTemplateKey:
+          type: string
+          description: ラベルテンプレート識別子
+        freeEntryText:
+          type: string
+          description: ラベルフリー記入項目
+        issuedAt:
+          type: string
+          format: date-time
+          description: 最終発行日時
+        printStatus:
+          type: string
+          description: 印刷状態
+        printedAt:
+          type: string
+          format: date-time
+          description: 最終印刷日時
+    AssetHistoryResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - pageSize
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 履歴総件数
+        pageSize:
+          type: integer
+          format: int32
+          description: 今回返却したページサイズ
+        nextCursor:
+          type: string
+          description: 次ページ取得用 continuation token。末尾到達時は null
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetHistoryItem'
+          description: 履歴一覧
+          x-word-subtable-title: items要素（AssetHistoryItem）
+    AssetHistoryItem:
+      type: object
+      additionalProperties: false
+      required:
+        - eventId
+        - eventType
+        - occurredAt
+        - title
+        - sourceId
+      properties:
+        eventId:
+          type: string
+          description: >-
+            履歴イベント識別子。APPLICATION_STATUS:{application_status_history_id} / INSPECTION_RESULT:{inspection_result_id} /
+            LENDING_TRANSACTION:{lending_transaction_id}
+        eventType:
+          type: string
+          description: APPLICATION_STATUS / INSPECTION_RESULT / LENDING_TRANSACTION
+        occurredAt:
+          type: string
+          format: date-time
+          description: イベント発生日時
+        title:
+          type: string
+          description: 一覧表示用タイトル。申請は 申請No.{application_no}、点検は 点検結果、貸出は 貸出 / 返却 を基本とする
+        statusLabel:
+          type: string
+          description: 状態表示ラベル。申請は遷移先ステータス、点検は総合判定、貸出は取引ステータスを返す
+        actorName:
+          type: string
+          description: 処理者/実施者名。履歴ソースに名称スナップショットがない場合は null
+        sourceId:
+          type: integer
+          format: int64
+          description: 元レコードID
+        sourcePath:
+          type: string
+          description: 関連画面ルート。/quotation-data-box / /inspection-result / /lending-checkout。導線を出さない場合は null
+        summary:
+          type: string
+          description: 補足表示。申請コメント、点検種別と備考、貸出先部署や返却予定日などを source 種別ごとに返す
+    PutAssetDetailAssetsByAssetIdRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lastKnownUpdatedAt
+        - identity
+        - location
+        - classification
+        - specification
+        - lifecycle
+      properties:
+        lastKnownUpdatedAt:
+          type: string
+          format: date-time
+          description: 取得時点の asset.updatedAt
+        identity:
+          $ref: '#/components/schemas/AssetIdentityUpdateModel'
+          description: 識別・管理情報更新
+          x-word-subtable-title: identity要素（AssetIdentityUpdateModel）
+        location:
+          $ref: '#/components/schemas/AssetLocationUpdateModel'
+          description: 設置情報更新
+          x-word-subtable-title: location要素（AssetLocationUpdateModel）
+        classification:
+          $ref: '#/components/schemas/AssetClassificationUpdateModel'
+          description: 分類・名称更新
+          x-word-subtable-title: classification要素（AssetClassificationUpdateModel）
+        specification:
+          $ref: '#/components/schemas/AssetSpecificationUpdateModel'
+          description: 機器仕様更新
+          x-word-subtable-title: specification要素（AssetSpecificationUpdateModel）
+        lifecycle:
+          $ref: '#/components/schemas/AssetLifecycleUpdateModel'
+          description: 取得・ライフサイクル情報更新
+          x-word-subtable-title: lifecycle要素（AssetLifecycleUpdateModel）
+    AssetDetailUpdateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - asset
+        - canEdit
+        - canViewPrice
+        - canViewHistory
+      properties:
+        asset:
+          $ref: '#/components/schemas/AssetDetailModel'
+          description: 更新後の資産詳細
+          x-word-subtable-title: asset要素（AssetDetailModel）
+        canEdit:
+          type: boolean
+          description: 更新後の編集可否
+        canViewPrice:
+          type: boolean
+          description: 価格項目表示可否
+        canViewHistory:
+          type: boolean
+          description: 履歴タブ表示可否
+    AssetIdentityUpdateModel:
+      type: object
+      additionalProperties: false
+      properties:
+        assetNo:
+          type: string
+          description: 固定資産番号
+        managementDepartmentId:
+          type: string
+          description: 資産管理部署ID。指定時は対象施設の active facility_locations.department_id（非NULL）として検証する
+        managementDepartmentName:
+          type: string
+          description: 資産管理部署名。managementDepartmentId を省略した互換更新時のみ使用し、対象施設で一意に解決できる active 部署名であること
+    AssetLocationUpdateModel:
+      type: object
+      additionalProperties: false
+      properties:
+        facilityLocationId:
+          type: integer
+          format: int64
+          description: 施設ロケーションID
+        building:
+          type: string
+          description: 棟の表示値
+        floor:
+          type: string
+          description: 階の表示値
+        shipDivisionName:
+          type: string
+          description: SHIP部門名
+        shipDepartmentName:
+          type: string
+          description: SHIP部署名
+        roomCategory1:
+          type: string
+          description: 諸室区分①
+        roomCategory2:
+          type: string
+          description: 諸室区分②
+        roomName:
+          type: string
+          description: 室名称
+        installationLocation:
+          type: string
+          description: 設置場所
+    AssetClassificationUpdateModel:
+      type: object
+      additionalProperties: false
+      required:
+        - classificationMode
+        - assetName
+      properties:
+        classificationMode:
+          type: string
+          description: LINKED / MANUAL
+        shipAssetMasterId:
+          type: integer
+          format: int64
+          description: LINKED 時に参照するSHIP資産マスタID。同じIDなら既存の資産固有メーカー名・型式を保持し、変更時は新マスタ名称を初期値にする
+        categoryId:
+          type: integer
+          format: int64
+          description: MANUAL 時の Category ID。LINKED 時に指定した場合は SHIP資産マスタと一致すること
+        assetItemId:
+          type: integer
+          format: int64
+          description: 品目ID
+        manufacturerId:
+          type: integer
+          format: int64
+          description: メーカーID
+        modelId:
+          type: integer
+          format: int64
+          description: 型式ID
+        assetName:
+          type: string
+          description: 個体管理名称
+    AssetSpecificationUpdateModel:
+      type: object
+      additionalProperties: false
+      required:
+        - quantity
+      properties:
+        managementNo:
+          type: string
+          description: 管理機器番号
+        equipmentNo:
+          type: string
+          description: ME番号
+        serialNo:
+          type: string
+          description: シリアル番号
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+        unit:
+          type: string
+          description: 単位
+        widthMm:
+          type: string
+          description: W
+        depthMm:
+          type: string
+          description: D
+        heightMm:
+          type: string
+          description: H
+        assetInfo:
+          type: string
+          description: 資産情報
+    AssetLifecycleUpdateModel:
+      type: object
+      additionalProperties: false
+      required:
+        - isLeased
+        - isRentedOut
+      properties:
+        purchasedOn:
+          type: string
+          format: date
+          description: 購入日
+        contractName:
+          type: string
+          description: 契約・見積名称
+        contractNo:
+          type: string
+          description: 契約番号
+        quotationNo:
+          type: string
+          description: 見積番号
+        contractDate:
+          type: string
+          format: date
+          description: 契約・発注日
+        deliveryDate:
+          type: string
+          format: date
+          description: 納品日
+        inspectionDate:
+          type: string
+          format: date
+          description: 検収日
+        isLeased:
+          type: boolean
+          description: リース品フラグ
+        isRentedOut:
+          type: boolean
+          description: 借用/貸出中フラグ
+        leaseStartOn:
+          type: string
+          format: date
+          description: リース開始日
+        leaseEndOn:
+          type: string
+          format: date
+          description: リース終了日
+        acquisitionCost:
+          type: number
+          description: 取得価格。更新時も価格権限を必須とする
+        legalServiceLife:
+          type: string
+          description: 耐用年数（法定）
+        recommendedServiceLife:
+          type: string
+          description: 使用年数（メーカー推奨）
+        endOfServiceOn:
+          type: string
+          format: date
+          description: End of service
+        endOfSupportOn:
+          type: string
+          format: date
+          description: End of support
+    PostAssetDetailAssetsByAssetIdPhotosRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload.photos
+        - files
+      properties:
+        payload.photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetPhotoCreateModel'
+          description: 追加写真メタデータ。各要素の filePartName で対応するファイルパートを指定する
+          x-word-subtable-title: photos要素（AssetPhotoCreateModel）
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: payload.photos[].filePartName で参照される写真ファイル本体
+    AssetPhotoCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetPhotoSummary'
+          description: 追加後の写真一覧
+          x-word-subtable-title: items要素（AssetPhotoSummary）
+    AssetPhotoCreateModel:
+      type: object
+      additionalProperties: false
+      required:
+        - filePartName
+        - fileName
+        - contentType
+      properties:
+        filePartName:
+          type: string
+          description: multipart 内の写真ファイルパート名
+        fileName:
+          type: string
+          description: 表示用ファイル名
+        contentType:
+          type: string
+          description: MIME Type
+        takenAt:
+          type: string
+          format: date-time
+          description: 撮影日時
+        isPrimary:
+          type: boolean
+          description: 代表写真指定
+    AssetDocumentListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: ドキュメント件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetDocumentSummary'
+          description: ドキュメント一覧
+          x-word-subtable-title: items要素（AssetDocumentSummary）
+    AssetDocumentSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - documentId
+        - documentType
+        - fileName
+        - downloadUrl
+        - uploadedAt
+      properties:
+        documentId:
+          type: integer
+          format: int64
+          description: ドキュメントID。application_documents.application_document_id を返す
+        documentType:
+          type: string
+          description: 'ドキュメント種別。例: CONTRACT, DELIVERY_NOTE, INSPECTION_REPORT, OTHER'
+        title:
+          type: string
+          description: 表示タイトル
+        fileName:
+          type: string
+          description: 表示用ファイル名
+        documentDate:
+          type: string
+          format: date
+          description: 文書日付
+        downloadUrl:
+          type: string
+          description: ダウンロード/プレビュー用の認可済みURL。S3オブジェクトキーは返却しない
+        uploadedAt:
+          type: string
+          format: date-time
+          description: 登録日時
+    PostAssetDetailAssetsByAssetIdDocumentsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload.documentType
+        - payload.fileName
+        - payload.contentType
+        - file
+      properties:
+        payload.documentType:
+          type: string
+          description: ドキュメント種別
+        payload.title:
+          type: string
+          description: 表示タイトル
+        payload.documentDate:
+          type: string
+          format: date
+          description: 文書日付
+        payload.fileName:
+          type: string
+          description: 表示用ファイル名
+        payload.contentType:
+          type: string
+          description: MIME Type
+        file:
+          type: string
+          format: binary
+          description: 登録ファイル本体
+    AssetDocumentCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/AssetDocumentSummary'
+          description: 追加後のドキュメント
+          x-word-subtable-title: item要素（AssetDocumentSummary）
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

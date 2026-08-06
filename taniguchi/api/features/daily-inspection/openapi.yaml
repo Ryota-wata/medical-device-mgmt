@@ -1,0 +1,1079 @@
+openapi: 3.0.4
+info:
+  title: 日常点検 API
+  version: 1.1.0
+  description: 日常点検で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: DailyInspection
+    description: 日常点検のAPI
+paths:
+  /inspection-prep/context:
+    get:
+      tags:
+        - DailyInspection
+      operationId: getInspectionPrepContext
+      summary: 準備状況取得
+      description: 日常点検オフライン準備画面の初期表示に必要なダウンロード状況、件数、最終送信情報を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: daily_inspection
+      parameters:
+        - name: clientDeviceId
+          in: query
+          required: false
+          description: 端末を識別する任意 ID。未指定時はユーザー単位の最終同期情報を返す
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionPrepContextResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 daily_inspection なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /inspection-prep/master/download:
+    get:
+      tags:
+        - DailyInspection
+      operationId: getInspectionPrepMasterDownload
+      summary: PWAパッケージ取得
+      description: >-
+        オフライン日常点検で利用する有効QR識別子付き点検対象資産、QR識別子、日常点検メニュー、点検項目、有効な資産別日常点検設定行を全量取得する。クライアントは取得結果でIndexedDB等の端末内ストレージを置換し、点検開始後のQR照合と点検メニュー解決に使用する。日常点検設定が未登録の資産も資産側に含め、QR読取時に設定未登録警告を表示できるようにする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: daily_inspection
+      parameters:
+        - name: clientDeviceId
+          in: query
+          required: false
+          description: 端末を識別する任意 ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyInspectionMasterDownloadResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 daily_inspection なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /inspection-prep/results/sync:
+    post:
+      tags:
+        - DailyInspection
+      operationId: postInspectionPrepResultsSync
+      summary: 日常点検結果同期
+      description: オフラインで実施した日常点検結果を一括送信する。各結果は個別に成功/失敗を返し、クライアント側で未送信結果を再送できるようにする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: daily_inspection
+      x-word-request-title: リクエスト（DailyInspectionResultSyncRequest）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DailyInspectionResultSyncRequest'
+      responses:
+        '200':
+          description: 同期処理完了。結果ごとの成否はレスポンスで確認する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyInspectionResultSyncResponse'
+        '400':
+          description: リクエスト形式不正、results 空
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 daily_inspection なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /daily-inspection/assets/by-qr/{qrCode}:
+    get:
+      tags:
+        - DailyInspection
+      operationId: getDailyInspectionAssetsByQrByQrCode
+      summary: オンラインQR資産再検証
+      description: >-
+        PWAパッケージで解決できないQR、期限切れパッケージ利用時のオンライン補助、またはユーザーが再検証を要求した場合に、QR
+        コードから日常点検対象資産を再確認する。通常の点検開始フローでは、クライアントがダウンロード済みPWAパッケージを検索して対象資産と点検メニューを決定し、本 API 呼び出しを必須にしない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: daily_inspection
+      parameters:
+        - name: qrCode
+          in: path
+          required: true
+          description: 読取または手入力した QR コード
+          schema:
+            type: string
+        - name: dailyTiming
+          in: query
+          required: false
+          description: BEFORE / DURING / AFTER。指定時は対象タイミングのメニューを優先返却する
+          schema:
+            type: string
+        - name: packageVersion
+          in: query
+          required: false
+          description: 端末が利用中のPWAパッケージバージョン。サーバー側で期限切れや全量再取得推奨を判断するための補助情報
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 取得成功。メニュー未登録時も 200 で警告コードを返す
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyInspectionAssetByQrResponse'
+        '400':
+          description: QR コード形式不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 daily_inspection なし、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: QR コードに一致する資産が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /daily-inspection/results:
+    post:
+      tags:
+        - DailyInspection
+      operationId: postDailyInspectionResults
+      summary: 日常点検結果登録
+      description: オンラインで実施した日常点検結果を登録する。オフライン同期 API の 1 件分と同じ検証・永続化を行う。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: daily_inspection
+      x-word-request-title: リクエスト（DailyInspectionResultCreateRequest）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DailyInspectionResultCreateRequest'
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyInspectionResultCreateResponse'
+        '400':
+          description: 入力不正、必須不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 daily_inspection なし、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象資産、点検タスク、点検メニュー、点検項目が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 資産別日常点検設定が未登録、対象タイミングのメニュー不一致、または対象資産が日常点検対象外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 点検結果明細の入力方式・評価方式がメニュー定義と一致しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /inspection-result/reports/{inspectionResultId}:
+    get:
+      tags:
+        - DailyInspection
+      operationId: getInspectionResultReportsByInspectionResultId
+      summary: 点検結果報告データ取得
+      description: 点検結果画面表示および報告書出力に必要な日常点検結果、対象資産、点検メニュー、項目結果を取得する。本書では日常点検結果のみを対象とし、定期点検結果の参照は No.30 点検管理タブ API 設計書で扱う。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: daily_inspection
+      parameters:
+        - name: inspectionResultId
+          in: path
+          required: true
+          description: 点検結果 ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionResultReportResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 daily_inspection なし、対象施設不一致、または定期点検結果を指定した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 点検結果が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 の報告書ダウンロード URL 発行に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    InspectionPrepContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - generatedAt
+        - assetCount
+        - dailyMenuCount
+        - dailySettingCount
+        - serverUnsyncedCount
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+          description: サーバーがレスポンスを生成した日時
+        assetCount:
+          type: integer
+          format: int32
+          description: 作業対象施設内の点検対象資産件数
+        dailyMenuCount:
+          type: integer
+          format: int32
+          description: 有効な日常点検メニュー件数
+        dailySettingCount:
+          type: integer
+          format: int32
+          description: 資産別日常点検設定件数
+        lastDownloadedAt:
+          type: string
+          format: date-time
+          description: 対象端末/ユーザーの最終ダウンロード日時
+        lastSyncedAt:
+          type: string
+          format: date-time
+          description: 対象端末/ユーザーの最終同期日時
+        serverUnsyncedCount:
+          type: integer
+          format: int32
+          description: サーバー側が把握する未同期件数。通常は 0
+    DailyInspectionMasterDownloadResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - downloadedAt
+        - isFull
+        - packageVersion
+        - assets
+        - menus
+        - settings
+      properties:
+        downloadedAt:
+          type: string
+          format: date-time
+          description: ダウンロード日時
+        isFull:
+          type: boolean
+          description: 常に true。端末側は取得結果でローカルPWAパッケージを置換する
+        packageVersion:
+          type: string
+          description: '端末内キャッシュ識別用のパッケージバージョン。例: downloadedAt と作業対象施設IDから生成'
+        validUntil:
+          type: string
+          format: date-time
+          description: 再ダウンロード推奨期限。期限切れ後は点検開始前にオンライン再取得を促す
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyInspectionAsset'
+          description: 点検対象資産
+        menus:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyInspectionMenu'
+          description: 日常点検メニュー
+        settings:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyInspectionAssetSetting'
+          description: 有効な資産別日常点検設定行
+    DailyInspectionAsset:
+      type: object
+      additionalProperties: false
+      required:
+        - assetLedgerId
+        - qrCode
+        - qrIdentifiers
+        - assetStatus
+        - dailyInspectionConfigured
+        - configuredTimings
+      properties:
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳 ID
+        qrCode:
+          type: string
+          description: 代表QR識別子。単一QR表示用
+        qrIdentifiers:
+          type: array
+          items:
+            type: string
+          description: 対象資産に紐づく有効QR識別子。QR読取時の端末内照合キー
+        assetStatus:
+          type: string
+          description: asset_ledgers.status。オフライン対象は ACTIVE のみ
+        largeClassName:
+          type: string
+          description: 大分類
+        mediumClassName:
+          type: string
+          description: 中分類
+        itemName:
+          type: string
+          description: 品目
+        manufacturerName:
+          type: string
+          description: メーカー
+        modelName:
+          type: string
+          description: 型式
+        managementDepartmentName:
+          type: string
+          description: 管理部署
+        installationLocation:
+          type: string
+          description: 設置場所
+        dailyInspectionConfigured:
+          type: boolean
+          description: 有効な資産別日常点検設定行が存在する場合 true。false の場合、QR照合後に未設定警告を表示し点検開始不可とする
+        configuredTimings:
+          type: array
+          items:
+            type: string
+          description: 設定済みタイミング。BEFORE / DURING / AFTER の配列。未設定時は空配列
+    DailyInspectionMenu:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionMenuId
+        - menuName
+        - dailyTiming
+        - isActive
+        - updatedAt
+        - items
+      properties:
+        inspectionMenuId:
+          type: integer
+          format: int64
+          description: 点検メニュー ID
+        menuName:
+          type: string
+          description: 点検メニュー名
+        dailyTiming:
+          type: string
+          description: BEFORE / DURING / AFTER
+        largeClassName:
+          type: string
+          description: 対象大分類
+        mediumClassName:
+          type: string
+          description: 対象中分類
+        itemName:
+          type: string
+          description: 対象品目
+        isActive:
+          type: boolean
+          description: PWA配信時点で有効な日常点検メニューのため true
+        updatedAt:
+          type: string
+          format: date-time
+          description: メニュー更新日時
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyInspectionMenuItem'
+          description: 点検項目
+    DailyInspectionMenuItem:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionMenuItemId
+        - displayOrder
+        - itemName
+        - itemContent
+        - inputType
+        - evaluationType
+      properties:
+        inspectionMenuItemId:
+          type: integer
+          format: int64
+          description: 点検項目 ID
+        displayOrder:
+          type: integer
+          format: int32
+          description: 表示順
+        itemName:
+          type: string
+          description: 項目名
+        itemContent:
+          type: string
+          description: 点検内容
+        inputType:
+          type: string
+          description: SELECT / FREE。UI 表示では 選択 / フリー入力 に変換する
+        evaluationType:
+          type: string
+          description: PASS_FAIL / UNIT / FREE。UI 表示では 合否 / 単位 / フリー入力 に変換する
+        unitText:
+          type: string
+          description: 単位入力時の単位
+        selectOptions:
+          type: array
+          items:
+            type: string
+          description: select_options_json を配列化した選択肢
+    DailyInspectionAssetSetting:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionTaskId
+        - assetLedgerId
+        - inspectionType
+        - isActive
+      properties:
+        inspectionTaskId:
+          type: integer
+          format: int64
+          description: 結果登録時に指定する点検タスク ID
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳 ID
+        inspectionType:
+          type: string
+          description: 日常点検 固定
+        beforeMenuId:
+          type: integer
+          format: int64
+          description: 使用前日常点検メニュー ID
+        duringMenuId:
+          type: integer
+          format: int64
+          description: 使用中日常点検メニュー ID
+        afterMenuId:
+          type: integer
+          format: int64
+          description: 使用後日常点検メニュー ID
+        isActive:
+          type: boolean
+          description: PWA配信対象のため true
+    DailyInspectionResultSyncRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - masterDownloadedAt
+        - results
+      properties:
+        clientDeviceId:
+          type: string
+          description: 端末を識別する任意 ID
+        masterDownloadedAt:
+          type: string
+          format: date-time
+          description: 端末が利用したオフラインマスタの取得日時。設定解除後の同期可否判定と再送診断に使用する
+        packageVersion:
+          type: string
+          description: 端末が利用したPWAパッケージバージョン。同期結果の監査と再送診断に使用する
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyInspectionResultInput'
+          description: 同期対象の日常点検結果
+    DailyInspectionResultSyncResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - syncedAt
+        - successCount
+        - failureCount
+        - results
+      properties:
+        syncedAt:
+          type: string
+          format: date-time
+          description: 同期処理日時
+        successCount:
+          type: integer
+          format: int32
+          description: 保存または既存確認に成功した件数
+        failureCount:
+          type: integer
+          format: int32
+          description: 保存に失敗した件数
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyInspectionSyncItemResult'
+          description: 結果ごとの同期結果
+    DailyInspectionResultInput:
+      type: object
+      additionalProperties: false
+      required:
+        - clientResultId
+        - inspectionTaskId
+        - assetLedgerId
+        - inspectionMenuId
+        - dailyTiming
+        - inspectedOn
+        - inspectedAt
+        - inspectorName
+        - overallResult
+        - resultDetails
+      properties:
+        clientResultId:
+          type: string
+          description: 端末内で一意な結果 ID。冪等登録に使用する
+        inspectionTaskId:
+          type: integer
+          format: int64
+          description: 資産別日常点検設定の点検タスク ID
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳 ID
+        inspectionMenuId:
+          type: integer
+          format: int64
+          description: 実施した日常点検メニュー ID
+        dailyTiming:
+          type: string
+          description: BEFORE / DURING / AFTER
+        inspectedOn:
+          type: string
+          format: date
+          description: 点検実施日
+        inspectedAt:
+          type: string
+          format: date-time
+          description: 端末上の点検完了日時。設定解除日時との前後判定に使用する
+        inspectorName:
+          type: string
+          description: 実施者名
+        overallResult:
+          type: string
+          description: PASS / REPAIR_REQUEST。画面表示の 合格 / 異常あり を正規化する
+        resultDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyInspectionResultDetailInput'
+          description: 点検項目ごとの結果
+          x-word-omit-subtable: true
+        remarks:
+          type: string
+          description: 備考
+    DailyInspectionSyncItemResult:
+      type: object
+      additionalProperties: false
+      required:
+        - clientResultId
+        - status
+      properties:
+        clientResultId:
+          type: string
+          description: 端末内結果 ID
+        inspectionResultId:
+          type: integer
+          format: int64
+          description: 保存済み点検結果 ID
+        status:
+          type: string
+          description: SUCCESS / FAILED / DUPLICATE
+        lendingStatusUpdateStatus:
+          type: string
+          description: UPDATED / NOT_TARGET / SKIPPED_TRANSITION_NOT_ALLOWED
+        errorCode:
+          type: string
+          description: 失敗時のエラーコード
+        message:
+          type: string
+          description: 失敗時の補足
+    DailyInspectionAssetByQrResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - asset
+        - menus
+        - canRegisterResult
+      properties:
+        asset:
+          $ref: '#/components/schemas/DailyInspectionAsset'
+          description: 対象資産
+          x-word-omit-subtable: true
+        setting:
+          $ref: '#/components/schemas/DailyInspectionAssetSetting'
+          description: 資産別日常点検設定。未登録時は null
+          x-word-omit-subtable: true
+        menus:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyInspectionMenu'
+          description: 利用可能な日常点検メニュー候補
+          x-word-omit-subtable: true
+        canRegisterResult:
+          type: boolean
+          description: 結果登録に必要な inspectionTaskId が解決できる場合 true
+        warningCode:
+          type: string
+          description: >-
+            NO_DAILY_MENU / DAILY_INSPECTION_TASK_REQUIRED / DAILY_TIMING_MENU_REQUIRED /
+            DAILY_INSPECTION_ASSET_NOT_TARGET
+    DailyInspectionResultCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionTaskId
+        - assetLedgerId
+        - inspectionMenuId
+        - dailyTiming
+        - inspectedOn
+        - inspectedAt
+        - inspectorName
+        - overallResult
+        - resultDetails
+      properties:
+        clientResultId:
+          type: string
+          description: PWA端末内で生成した結果 ID。オンライン即時登録でも指定時は冪等登録に使用する
+        masterDownloadedAt:
+          type: string
+          format: date-time
+          description: 点検時に利用したPWAパッケージの取得日時
+        packageVersion:
+          type: string
+          description: 点検時に利用したPWAパッケージバージョン
+        inspectionTaskId:
+          type: integer
+          format: int64
+          description: 資産別日常点検設定の点検タスク ID
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳 ID
+        inspectionMenuId:
+          type: integer
+          format: int64
+          description: 実施した日常点検メニュー ID
+        dailyTiming:
+          type: string
+          description: BEFORE / DURING / AFTER
+        inspectedOn:
+          type: string
+          format: date
+          description: 点検実施日
+        inspectedAt:
+          type: string
+          format: date-time
+          description: 端末上の点検完了日時
+        inspectorName:
+          type: string
+          description: 実施者名
+        overallResult:
+          type: string
+          description: PASS / REPAIR_REQUEST
+        resultDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyInspectionResultDetailInput'
+          description: 点検項目ごとの結果
+        remarks:
+          type: string
+          description: 備考
+        nextAction:
+          type: string
+          description: FINISH / NEXT_INSPECTION / REPAIR_REQUEST。画面遷移補助情報
+    DailyInspectionResultCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionResultId
+        - assetLedgerId
+        - overallResult
+        - lendingStatusUpdated
+      properties:
+        inspectionResultId:
+          type: integer
+          format: int64
+          description: 登録した点検結果 ID
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳 ID
+        overallResult:
+          type: string
+          description: PASS / REPAIR_REQUEST
+        lendingStatusUpdated:
+          type: boolean
+          description: 貸出管理対象機器のステータスを更新した場合 true
+        newLendingStatus:
+          type: string
+          description: 更新後の貸出ステータス
+        lendingStatusUpdateStatus:
+          type: string
+          description: UPDATED / NOT_TARGET / SKIPPED_TRANSITION_NOT_ALLOWED
+        repairRequestSeed:
+          $ref: '#/components/schemas/RepairRequestSeed'
+          description: 修理申請へ連携する初期値。overallResult=REPAIR_REQUEST の場合に返す
+    DailyInspectionResultDetailInput:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionMenuItemId
+        - displayOrder
+        - itemName
+        - itemContent
+        - inputType
+        - evaluationType
+        - value
+        - displayValue
+      properties:
+        inspectionMenuItemId:
+          type: integer
+          format: int64
+          description: 点検項目 ID
+        displayOrder:
+          type: integer
+          format: int32
+          description: 実施時点の表示順
+        itemName:
+          type: string
+          description: 項目名スナップショット
+        itemContent:
+          type: string
+          description: 点検内容スナップショット
+        inputType:
+          type: string
+          description: SELECT / FREE
+        evaluationType:
+          type: string
+          description: PASS_FAIL / UNIT / FREE
+        value:
+          type: string
+          description: 入力値。合否は PASS / FAIL、単位入力は数値文字列、フリー入力は入力文字列
+        displayValue:
+          type: string
+          description: '画面表示値。例: ○, ×, 120 ml'
+        unitText:
+          type: string
+          description: 単位入力時の単位
+    RepairRequestSeed:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionResultId
+        - assetLedgerId
+        - qrCode
+        - inspectionDate
+        - inspectorName
+      properties:
+        inspectionResultId:
+          type: integer
+          format: int64
+          description: 点検結果 ID
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳 ID
+        qrCode:
+          type: string
+          description: QR コード
+        largeClassName:
+          type: string
+          description: 大分類
+        mediumClassName:
+          type: string
+          description: 中分類
+        itemName:
+          type: string
+          description: 品目
+        manufacturerName:
+          type: string
+          description: メーカー
+        modelName:
+          type: string
+          description: 型式
+        symptom:
+          type: string
+          description: 修理申請の症状初期値。備考を引き継ぐ
+        inspectionRemarks:
+          type: string
+          description: 点検時備考
+        inspectionDate:
+          type: string
+          format: date
+          description: 点検日
+        inspectorName:
+          type: string
+          description: 実施者名
+    InspectionResultReportResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionResultId
+        - source
+        - inspectionType
+        - returnTo
+        - asset
+        - menuName
+        - inspectorName
+        - inspectedOn
+        - overallResult
+        - resultDetails
+      properties:
+        inspectionResultId:
+          type: integer
+          format: int64
+          description: 点検結果 ID
+        source:
+          type: string
+          description: daily 固定
+        inspectionType:
+          type: string
+          description: 日常点検 固定
+        dailyTiming:
+          type: string
+          description: BEFORE / DURING / AFTER
+        returnTo:
+          type: string
+          description: /inspection-prep
+        asset:
+          $ref: '#/components/schemas/DailyInspectionAsset'
+          description: 対象資産
+          x-word-omit-subtable: true
+        menuName:
+          type: string
+          description: 点検メニュー名
+        inspectorName:
+          type: string
+          description: 実施者名
+        inspectedOn:
+          type: string
+          format: date
+          description: 点検日
+        overallResult:
+          type: string
+          description: PASS / REPAIR_REQUEST
+        resultDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyInspectionResultDetail'
+          description: 点検項目結果
+        remarks:
+          type: string
+          description: 備考
+        reportDocument:
+          $ref: '#/components/schemas/InspectionReportDocument'
+          description: 保存済み報告書メタデータと認可済みダウンロード URL
+    DailyInspectionResultDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionMenuItemId
+        - displayOrder
+        - itemName
+        - itemContent
+        - inputType
+        - evaluationType
+        - value
+        - displayValue
+      properties:
+        inspectionMenuItemId:
+          type: integer
+          format: int64
+          description: 点検項目 ID
+        displayOrder:
+          type: integer
+          format: int32
+          description: 実施時点の表示順
+        itemName:
+          type: string
+          description: 項目名スナップショット
+        itemContent:
+          type: string
+          description: 点検内容スナップショット
+        inputType:
+          type: string
+          description: SELECT / FREE
+        evaluationType:
+          type: string
+          description: PASS_FAIL / UNIT / FREE
+        value:
+          type: string
+          description: 保存値
+        displayValue:
+          type: string
+          description: 画面表示値
+        unitText:
+          type: string
+          description: 単位入力時の単位
+    InspectionReportDocument:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationDocumentId
+        - documentType
+        - fileName
+        - downloadUrl
+      properties:
+        applicationDocumentId:
+          type: integer
+          format: int64
+          description: ドキュメント ID
+        documentType:
+          type: string
+          description: ドキュメント種別
+        title:
+          type: string
+          description: タイトル
+        fileName:
+          type: string
+          description: ファイル名
+        downloadUrl:
+          type: string
+          description: 認可済みダウンロード URL。S3 オブジェクトキーは返却しない
+        mimeType:
+          type: string
+          description: MIME タイプ
+        fileSizeBytes:
+          type: integer
+          format: int64
+          description: ファイルサイズ
+        uploadedAt:
+          type: string
+          format: date-time
+          description: 登録日時
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

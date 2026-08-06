@@ -1,0 +1,20 @@
+type: object
+required:
+  - code
+  - message
+properties:
+  code:
+    type: string
+    description: アプリケーションエラーコード
+    example: VALIDATION_ERROR
+  message:
+    type: string
+    description: 利用者またはAPI利用者が確認するエラー概要
+    example: 入力内容を確認してください。
+  details:
+    type: array
+    description: 項目別エラーなどの補足情報
+    items:
+      type: string
+additionalProperties: false
+

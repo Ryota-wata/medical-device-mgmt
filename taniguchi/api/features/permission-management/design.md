@@ -1,0 +1,322 @@
+# 権限管理 API内部設計
+
+## 第1章 概要
+
+### 本書の目的
+
+本書は、権限管理画面（`/permission-management`）で利用する API の設計内容を整理し、共有システム管理者アカウントが施設単位の提供機能・提供カラムを管理するための実装基準を明確にすることを目的とする。
+
+SHIP施設マスタ API に混在していた施設提供設定の責務を本書へ切り出し、施設基本情報管理と権限設定管理の境界を明確にする。
+
+特に以下を明確にする。
+
+- 権限管理画面の初期表示、対象施設選択、設定取得、保存、設定コピーの I/F
+- 施設提供機能・施設提供カラムの候補取得と現在値の返却ルール
+- `lending_checkout` と `lending_in_use_used` の親子制約
+- `lending_in_use_used` を OFF にする際の未返却貸出データ検証
+- 施設提供設定とユーザー施設別設定の責務分離
+- 共有システム管理者アカウント専用の直接認可と、新規施設追加直後の初期設定フロー
+- 権限・バリデーション・エラーレスポンス
+
+### 対象システム概要
+
+権限管理は、メイン画面のマスタ管理モーダルから遷移する独立画面である。共有システム管理者アカウントが対象施設を選択し、当該施設で提供する機能および表示カラムを ON/OFF 設定する。
+
+施設単位の提供設定は、その施設に所属または担当するユーザーが利用できる機能・カラムの上限として働く。`config_scope='FACILITY_USER'` の機能は、施設提供設定とユーザー施設別設定の両方が有効な場合にのみ実効利用できる。
+
+本画面/APIは、通常アカウントへ付与する `feature_code` ではなく `users.account_type='SYSTEM_ADMIN'` により直接認可する。新しい施設を追加する運用では、共有システム管理者アカウントが 施設追加 → 施設権限設定 → 最初のユーザー追加 → 最初のユーザー権限設定 の順に初期設定を完了できる必要があるため、対象施設に通常ユーザーやユーザー施設別設定が未作成でも、未削除の施設であれば本APIの設定対象に含める。
+
+### 用語定義
+
+| 用語 | 説明 |
+| --- | --- |
+| 権限管理 | 施設単位の提供機能・提供カラムを管理する画面および API 群 |
+| 対象施設 | 設定を取得・保存する施設。`facilities` で管理し、通常ユーザー割当の有無にかかわらず未削除施設を対象とする |
+| 初期施設設定 | 新規施設追加後、最初のユーザーを追加する前に共有システム管理者アカウントが施設提供機能・提供カラムを設定する作業 |
+| 施設提供機能 | 対象施設で提供する `feature_code`。`facility_feature_settings` で管理する |
+| 施設提供カラム | 対象施設で提供する `column_code`。`facility_column_settings` で管理する |
+| 機能カタログ | 管理対象機能の正本。`feature_catalogs` で管理する |
+| カラムカタログ | 管理対象カラムの正本。`column_catalogs` で管理する |
+| ユーザー施設別設定 | 施設提供設定の範囲内でユーザーごとの利用可否を管理する `user_facility_feature_settings` / `user_facility_column_settings` |
+| lending_in_use_used | 貸出・返却の使用中/使用済みフローを制御するユーザー施設別機能。実効利用には `lending_checkout` も有効であることが必要 |
+
+### 対象画面
+
+| 項目 | 内容 |
+| --- | --- |
+| 画面名 | 64. 権限管理画面 |
+| 画面URL | /permission-management |
+| 主機能 | 対象施設選択、施設提供機能・提供カラム設定、設定コピー、未保存変更の保存 |
+
+## 第2章 システム全体構成
+
+### APIの位置づけ
+
+本API群は、権限管理画面の初期表示、対象施設別の設定取得、設定保存、別施設からの設定コピーを提供する。対象施設候補は共有システム管理者アカウントの担当施設割当ではなく `facilities.deleted_at IS NULL` を基準に取得し、新規施設追加直後のように通常ユーザーやユーザー施設別設定がまだ存在しない施設も設定対象に含める。
+
+候補正本は `feature_catalogs` / `column_catalogs` とし、施設別の設定値は `facility_feature_settings` / `facility_column_settings` へ保存する。ユーザー施設別設定は本APIでは更新しない。
+
+### 画面とAPIの関係
+
+| 画面操作 | API | 補足 |
+| --- | --- | --- |
+| 画面初期表示 | GET /permission-management/context | 対象施設候補、機能カタログ、カラムカタログ、初期選択施設、初期選択施設の現在設定を取得する |
+| 対象施設選択 | GET /permission-management/facilities/{facilityId}/settings | 選択施設の施設提供機能・施設提供カラムの現在値を取得する |
+| 保存する | PUT /permission-management/facilities/{facilityId}/settings | pendingChanges を施設提供設定へ永続化する |
+| 施設設定コピー | POST /permission-management/facilities/{facilityId}/copy-settings | コピー元施設の設定をコピー先施設へ置き換える |
+
+### 使用テーブル
+
+| テーブル | 利用種別 | 用途 |
+| --- | --- | --- |
+| facilities | READ | 対象施設候補、対象施設・コピー元施設の存在確認、施設名・契約状態の返却 |
+| feature_catalogs | READ | 施設提供機能候補の正本、カテゴリ・表示順・設定スコープの取得 |
+| column_catalogs | READ | 施設提供カラム候補の正本、関連機能コード・表示順の取得 |
+| facility_feature_settings | READ / CREATE / UPDATE | 対象施設の施設提供機能設定の取得、保存、コピー |
+| facility_column_settings | READ / CREATE / UPDATE | 対象施設の施設提供カラム設定の取得、保存、コピー |
+| asset_ledgers | READ | `lending_in_use_used` OFF 可否検証で貸出機器の対象施設を判定する |
+| lending_devices | READ | `lending_in_use_used` OFF 可否検証で使用中/使用済み状態の貸出機器を確認する |
+| lending_transactions | READ | `lending_in_use_used` OFF 可否検証で未返却の使用中/使用済み履歴を確認する |
+
+## 第3章 共通仕様
+
+### API共通仕様
+
+- 通信方式: HTTPS
+- データ形式: JSON
+- 文字コード: UTF-8
+- 日時形式: ISO 8601（例: `2026-05-17T00:00:00Z`）
+- 論理削除済み施設（`facilities.deleted_at IS NOT NULL`）は対象施設候補、設定取得、保存、コピー元、コピー先の対象外とする
+- 共有システム管理者アカウントは `user_facility_assignments` に依存せず未削除の全施設を対象にできる。通常ユーザーやユーザー施設別設定が未作成の新規施設も対象に含める
+- カタログ候補は `is_active=true` の行を対象とし、`sort_order`、コードの順で安定ソートする
+- 旧整理の `facility_feature_edit` は通常アカウント向け `feature_code` として扱わないため、施設提供機能候補、保存リクエスト、コピー結果の候補集合に含めない
+- `switchContent` は `taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シートを正本とする表示メタ情報であり、`facility_feature_settings` / `facility_column_settings` には保存しない
+- 保存・コピーは1リクエストを1トランザクションで処理し、一部だけ保存された状態を残さない
+- 保存・コピー時は候補集合全体を基準に UPSERT し、リクエストで指定されない候補は `is_enabled=false` として扱う
+
+### 認証方式
+
+ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。
+
+### 権限モデル
+
+本API群は施設提供設定そのものを管理する管理者 API であるため、対象施設の `facility_feature_settings` / `user_facility_feature_settings` による自己参照型の feature_code 判定は行わない。Bearer トークンの認証コンテキストで共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）と判定できる場合のみ実行を許可する。通常ユーザー、施設管理者、または `feature_code` による個別権限では本APIを利用できない。
+
+| 処理 | 必要条件 | 説明 |
+| --- | --- | --- |
+| 全API | Bearer トークンが有効であること | 未認証または期限切れの場合は 401 |
+| 全API | 認証コンテキスト上のユーザーが共有システム管理者アカウントであること | `users.account_type='SYSTEM_ADMIN'` で判定する。共有システム管理者アカウント以外は 403 |
+| 設定取得 / 保存 / コピー | 対象施設が未削除であること | 存在しない、または論理削除済みの場合は 404。通常ユーザー割当やユーザー施設別設定の有無は必要条件にしない |
+
+### エラーレスポンス仕様
+
+#### 基本エラーレスポンス（ErrorResponse）
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| code | string | ✓ | エラーコード |
+| message | string | ✓ | 利用者向けエラーメッセージ |
+| details | string[] | - | 入力エラーや補足情報 |
+
+### 共通レスポンスDTO
+
+#### PermissionFacilitySettingsResponse
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| facilityId | int64 | ✓ | 設定対象施設ID |
+| facilityCode | string | - | 施設コード |
+| facilityName | string | ✓ | 施設名 |
+| permissionUnitCount | int32 | ✓ | 権限管理単位数。施設提供機能候補数と施設提供カラム候補数の合計 |
+| updatedAt | datetime | - | 施設提供設定の最終更新日時。未設定の場合は null |
+| featureSettings | PermissionFeatureSettingItem[] | ✓ | 施設提供機能候補と現在値 |
+| columnSettings | PermissionColumnSettingItem[] | ✓ | 施設提供カラム候補と現在値 |
+
+#### PermissionFeatureSettingItem
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| featureCode | string | ✓ | `feature_catalogs.feature_code` |
+| featureName | string | ✓ | 機能表示名 |
+| categoryCode | string | ✓ | カテゴリコード |
+| menuGroupCode | string | - | メニューグループコード |
+| featureKind | string | - | 機能種別 |
+| usageContext | string | - | 利用文脈 |
+| configScope | string | ✓ | `FACILITY` または `FACILITY_USER` |
+| sortOrder | int32 | ✓ | 表示順 |
+| switchContent | string | ✓ | ON の場合に利用可能になる画面・ボタン・カラム・モーダルの説明。`taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シートから導出する |
+| isEnabled | boolean | ✓ | 対象施設で提供するかどうか |
+| isSelectable | boolean | ✓ | 親機能制約などにより ON/OFF 操作できるかどうか |
+| disabledReason | string | - | 操作不可理由。操作可能な場合は null |
+
+#### PermissionColumnSettingItem
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| columnCode | string | ✓ | `column_catalogs.column_code` |
+| columnName | string | ✓ | カラム表示名 |
+| relatedFeatureCode | string | ✓ | 関連する `feature_code` |
+| columnGroupCode | string | - | カラム分類コード |
+| usageContext | string | - | 利用文脈 |
+| sortOrder | int32 | ✓ | 表示順 |
+| switchContent | string | ✓ | ON の場合に利用可能になるカラム表示の説明。`taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シートから導出する |
+| isEnabled | boolean | ✓ | 対象施設で提供するかどうか |
+| isSelectable | boolean | ✓ | 関連 `feature_code` が施設提供機能として有効で、ON にできるかどうか |
+| disabledReason | string | - | 操作不可理由。操作可能な場合は null |
+
+## 第4章 API 一覧
+
+### 権限管理（/permission-management）
+
+| 機能名 | Method | Path | 概要 | 認証 |
+| --- | --- | --- | --- | --- |
+| 権限管理コンテキスト取得 | GET | /permission-management/context | 初期表示に必要な対象施設候補、機能カタログ、カラムカタログ、現在の施設提供設定を取得する | 要 |
+| 施設提供設定取得 | GET | /permission-management/facilities/{facilityId}/settings | 対象施設の施設提供機能・施設提供カラム設定を取得する | 要 |
+| 施設提供設定保存 | PUT | /permission-management/facilities/{facilityId}/settings | 対象施設の施設提供機能・施設提供カラム設定を保存する | 要 |
+| 施設提供設定コピー | POST | /permission-management/facilities/{facilityId}/copy-settings | コピー元施設の施設提供設定を対象施設へコピーする | 要 |
+
+## 第5章 権限管理機能設計
+
+### getPermissionManagementContext
+
+#### 権限
+
+- 認可条件: Bearer トークンが有効であること
+- 認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）であること
+- 認可条件: 通常ユーザー向け `feature_code`、施設提供設定、ユーザー施設別設定による判定は行わない
+
+#### 処理仕様
+
+1. `facilities.deleted_at IS NULL` の施設を対象施設候補として取得する。`user_facility_assignments` の有無は参照せず、新規施設追加直後で通常ユーザーが未登録の施設も含める
+2. `feature_catalogs.is_active=true` かつ `config_scope in ('FACILITY', 'FACILITY_USER')` の `feature_code` を施設提供機能候補として取得する。`auth_login` / `facility_select` など `SYSTEM_FIXED` の固定導線、および旧整理の `facility_feature_edit` は候補に含めない
+3. Phase1では `normal_ship_request` / `lending_in_use_used` を `FACILITY_USER` として候補に含める
+4. `column_catalogs.is_active=true` のカラム候補を取得し、`related_feature_code` を併せて返却する
+5. 初期選択施設は対象施設候補の先頭とする。クライアントが前回選択施設を保持している場合は、`facilities` に当該施設が含まれることを確認したうえで、施設提供設定取得 API を呼び出して表示を切り替える
+6. 初期選択施設が存在する場合は、同施設の施設提供機能・施設提供カラム設定を `currentSettings` として同時に返却する。対象施設候補がない場合は `currentSettings=null` とする
+
+### getPermissionManagementFacilitiesByFacilityIdSettings
+
+#### 権限
+
+- 認可条件: Bearer トークンが有効であること
+- 認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）であること
+- 認可条件: 対象施設に通常ユーザー割当やユーザー施設別設定が存在することは要求しない
+
+#### 処理仕様
+
+1. 対象施設が存在し、未削除であることを確認する
+2. `feature_catalogs.is_active=true` かつ `config_scope in ('FACILITY', 'FACILITY_USER')` の `feature_code` を施設提供機能候補として取得する。旧整理の `facility_feature_edit` は候補に含めない
+3. `column_catalogs.is_active=true` のカラム候補を取得し、`related_feature_code` を併せて返却する
+4. `facility_feature_settings` と `facility_column_settings` の既存値を左結合し、設定行がない候補は `isEnabled=false` として返却する
+5. `lending_in_use_used` は `lending_checkout` の子機能として扱う。`lending_checkout` が OFF の場合、画面は `lending_in_use_used` を非活性または自動 OFF として扱う
+6. カラム候補は、関連 `feature_code` が施設提供機能として有効化されていない場合 `isSelectable=false` として返却する
+
+### putPermissionManagementFacilitiesByFacilityIdSettings
+
+#### 権限
+
+- 認可条件: Bearer トークンが有効であること
+- 認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）であること
+- 認可条件: 対象施設に通常ユーザー割当やユーザー施設別設定が存在することは要求しない
+
+#### 処理仕様
+
+1. 対象施設が存在し、未削除であることを確認する
+2. `enabledFeatureCodes` は `feature_catalogs.is_active=true` かつ `config_scope in ('FACILITY', 'FACILITY_USER')` の候補集合の部分集合でなければならない。`auth_login` / `facility_select` など `SYSTEM_FIXED` の固定導線、および旧整理の `facility_feature_edit` は受け付けない
+3. `enabledFeatureCodes` に `lending_in_use_used` を含める場合は `lending_checkout` も含めなければならない。含まれない場合は 400 (`PERMISSION_SETTING_PARENT_FEATURE_REQUIRED`) とする
+4. 既存設定で `lending_in_use_used=true` の施設について、リクエストで `lending_in_use_used` を OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、未返却の `使用中` / `使用済` 状態が存在しないことを確認する。具体的には `lending_devices.status IN ('使用中','使用済')`、または同一 `lending_device_id` の `lending_transactions.returned_on IS NULL AND status IN ('使用中','使用済')` が存在する場合は 409 (`LENDING_IN_USE_USED_ACTIVE_EXISTS`) とする。返却済み履歴や対象施設外の機器は OFF 拒否条件に含めない
+5. `enabledColumnCodes` は `column_catalogs.is_active=true` の候補集合の部分集合でなければならない
+6. `enabledColumnCodes` に含む各 `column_code` は、`column_catalogs.related_feature_code` が `enabledFeatureCodes` に含まれている場合のみ有効化できる。関連機能が無効な場合は 400 (`PERMISSION_SETTING_COLUMN_RELATED_FEATURE_DISABLED`) とする
+7. 候補集合の各 `feature_code` について `facility_feature_settings` を UPSERT し、`enabledFeatureCodes` に含むコードを `is_enabled=true`、含まないコードを `false` とする
+8. 候補集合の各 `column_code` について `facility_column_settings` を UPSERT し、`enabledColumnCodes` に含み、かつ関連 `feature_code` が有効なコードを `is_enabled=true`、それ以外を `false` とする
+9. ユーザー施設別設定（`user_facility_feature_settings` / `user_facility_column_settings`）は本 API では更新しない。施設提供設定が OFF になったコードは、既存ユーザー設定が残っていても実効権限としては無効になる
+
+### postPermissionManagementFacilitiesByFacilityIdCopySettings
+
+#### 権限
+
+- 認可条件: Bearer トークンが有効であること
+- 認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）であること
+- 認可条件: コピー先施設に通常ユーザー割当やユーザー施設別設定が存在することは要求しない
+
+#### 処理仕様
+
+1. コピー先施設とコピー元施設が存在し、未削除であることを確認する
+2. コピー元施設とコピー先施設が同一の場合は 400 (`PERMISSION_COPY_SOURCE_INVALID`) とする
+3. コピー元施設の `facility_feature_settings` / `facility_column_settings` を候補集合へ左結合し、設定行がない候補は `is_enabled=false` として扱う
+4. コピー後の `enabledFeatureCodes` / `enabledColumnCodes` に対して、保存 API と同じ候補集合検証、`lending_checkout` と `lending_in_use_used` の親子制約、関連機能 OFF 時のカラム ON 拒否、`lending_in_use_used` OFF 可否検証を行う
+5. 検証に成功した場合、コピー先施設の候補集合全体について `facility_feature_settings` / `facility_column_settings` を UPSERT し、コピー元と同じ有効状態へ置き換える
+6. ユーザー施設別設定（`user_facility_feature_settings` / `user_facility_column_settings`）は本 API では更新しない
+
+## 第6章 権限・業務ルール
+
+### 必要権限
+
+| 処理 | 必要条件 | 判定基準 | 説明 |
+| --- | --- | --- | --- |
+| 権限管理コンテキスト取得 | 共有システム管理者アカウント | Bearer トークンの認証コンテキストで共有システム管理者アカウントと判定できること | 初期表示用の対象施設候補とカタログ候補を参照する |
+| 施設提供設定取得 | 共有システム管理者アカウント | Bearer トークンの認証コンテキストで共有システム管理者アカウントと判定できること | 対象施設の現在設定を参照する |
+| 施設提供設定保存 | 共有システム管理者アカウント | Bearer トークンの認証コンテキストで共有システム管理者アカウントと判定できること | 対象施設の施設提供設定を更新する |
+| 施設提供設定コピー | 共有システム管理者アカウント | Bearer トークンの認証コンテキストで共有システム管理者アカウントと判定できること | コピー元施設の設定を対象施設へ反映する |
+
+### 施設提供設定ルール
+
+- 施設提供機能の候補は `feature_catalogs.is_active=true` かつ `config_scope in ('FACILITY', 'FACILITY_USER')` の `feature_code` とし、`auth_login` / `facility_select` などの固定導線、および旧整理の `facility_feature_edit` は対象外とする
+- Phase1では `normal_ship_request` / `lending_in_use_used` を `FACILITY_USER` として施設提供機能候補に含める
+- `lending_in_use_used` は `lending_checkout` の子機能であり、`lending_checkout` が OFF の場合は ON にできない。保存 API とコピー API は `lending_in_use_used=true` かつ `lending_checkout=false` の組み合わせを拒否する
+- `lending_in_use_used` を ON から OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、`lending_devices.status IN ('使用中','使用済')`、または同一 `lending_device_id` の `lending_transactions.returned_on IS NULL AND status IN ('使用中','使用済')` が存在しないことを検証する。存在する場合は 409 で拒否し、運用上は該当機器を返却完了してから OFF にする
+- 施設提供カラムの候補は `column_catalogs.is_active=true` の `column_code` とする
+- 施設提供カラムは、`column_catalogs.related_feature_code` に対応する施設提供機能が ON の場合のみ ON にできる
+- 施設提供設定を OFF にしてもユーザー施設別設定は削除しない。`config_scope='FACILITY_USER'` では実効権限判定時に施設提供設定が OFF であれば、ユーザー側が ON でも利用不可とする
+- 施設論理削除時は `facility_feature_settings` / `facility_column_settings` を削除せず保持する。再契約等で `facilities.deleted_at` を解除した場合は既存設定を再利用する
+
+### 新規施設初期設定ルール
+
+- 新しい施設を追加する運用では、共有システム管理者アカウントが施設追加後、通常ユーザーを作成する前に本APIで施設提供機能・提供カラムを設定できる
+- 対象施設候補、設定取得、保存、コピー先判定では `user_facility_assignments`、`user_facility_feature_settings`、`user_facility_column_settings` の存在を必要条件にしない
+- 施設権限設定後、No.20 ユーザー管理APIで最初のユーザー追加と担当施設・ユーザー施設別権限設定を行う。ユーザー施設別設定は本APIでは作成・更新しない
+- 共有システム管理者アカウント以外が本画面/APIを呼び出した場合は、施設管理者であっても 403 とする
+
+### 設定コピーの業務ルール
+
+- コピーはコピー先施設の設定をコピー元施設の設定へ置き換える処理であり、差分追加ではない
+- コピー元施設に設定行が存在しない候補は OFF としてコピーする
+- コピー元施設とコピー先施設が同一の場合は実行しない
+- コピー先施設の貸出データ状態により `lending_in_use_used` を OFF にできない場合は、コピー処理全体を 409 で拒否する
+- コピー実行後もユーザー施設別設定は変更しないため、必要に応じてユーザー管理画面（/user-management）の編集モーダル（担当施設・権限タブ）でユーザー別設定を見直す
+
+### 監査・更新者ルール
+
+- 保存・コピーで作成する `facility_feature_settings` / `facility_column_settings` の `created_by` / `updated_by` には Bearer トークンのユーザーIDを設定する
+- 既存行を更新する場合は `updated_by` / `updated_at` を更新する
+- リクエストで指定されず OFF として保存する候補についても、既存行がない場合は OFF 行を作成し、候補集合全体の状態を明示化する
+
+## 第7章 エラーコード一覧
+
+| エラーコード | HTTPステータス | 内容 |
+| --- | --- | --- |
+| UNAUTHORIZED | 401 | Bearer トークン未指定、期限切れ、または不正 |
+| PERMISSION_MANAGEMENT_FORBIDDEN | 403 | 共有システム管理者アカウントではないユーザーが権限管理 API を呼び出した |
+| PERMISSION_TARGET_FACILITY_NOT_FOUND | 404 | 対象施設、コピー元施設、またはコピー先施設が存在しない、または論理削除済み |
+| PERMISSION_SETTING_CODE_INVALID | 400 | 未知の `feature_code` / `column_code`、非アクティブコード、固定導線コード、または旧 `facility_feature_edit` が指定された |
+| PERMISSION_SETTING_PARENT_FEATURE_REQUIRED | 400 | `lending_in_use_used` が ON だが `lending_checkout` が OFF である |
+| PERMISSION_SETTING_COLUMN_RELATED_FEATURE_DISABLED | 400 | 関連 `feature_code` が OFF の `column_code` を ON にしようとした |
+| PERMISSION_COPY_SOURCE_INVALID | 400 | コピー元施設が未指定、コピー先と同一、またはコピー元として利用できない |
+| LENDING_IN_USE_USED_ACTIVE_EXISTS | 409 | `lending_in_use_used` を OFF にできない未返却の使用中/使用済み貸出データが存在する |
+| INTERNAL_SERVER_ERROR | 500 | 想定外のサーバー内部エラー |
+
+## 第8章 運用・保守方針
+
+### カタログ管理
+
+- 権限管理画面に表示する機能・カラムは `feature_catalogs` / `column_catalogs` を正本とする
+- 新しい画面、ボタン、カラムを権限管理対象に追加する場合は、API 実装より先にカタログ定義を追加する
+- `SYSTEM_FIXED` の固定導線と旧 `facility_feature_edit` は本画面に表示せず、保存 API でも受け付けない
+
+### 保守時の注意点
+
+- SHIP施設マスタ API は施設基本情報管理に限定し、施設提供機能・提供カラム設定は本APIを正本とする
+- 新規施設追加後は、本APIで施設提供設定を行ってからユーザー管理APIで最初のユーザーとユーザー施設別設定を登録する
+- 施設グループ管理および他施設向け公開設定は本APIでは扱わず、施設グループ管理 API 設計書で扱う
+- 施設提供設定を OFF にしてもユーザー施設別設定は削除しないため、権限が再度 ON になった際に既存ユーザー設定が再利用される
+- `lending_in_use_used` OFF 拒否は運用上のデータ不整合を防ぐためのサーバー側必須検証とし、フロントの非活性制御だけに依存しない

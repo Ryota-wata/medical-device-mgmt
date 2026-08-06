@@ -1,0 +1,5268 @@
+openapi: 3.0.4
+info:
+  title: SHIP資産マスタ API
+  version: '1.1'
+  description: SHIP資産マスタで利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: SHIP資産マスタ
+    description: SHIP資産マスタのAPI
+paths:
+  /ship-asset-master/assets:
+    get:
+      tags:
+        - SHIP資産マスタ
+      operationId: getShipAssetMasterAssets
+      summary: 資産マスタ一覧取得
+      description: SHIP資産マスタ一覧、表示件数、および一覧固定カラム全体を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_master_list
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      parameters:
+        - name: categoryId
+          in: query
+          required: false
+          description: Category ID
+          schema:
+            type: integer
+            format: int64
+        - name: largeClassId
+          in: query
+          required: false
+          description: 大分類 ID
+          schema:
+            type: integer
+            format: int64
+        - name: mediumClassId
+          in: query
+          required: false
+          description: 中分類 ID
+          schema:
+            type: integer
+            format: int64
+        - name: assetItemId
+          in: query
+          required: false
+          description: 品目 ID
+          schema:
+            type: integer
+            format: int64
+        - name: manufacturerId
+          in: query
+          required: false
+          description: メーカー ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipAssetMasterListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_master_list なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：ShipAssetMasterListResponse）
+      x-word-response-subtable-titles:
+        - items要素（ShipAssetMasterSummary）
+        - fixedDetails要素（ShipAssetMasterFixedDetails）
+      x-word-response-subtables:
+        - Title: items要素（ShipAssetMasterSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - shipAssetMasterId
+              - int64
+              - ✓
+              - 資産マスタID
+            - - categoryId
+              - int64
+              - ✓
+              - Category ID
+            - - categoryName
+              - string
+              - ✓
+              - Category 名
+            - - largeClassId
+              - int64
+              - ✓
+              - 大分類 ID
+            - - largeClassName
+              - string
+              - ✓
+              - 大分類名
+            - - mediumClassId
+              - int64
+              - ✓
+              - 中分類 ID
+            - - mediumClassName
+              - string
+              - ✓
+              - 中分類名
+            - - detailType
+              - string
+              - ✓
+              - 明細区分
+            - - assetItemId
+              - int64
+              - ✓
+              - 品目 ID
+            - - assetItemName
+              - string
+              - ✓
+              - 品目名
+            - - manufacturerId
+              - int64
+              - ✓
+              - メーカー ID
+            - - manufacturerName
+              - string
+              - ✓
+              - メーカー名
+            - - modelId
+              - int64
+              - ✓
+              - 型式 ID
+            - - modelName
+              - string
+              - ✓
+              - 型式名
+            - - jmdnRegisteredItemId
+              - int64
+              - ✓
+              - JMDN登録品目 ID
+            - - classCode
+              - string
+              - ✓
+              - 類別コード
+            - - className
+              - string
+              - ✓
+              - 類別名称
+            - - jmdnMediumClassificationName
+              - string
+              - ✓
+              - JMDN中分類名
+            - - generalName
+              - string
+              - ✓
+              - 一般的名称
+            - - jmdnCode
+              - string
+              - ✓
+              - JMDNコード
+            - - marketingName
+              - string
+              - ✓
+              - 販売名
+            - - marketingAuthorizationHolderName
+              - string
+              - ✓
+              - 製造販売業者等
+            - - attachmentDocumentFileName
+              - string
+              - ✓
+              - JMDN登録品目に紐づく添付文書ファイル名
+            - - attachmentDocumentUrl
+              - string
+              - ✓
+              - JMDN登録品目に紐づく添付文書 URL
+            - - fixedDetails
+              - ShipAssetMasterFixedDetails
+              - ✓
+              - 薬事 / 設備情報 / 資産情報 / PMDA提供 / 登録状況の固定属性。全項目必須
+            - - createdAt
+              - datetime
+              - ✓
+              - 作成日時
+            - - updatedAt
+              - datetime
+              - ✓
+              - 更新日時
+        - Title: fixedDetails要素（ShipAssetMasterFixedDetails）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - pharmaceuticalAffairs
+              - string
+              - ✓
+              - 薬事
+            - - drawingNo
+              - string
+              - ✓
+              - 図面No.
+            - - layoutReflection
+              - string
+              - ✓
+              - レイアウト反映
+            - - specialEquipment
+              - string
+              - ✓
+              - 特殊設備
+            - - masterStandardDrawing
+              - string
+              - ✓
+              - Master標準図
+            - - widthValue
+              - string
+              - ✓
+              - 幅(W)
+            - - depthValue
+              - string
+              - ✓
+              - 奥行(D)
+            - - heightValue
+              - string
+              - ✓
+              - 高さ(H)
+            - - powerConnection
+              - string
+              - ✓
+              - 電源接続
+            - - powerType
+              - string
+              - ✓
+              - 電源種別
+            - - powerConsumption
+              - string
+              - ✓
+              - 消費電力
+            - - waterSupplySize
+              - string
+              - ✓
+              - 給水
+            - - hotWaterSize
+              - string
+              - ✓
+              - 給湯
+            - - drainageSize
+              - string
+              - ✓
+              - 排水
+            - - exhaustSize
+              - string
+              - ✓
+              - 排気サイズ
+            - - exhaustVolume
+              - string
+              - ✓
+              - 排気風量
+            - - steamSize
+              - string
+              - ✓
+              - 蒸気
+            - - gas
+              - string
+              - ✓
+              - ガス
+            - - weightKg
+              - string
+              - ✓
+              - 重量(kg)
+            - - reinforcement
+              - string
+              - ✓
+              - 補強
+            - - mountAnchor
+              - string
+              - ✓
+              - 架台・アンカー
+            - - floorLowering
+              - string
+              - ✓
+              - 床下げ
+            - - equipmentRemarks
+              - string
+              - ✓
+              - 設備備考
+            - - legalServiceLife
+              - string
+              - ✓
+              - 耐用年数(法定)
+            - - serviceLifePeriod
+              - string
+              - ✓
+              - 耐用期間
+            - - endOfSales
+              - string
+              - ✓
+              - EOS:販売終了
+            - - endOfMaintenance
+              - string
+              - ✓
+              - EOS:メンテ終了
+            - - dedicatedConsumables
+              - string
+              - ✓
+              - 専用消耗品
+            - - catalogDocument
+              - string
+              - ✓
+              - カタログ
+            - - operationManual
+              - string
+              - ✓
+              - 操作マニュアル
+            - - otherPdf
+              - string
+              - ✓
+              - その他PDF
+            - - pmdaClassNotification
+              - string
+              - ✓
+              - クラス分類告示
+            - - pmdaMaintenanceNotification
+              - string
+              - ✓
+              - 特定保守告示
+            - - pmdaInstallNotification
+              - string
+              - ✓
+              - 設置管理告示
+            - - pmdaClassCode
+              - string
+              - ✓
+              - 類別コード(PMDA)
+            - - pmdaClassName
+              - string
+              - ✓
+              - 類別名称(PMDA)
+            - - pmdaMiddleClassName
+              - string
+              - ✓
+              - 中分類名(PMDA)
+            - - pmdaCode
+              - string
+              - ✓
+              - コード(PMDA)
+            - - pmdaGeneralName
+              - string
+              - ✓
+              - 一般的名称(PMDA)
+            - - pmdaGeneralNameDefinition
+              - string
+              - ✓
+              - 一般的名称定義
+            - - pmdaClassification
+              - string
+              - ✓
+              - クラス分類
+            - - pmdaGhtfRule
+              - string
+              - ✓
+              - GHTFルール
+            - - pmdaSpecificMaintenance
+              - string
+              - ✓
+              - 特定保守
+            - - pmdaInstallManagement
+              - string
+              - ✓
+              - 設置管理
+            - - pmdaRepairCategory
+              - string
+              - ✓
+              - 修理区分
+            - - pmdaQms316
+              - string
+              - ✓
+              - QMS告示316号
+            - - pmdaOldGeneralNameCode
+              - string
+              - ✓
+              - 旧一般的名称コード
+            - - pmdaOldGeneralName
+              - string
+              - ✓
+              - 旧一般的名称
+            - - pmdaOldClassification
+              - string
+              - ✓
+              - 旧クラス分類
+            - - pmdaOldRepairType
+              - string
+              - ✓
+              - 旧修理種別
+            - - pmdaRevisionCount
+              - string
+              - ✓
+              - 改正回数
+            - - pmdaLastUpdatedOn
+              - date
+              - ✓
+              - 最終更新日
+            - - registrationStatus
+              - string
+              - ✓
+              - 登録状況
+      x-word-response-lines:
+        - items要素は一覧画面に表示する固定カラム全体（JMDN分類・一般名称、薬事、SHIP_Master、設備情報、資産情報、PMDA提供、登録状況）を返却する。
+    post:
+      tags:
+        - SHIP資産マスタ
+      operationId: postShipAssetMasterAssets
+      summary: 資産マスタ新規作成
+      description: SHIP 資産マスタを新規作成する。資産マスタID（ship_asset_master_id）はサーバー側で採番し、JMDN登録品目、SHIP_Master項目、固定属性を同一トランザクションで保存する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_master_edit
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShipAssetMasterCreateRequest'
+      x-word-request-title: リクエスト（ShipAssetMasterCreateRequest）
+      x-word-request-subtable-titles:
+        - fixedDetails要素（ShipAssetMasterFixedDetailsUpsert）
+      x-word-request-subtables:
+        - Title: fixedDetails要素（ShipAssetMasterFixedDetailsUpsert）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - pharmaceuticalAffairs
+              - string
+              - ✓
+              - 薬事
+            - - drawingNo
+              - string
+              - ✓
+              - 図面No.
+            - - layoutReflection
+              - string
+              - ✓
+              - レイアウト反映
+            - - specialEquipment
+              - string
+              - ✓
+              - 特殊設備
+            - - masterStandardDrawing
+              - string
+              - ✓
+              - Master標準図
+            - - widthValue
+              - string
+              - ✓
+              - 幅(W)
+            - - depthValue
+              - string
+              - ✓
+              - 奥行(D)
+            - - heightValue
+              - string
+              - ✓
+              - 高さ(H)
+            - - powerConnection
+              - string
+              - ✓
+              - 電源接続
+            - - powerType
+              - string
+              - ✓
+              - 電源種別
+            - - powerConsumption
+              - string
+              - ✓
+              - 消費電力
+            - - waterSupplySize
+              - string
+              - ✓
+              - 給水
+            - - hotWaterSize
+              - string
+              - ✓
+              - 給湯
+            - - drainageSize
+              - string
+              - ✓
+              - 排水
+            - - exhaustSize
+              - string
+              - ✓
+              - 排気サイズ
+            - - exhaustVolume
+              - string
+              - ✓
+              - 排気風量
+            - - steamSize
+              - string
+              - ✓
+              - 蒸気
+            - - gas
+              - string
+              - ✓
+              - ガス
+            - - weightKg
+              - string
+              - ✓
+              - 重量(kg)
+            - - reinforcement
+              - string
+              - ✓
+              - 補強
+            - - mountAnchor
+              - string
+              - ✓
+              - 架台・アンカー
+            - - floorLowering
+              - string
+              - ✓
+              - 床下げ
+            - - equipmentRemarks
+              - string
+              - ✓
+              - 設備備考
+            - - legalServiceLife
+              - string
+              - ✓
+              - 耐用年数(法定)
+            - - serviceLifePeriod
+              - string
+              - ✓
+              - 耐用期間
+            - - endOfSales
+              - string
+              - ✓
+              - EOS:販売終了
+            - - endOfMaintenance
+              - string
+              - ✓
+              - EOS:メンテ終了
+            - - dedicatedConsumables
+              - string
+              - ✓
+              - 専用消耗品
+            - - catalogDocument
+              - string
+              - ✓
+              - カタログ
+            - - operationManual
+              - string
+              - ✓
+              - 操作マニュアル
+            - - otherPdf
+              - string
+              - ✓
+              - その他PDF
+            - - pmdaClassNotification
+              - string
+              - ✓
+              - クラス分類告示
+            - - pmdaMaintenanceNotification
+              - string
+              - ✓
+              - 特定保守告示
+            - - pmdaInstallNotification
+              - string
+              - ✓
+              - 設置管理告示
+            - - pmdaClassCode
+              - string
+              - ✓
+              - 類別コード(PMDA)
+            - - pmdaClassName
+              - string
+              - ✓
+              - 類別名称(PMDA)
+            - - pmdaMiddleClassName
+              - string
+              - ✓
+              - 中分類名(PMDA)
+            - - pmdaCode
+              - string
+              - ✓
+              - コード(PMDA)
+            - - pmdaGeneralName
+              - string
+              - ✓
+              - 一般的名称(PMDA)
+            - - pmdaGeneralNameDefinition
+              - string
+              - ✓
+              - 一般的名称定義
+            - - pmdaClassification
+              - string
+              - ✓
+              - クラス分類
+            - - pmdaGhtfRule
+              - string
+              - ✓
+              - GHTFルール
+            - - pmdaSpecificMaintenance
+              - string
+              - ✓
+              - 特定保守
+            - - pmdaInstallManagement
+              - string
+              - ✓
+              - 設置管理
+            - - pmdaRepairCategory
+              - string
+              - ✓
+              - 修理区分
+            - - pmdaQms316
+              - string
+              - ✓
+              - QMS告示316号
+            - - pmdaOldGeneralNameCode
+              - string
+              - ✓
+              - 旧一般的名称コード
+            - - pmdaOldGeneralName
+              - string
+              - ✓
+              - 旧一般的名称
+            - - pmdaOldClassification
+              - string
+              - ✓
+              - 旧クラス分類
+            - - pmdaOldRepairType
+              - string
+              - ✓
+              - 旧修理種別
+            - - pmdaRevisionCount
+              - string
+              - ✓
+              - 改正回数
+            - - pmdaLastUpdatedOn
+              - date
+              - ✓
+              - 最終更新日
+            - - registrationStatus
+              - string
+              - ✓
+              - 登録状況
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostShipAssetMasterAssetsResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 指定した JMDN登録品目が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 組み合わせ重複
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '201': ShipAssetMasterDetailResponse
+      x-word-response-title: レスポンス（201：ShipAssetMasterDetailResponse）
+      x-word-response-subtable-titles:
+        - item要素（ShipAssetMasterSummary）
+        - fixedDetails要素（ShipAssetMasterFixedDetails）
+      x-word-response-subtables:
+        - Title: item要素（ShipAssetMasterSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - shipAssetMasterId
+              - int64
+              - ✓
+              - 資産マスタID
+            - - categoryId
+              - int64
+              - ✓
+              - Category ID
+            - - categoryName
+              - string
+              - ✓
+              - Category 名
+            - - largeClassId
+              - int64
+              - ✓
+              - 大分類 ID
+            - - largeClassName
+              - string
+              - ✓
+              - 大分類名
+            - - mediumClassId
+              - int64
+              - ✓
+              - 中分類 ID
+            - - mediumClassName
+              - string
+              - ✓
+              - 中分類名
+            - - detailType
+              - string
+              - ✓
+              - 明細区分
+            - - assetItemId
+              - int64
+              - ✓
+              - 品目 ID
+            - - assetItemName
+              - string
+              - ✓
+              - 品目名
+            - - manufacturerId
+              - int64
+              - ✓
+              - メーカー ID
+            - - manufacturerName
+              - string
+              - ✓
+              - メーカー名
+            - - modelId
+              - int64
+              - ✓
+              - 型式 ID
+            - - modelName
+              - string
+              - ✓
+              - 型式名
+            - - jmdnRegisteredItemId
+              - int64
+              - ✓
+              - JMDN登録品目 ID
+            - - classCode
+              - string
+              - ✓
+              - 類別コード
+            - - className
+              - string
+              - ✓
+              - 類別名称
+            - - jmdnMediumClassificationName
+              - string
+              - ✓
+              - JMDN中分類名
+            - - generalName
+              - string
+              - ✓
+              - 一般的名称
+            - - jmdnCode
+              - string
+              - ✓
+              - JMDNコード
+            - - marketingName
+              - string
+              - ✓
+              - 販売名
+            - - marketingAuthorizationHolderName
+              - string
+              - ✓
+              - 製造販売業者等
+            - - attachmentDocumentFileName
+              - string
+              - ✓
+              - JMDN登録品目に紐づく添付文書ファイル名
+            - - attachmentDocumentUrl
+              - string
+              - ✓
+              - JMDN登録品目に紐づく添付文書 URL
+            - - fixedDetails
+              - ShipAssetMasterFixedDetails
+              - ✓
+              - 薬事 / 設備情報 / 資産情報 / PMDA提供 / 登録状況の固定属性。全項目必須
+            - - createdAt
+              - datetime
+              - ✓
+              - 作成日時
+            - - updatedAt
+              - datetime
+              - ✓
+              - 更新日時
+        - Title: fixedDetails要素（ShipAssetMasterFixedDetails）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - pharmaceuticalAffairs
+              - string
+              - ✓
+              - 薬事
+            - - drawingNo
+              - string
+              - ✓
+              - 図面No.
+            - - layoutReflection
+              - string
+              - ✓
+              - レイアウト反映
+            - - specialEquipment
+              - string
+              - ✓
+              - 特殊設備
+            - - masterStandardDrawing
+              - string
+              - ✓
+              - Master標準図
+            - - widthValue
+              - string
+              - ✓
+              - 幅(W)
+            - - depthValue
+              - string
+              - ✓
+              - 奥行(D)
+            - - heightValue
+              - string
+              - ✓
+              - 高さ(H)
+            - - powerConnection
+              - string
+              - ✓
+              - 電源接続
+            - - powerType
+              - string
+              - ✓
+              - 電源種別
+            - - powerConsumption
+              - string
+              - ✓
+              - 消費電力
+            - - waterSupplySize
+              - string
+              - ✓
+              - 給水
+            - - hotWaterSize
+              - string
+              - ✓
+              - 給湯
+            - - drainageSize
+              - string
+              - ✓
+              - 排水
+            - - exhaustSize
+              - string
+              - ✓
+              - 排気サイズ
+            - - exhaustVolume
+              - string
+              - ✓
+              - 排気風量
+            - - steamSize
+              - string
+              - ✓
+              - 蒸気
+            - - gas
+              - string
+              - ✓
+              - ガス
+            - - weightKg
+              - string
+              - ✓
+              - 重量(kg)
+            - - reinforcement
+              - string
+              - ✓
+              - 補強
+            - - mountAnchor
+              - string
+              - ✓
+              - 架台・アンカー
+            - - floorLowering
+              - string
+              - ✓
+              - 床下げ
+            - - equipmentRemarks
+              - string
+              - ✓
+              - 設備備考
+            - - legalServiceLife
+              - string
+              - ✓
+              - 耐用年数(法定)
+            - - serviceLifePeriod
+              - string
+              - ✓
+              - 耐用期間
+            - - endOfSales
+              - string
+              - ✓
+              - EOS:販売終了
+            - - endOfMaintenance
+              - string
+              - ✓
+              - EOS:メンテ終了
+            - - dedicatedConsumables
+              - string
+              - ✓
+              - 専用消耗品
+            - - catalogDocument
+              - string
+              - ✓
+              - カタログ
+            - - operationManual
+              - string
+              - ✓
+              - 操作マニュアル
+            - - otherPdf
+              - string
+              - ✓
+              - その他PDF
+            - - pmdaClassNotification
+              - string
+              - ✓
+              - クラス分類告示
+            - - pmdaMaintenanceNotification
+              - string
+              - ✓
+              - 特定保守告示
+            - - pmdaInstallNotification
+              - string
+              - ✓
+              - 設置管理告示
+            - - pmdaClassCode
+              - string
+              - ✓
+              - 類別コード(PMDA)
+            - - pmdaClassName
+              - string
+              - ✓
+              - 類別名称(PMDA)
+            - - pmdaMiddleClassName
+              - string
+              - ✓
+              - 中分類名(PMDA)
+            - - pmdaCode
+              - string
+              - ✓
+              - コード(PMDA)
+            - - pmdaGeneralName
+              - string
+              - ✓
+              - 一般的名称(PMDA)
+            - - pmdaGeneralNameDefinition
+              - string
+              - ✓
+              - 一般的名称定義
+            - - pmdaClassification
+              - string
+              - ✓
+              - クラス分類
+            - - pmdaGhtfRule
+              - string
+              - ✓
+              - GHTFルール
+            - - pmdaSpecificMaintenance
+              - string
+              - ✓
+              - 特定保守
+            - - pmdaInstallManagement
+              - string
+              - ✓
+              - 設置管理
+            - - pmdaRepairCategory
+              - string
+              - ✓
+              - 修理区分
+            - - pmdaQms316
+              - string
+              - ✓
+              - QMS告示316号
+            - - pmdaOldGeneralNameCode
+              - string
+              - ✓
+              - 旧一般的名称コード
+            - - pmdaOldGeneralName
+              - string
+              - ✓
+              - 旧一般的名称
+            - - pmdaOldClassification
+              - string
+              - ✓
+              - 旧クラス分類
+            - - pmdaOldRepairType
+              - string
+              - ✓
+              - 旧修理種別
+            - - pmdaRevisionCount
+              - string
+              - ✓
+              - 改正回数
+            - - pmdaLastUpdatedOn
+              - date
+              - ✓
+              - 最終更新日
+            - - registrationStatus
+              - string
+              - ✓
+              - 登録状況
+  /ship-asset-master/assets/export:
+    get:
+      tags:
+        - SHIP資産マスタ
+      operationId: getShipAssetMasterAssetsExport
+      summary: 資産マスタエクスポート
+      description: 現在の絞り込み条件に一致する SHIP 資産マスタ一覧を Excel ファイルとして出力する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_master_list
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '500'
+      parameters:
+        - name: categoryId
+          in: query
+          required: false
+          description: Category ID
+          schema:
+            type: integer
+            format: int64
+        - name: largeClassId
+          in: query
+          required: false
+          description: 大分類 ID
+          schema:
+            type: integer
+            format: int64
+        - name: mediumClassId
+          in: query
+          required: false
+          description: 中分類 ID
+          schema:
+            type: integer
+            format: int64
+        - name: assetItemId
+          in: query
+          required: false
+          description: 品目 ID
+          schema:
+            type: integer
+            format: int64
+        - name: manufacturerId
+          in: query
+          required: false
+          description: メーカー ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 出力成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: 未認証
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_master_list なし
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+      x-word-response-schema-labels:
+        '200': Excel File
+        '401': ErrorResponse
+        '403': ErrorResponse
+        '500': ErrorResponse
+      x-word-response-title: レスポンス（200：Excel File）
+      x-word-response-subtable-titles:
+        - Headers
+      x-word-response-subtables:
+        - Title: Headers
+          Headers:
+            - ヘッダー名
+            - 必須
+            - 形式
+            - 説明
+          Rows:
+            - - Content-Type
+              - ✓
+              - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+              - Excel 形式で返却する
+            - - Content-Disposition
+              - ✓
+              - attachment; filename="SHIP資産マスタ_YYYYMMDD.xlsx"
+              - ダウンロードファイル名
+      x-word-response-lines:
+        - 'Body: 絞り込み条件に一致する SHIP 資産マスタ一覧を Excel バイナリで返却する。'
+        - 出力列は一覧画面の固定表示列全体とする。
+  /ship-asset-master/assets/template:
+    get:
+      tags:
+        - SHIP資産マスタ
+      operationId: getShipAssetMasterAssetsTemplate
+      summary: 資産マスタ取込テンプレート取得
+      description: SHIP 資産マスタ取込用の Excel テンプレートを取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_master_edit
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '500'
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: 未認証
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_master_edit なし
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+      x-word-response-schema-labels:
+        '200': Excel File
+        '401': ErrorResponse
+        '403': ErrorResponse
+        '500': ErrorResponse
+      x-word-response-title: レスポンス（200：Excel File）
+      x-word-response-subtable-titles:
+        - Headers
+      x-word-response-subtables:
+        - Title: Headers
+          Headers:
+            - ヘッダー名
+            - 必須
+            - 形式
+            - 説明
+          Rows:
+            - - Content-Type
+              - ✓
+              - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+              - Excel 形式で返却する
+            - - Content-Disposition
+              - ✓
+              - attachment; filename="SHIP資産マスタ_テンプレート_YYYYMMDD.xlsx"
+              - ダウンロードファイル名
+      x-word-response-lines:
+        - 'Body: SHIP 資産マスタ取込テンプレートを Excel バイナリで返却する。'
+  /ship-asset-master/assets/import-preview:
+    post:
+      tags:
+        - SHIP資産マスタ
+      operationId: postShipAssetMasterAssetsImportPreview
+      summary: 資産マスタ取込プレビュー
+      description: アップロードされた Excel を検証し、追加インポート / 置換インポートの事前確認に使うプレビューを作成する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_master_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostShipAssetMasterAssetsImportPreviewRequest'
+      x-word-request-title: リクエスト（multipart/form-data）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 検証完了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipAssetMasterImportPreviewResponse'
+        '400':
+          description: ファイル形式不正、シート解析不能
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：ShipAssetMasterImportPreviewResponse）
+      x-word-response-subtable-titles:
+        - rows要素（ShipAssetMasterImportPreviewRow）
+        - fixedDetails要素（ShipAssetMasterFixedDetails）
+      x-word-response-subtables:
+        - Title: rows要素（ShipAssetMasterImportPreviewRow）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - rowNo
+              - int32
+              - ✓
+              - Excel 上の行番号
+            - - shipAssetMasterId
+              - int64
+              - '-'
+              - 資産マスタID。空欄時は新規候補
+            - - categoryName
+              - string
+              - ✓
+              - Category 名
+            - - largeClassName
+              - string
+              - ✓
+              - 大分類名
+            - - mediumClassName
+              - string
+              - ✓
+              - 中分類名
+            - - detailType
+              - string
+              - ✓
+              - 明細区分
+            - - assetItemName
+              - string
+              - ✓
+              - 品目名
+            - - manufacturerName
+              - string
+              - ✓
+              - メーカー名
+            - - modelName
+              - string
+              - ✓
+              - 型式名
+            - - classCode
+              - string
+              - ✓
+              - 類別コード
+            - - className
+              - string
+              - ✓
+              - 類別名称
+            - - jmdnMediumClassificationName
+              - string
+              - ✓
+              - JMDN中分類名
+            - - generalName
+              - string
+              - ✓
+              - 一般的名称
+            - - jmdnCode
+              - string
+              - ✓
+              - JMDNコード
+            - - marketingName
+              - string
+              - ✓
+              - 販売名
+            - - marketingAuthorizationHolderName
+              - string
+              - ✓
+              - 製造販売業者等
+            - - attachmentDocumentFileName
+              - string
+              - ✓
+              - JMDN登録品目に紐づく添付文書ファイル名
+            - - attachmentDocumentUrl
+              - string
+              - ✓
+              - JMDN登録品目に紐づく添付文書 URL
+            - - fixedDetails
+              - ShipAssetMasterFixedDetails
+              - ✓
+              - 薬事 / 設備情報 / 資産情報 / PMDA提供 / 登録状況の固定属性。全項目必須
+            - - resolvedAction
+              - string
+              - ✓
+              - サーバー解決結果。CREATE / UPDATE / REACTIVATE のいずれか
+            - - resolvedJmdnAction
+              - string
+              - ✓
+              - JMDN 解決結果。REUSE_REGISTERED_ITEM / CREATE_REGISTERED_ITEM のいずれか
+            - - validationErrors
+              - string[]
+              - ✓
+              - 行エラー一覧。正常行は空配列
+        - Title: fixedDetails要素（ShipAssetMasterFixedDetails）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - pharmaceuticalAffairs
+              - string
+              - ✓
+              - 薬事
+            - - drawingNo
+              - string
+              - ✓
+              - 図面No.
+            - - layoutReflection
+              - string
+              - ✓
+              - レイアウト反映
+            - - specialEquipment
+              - string
+              - ✓
+              - 特殊設備
+            - - masterStandardDrawing
+              - string
+              - ✓
+              - Master標準図
+            - - widthValue
+              - string
+              - ✓
+              - 幅(W)
+            - - depthValue
+              - string
+              - ✓
+              - 奥行(D)
+            - - heightValue
+              - string
+              - ✓
+              - 高さ(H)
+            - - powerConnection
+              - string
+              - ✓
+              - 電源接続
+            - - powerType
+              - string
+              - ✓
+              - 電源種別
+            - - powerConsumption
+              - string
+              - ✓
+              - 消費電力
+            - - waterSupplySize
+              - string
+              - ✓
+              - 給水
+            - - hotWaterSize
+              - string
+              - ✓
+              - 給湯
+            - - drainageSize
+              - string
+              - ✓
+              - 排水
+            - - exhaustSize
+              - string
+              - ✓
+              - 排気サイズ
+            - - exhaustVolume
+              - string
+              - ✓
+              - 排気風量
+            - - steamSize
+              - string
+              - ✓
+              - 蒸気
+            - - gas
+              - string
+              - ✓
+              - ガス
+            - - weightKg
+              - string
+              - ✓
+              - 重量(kg)
+            - - reinforcement
+              - string
+              - ✓
+              - 補強
+            - - mountAnchor
+              - string
+              - ✓
+              - 架台・アンカー
+            - - floorLowering
+              - string
+              - ✓
+              - 床下げ
+            - - equipmentRemarks
+              - string
+              - ✓
+              - 設備備考
+            - - legalServiceLife
+              - string
+              - ✓
+              - 耐用年数(法定)
+            - - serviceLifePeriod
+              - string
+              - ✓
+              - 耐用期間
+            - - endOfSales
+              - string
+              - ✓
+              - EOS:販売終了
+            - - endOfMaintenance
+              - string
+              - ✓
+              - EOS:メンテ終了
+            - - dedicatedConsumables
+              - string
+              - ✓
+              - 専用消耗品
+            - - catalogDocument
+              - string
+              - ✓
+              - カタログ
+            - - operationManual
+              - string
+              - ✓
+              - 操作マニュアル
+            - - otherPdf
+              - string
+              - ✓
+              - その他PDF
+            - - pmdaClassNotification
+              - string
+              - ✓
+              - クラス分類告示
+            - - pmdaMaintenanceNotification
+              - string
+              - ✓
+              - 特定保守告示
+            - - pmdaInstallNotification
+              - string
+              - ✓
+              - 設置管理告示
+            - - pmdaClassCode
+              - string
+              - ✓
+              - 類別コード(PMDA)
+            - - pmdaClassName
+              - string
+              - ✓
+              - 類別名称(PMDA)
+            - - pmdaMiddleClassName
+              - string
+              - ✓
+              - 中分類名(PMDA)
+            - - pmdaCode
+              - string
+              - ✓
+              - コード(PMDA)
+            - - pmdaGeneralName
+              - string
+              - ✓
+              - 一般的名称(PMDA)
+            - - pmdaGeneralNameDefinition
+              - string
+              - ✓
+              - 一般的名称定義
+            - - pmdaClassification
+              - string
+              - ✓
+              - クラス分類
+            - - pmdaGhtfRule
+              - string
+              - ✓
+              - GHTFルール
+            - - pmdaSpecificMaintenance
+              - string
+              - ✓
+              - 特定保守
+            - - pmdaInstallManagement
+              - string
+              - ✓
+              - 設置管理
+            - - pmdaRepairCategory
+              - string
+              - ✓
+              - 修理区分
+            - - pmdaQms316
+              - string
+              - ✓
+              - QMS告示316号
+            - - pmdaOldGeneralNameCode
+              - string
+              - ✓
+              - 旧一般的名称コード
+            - - pmdaOldGeneralName
+              - string
+              - ✓
+              - 旧一般的名称
+            - - pmdaOldClassification
+              - string
+              - ✓
+              - 旧クラス分類
+            - - pmdaOldRepairType
+              - string
+              - ✓
+              - 旧修理種別
+            - - pmdaRevisionCount
+              - string
+              - ✓
+              - 改正回数
+            - - pmdaLastUpdatedOn
+              - date
+              - ✓
+              - 最終更新日
+            - - registrationStatus
+              - string
+              - ✓
+              - 登録状況
+  /ship-asset-master/assets/import:
+    post:
+      tags:
+        - SHIP資産マスタ
+      operationId: postShipAssetMasterAssetsImport
+      summary: 資産マスタ取込実行
+      description: プレビュー済みの SHIP 資産マスタ取込を追加または置換モードで実行する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_master_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShipAssetMasterImportRequest'
+      x-word-request-title: リクエスト（ShipAssetMasterImportRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 取込成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipAssetMasterImportResultResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象プレビューが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: プレビュー期限切れ、またはプレビューエラー残存
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：ShipAssetMasterImportResultResponse）
+  /ship-asset-master/jmdn-registered-items:
+    get:
+      tags:
+        - SHIP資産マスタ
+      operationId: getShipAssetMasterJmdnRegisteredItems
+      summary: JMDN登録品目検索
+      description: JMDN検索モーダルで既存の JMDN登録品目候補を検索取得する。返却には親の JMDN分類・一般的名称情報を含める。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_master_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          description: 全体検索文字列。類別コード、類別名称、JMDNコード、販売名、製造販売業者等を横断検索する
+          schema:
+            type: string
+        - name: classCode
+          in: query
+          required: false
+          description: 類別コード
+          schema:
+            type: string
+        - name: className
+          in: query
+          required: false
+          description: 類別名称
+          schema:
+            type: string
+        - name: jmdnCode
+          in: query
+          required: false
+          description: JMDNコード
+          schema:
+            type: string
+        - name: marketingName
+          in: query
+          required: false
+          description: 販売名
+          schema:
+            type: string
+        - name: marketingAuthorizationHolderName
+          in: query
+          required: false
+          description: 製造販売業者等
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JmdnRegisteredItemSearchResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：JmdnRegisteredItemSearchResponse）
+      x-word-response-subtable-titles:
+        - items要素（JmdnRegisteredItemSummary）
+      x-word-response-subtables:
+        - Title: items要素（JmdnRegisteredItemSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - jmdnRegisteredItemId
+              - int64
+              - ✓
+              - JMDN登録品目 ID
+            - - jmdnClassificationId
+              - int64
+              - ✓
+              - JMDN分類・一般的名称 ID
+            - - classCode
+              - string
+              - ✓
+              - 類別コード
+            - - className
+              - string
+              - ✓
+              - 類別名称
+            - - jmdnMediumClassificationName
+              - string
+              - ✓
+              - JMDN中分類名
+            - - generalName
+              - string
+              - ✓
+              - 一般的名称
+            - - jmdnCode
+              - string
+              - ✓
+              - JMDNコード
+            - - marketingName
+              - string
+              - ✓
+              - 販売名
+            - - marketingAuthorizationHolderName
+              - string
+              - ✓
+              - 製造販売業者等
+            - - attachmentDocumentFileName
+              - string
+              - ✓
+              - JMDN登録品目に紐づく添付文書ファイル名
+            - - attachmentDocumentUrl
+              - string
+              - ✓
+              - JMDN登録品目に紐づく添付文書 URL
+    post:
+      tags:
+        - SHIP資産マスタ
+      operationId: postShipAssetMasterJmdnRegisteredItems
+      summary: JMDN登録品目作成
+      description: JMDN作成モーダルから JMDN分類・一般的名称 / JMDN登録品目を再利用または新規作成し、資産マスタモーダルで選択する候補を返却する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_master_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JmdnRegisteredItemUpsertRequest'
+      x-word-request-title: リクエスト（JmdnRegisteredItemUpsertRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 処理成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JmdnRegisteredItemUpsertResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 既存 JMDNコード と分類項目が不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：JmdnRegisteredItemUpsertResponse）
+      x-word-response-subtable-titles:
+        - item要素（JmdnRegisteredItemSummary）
+      x-word-response-subtables:
+        - Title: item要素（JmdnRegisteredItemSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - jmdnRegisteredItemId
+              - int64
+              - ✓
+              - JMDN登録品目 ID
+            - - jmdnClassificationId
+              - int64
+              - ✓
+              - JMDN分類・一般的名称 ID
+            - - classCode
+              - string
+              - ✓
+              - 類別コード
+            - - className
+              - string
+              - ✓
+              - 類別名称
+            - - jmdnMediumClassificationName
+              - string
+              - ✓
+              - JMDN中分類名
+            - - generalName
+              - string
+              - ✓
+              - 一般的名称
+            - - jmdnCode
+              - string
+              - ✓
+              - JMDNコード
+            - - marketingName
+              - string
+              - ✓
+              - 販売名
+            - - marketingAuthorizationHolderName
+              - string
+              - ✓
+              - 製造販売業者等
+            - - attachmentDocumentFileName
+              - string
+              - ✓
+              - JMDN登録品目に紐づく添付文書ファイル名
+            - - attachmentDocumentUrl
+              - string
+              - ✓
+              - JMDN登録品目に紐づく添付文書 URL
+  /ship-asset-master/assets/{shipAssetMasterId}:
+    put:
+      tags:
+        - SHIP資産マスタ
+      operationId: putShipAssetMasterAssetsByShipAssetMasterId
+      summary: 資産マスタ更新
+      description: 指定した SHIP 資産マスタを更新する。資産マスタID（ship_asset_master_id）をキーに、JMDN登録品目、SHIP_Master項目、固定属性を同一トランザクションで更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_master_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: shipAssetMasterId
+          in: path
+          required: true
+          description: 更新対象の資産マスタID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShipAssetMasterUpdateRequest'
+      x-word-request-title: リクエスト（ShipAssetMasterUpdateRequest）
+      x-word-request-subtable-titles:
+        - fixedDetails要素（ShipAssetMasterFixedDetailsUpsert）
+      x-word-request-subtables:
+        - Title: fixedDetails要素（ShipAssetMasterFixedDetailsUpsert）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - pharmaceuticalAffairs
+              - string
+              - ✓
+              - 薬事
+            - - drawingNo
+              - string
+              - ✓
+              - 図面No.
+            - - layoutReflection
+              - string
+              - ✓
+              - レイアウト反映
+            - - specialEquipment
+              - string
+              - ✓
+              - 特殊設備
+            - - masterStandardDrawing
+              - string
+              - ✓
+              - Master標準図
+            - - widthValue
+              - string
+              - ✓
+              - 幅(W)
+            - - depthValue
+              - string
+              - ✓
+              - 奥行(D)
+            - - heightValue
+              - string
+              - ✓
+              - 高さ(H)
+            - - powerConnection
+              - string
+              - ✓
+              - 電源接続
+            - - powerType
+              - string
+              - ✓
+              - 電源種別
+            - - powerConsumption
+              - string
+              - ✓
+              - 消費電力
+            - - waterSupplySize
+              - string
+              - ✓
+              - 給水
+            - - hotWaterSize
+              - string
+              - ✓
+              - 給湯
+            - - drainageSize
+              - string
+              - ✓
+              - 排水
+            - - exhaustSize
+              - string
+              - ✓
+              - 排気サイズ
+            - - exhaustVolume
+              - string
+              - ✓
+              - 排気風量
+            - - steamSize
+              - string
+              - ✓
+              - 蒸気
+            - - gas
+              - string
+              - ✓
+              - ガス
+            - - weightKg
+              - string
+              - ✓
+              - 重量(kg)
+            - - reinforcement
+              - string
+              - ✓
+              - 補強
+            - - mountAnchor
+              - string
+              - ✓
+              - 架台・アンカー
+            - - floorLowering
+              - string
+              - ✓
+              - 床下げ
+            - - equipmentRemarks
+              - string
+              - ✓
+              - 設備備考
+            - - legalServiceLife
+              - string
+              - ✓
+              - 耐用年数(法定)
+            - - serviceLifePeriod
+              - string
+              - ✓
+              - 耐用期間
+            - - endOfSales
+              - string
+              - ✓
+              - EOS:販売終了
+            - - endOfMaintenance
+              - string
+              - ✓
+              - EOS:メンテ終了
+            - - dedicatedConsumables
+              - string
+              - ✓
+              - 専用消耗品
+            - - catalogDocument
+              - string
+              - ✓
+              - カタログ
+            - - operationManual
+              - string
+              - ✓
+              - 操作マニュアル
+            - - otherPdf
+              - string
+              - ✓
+              - その他PDF
+            - - pmdaClassNotification
+              - string
+              - ✓
+              - クラス分類告示
+            - - pmdaMaintenanceNotification
+              - string
+              - ✓
+              - 特定保守告示
+            - - pmdaInstallNotification
+              - string
+              - ✓
+              - 設置管理告示
+            - - pmdaClassCode
+              - string
+              - ✓
+              - 類別コード(PMDA)
+            - - pmdaClassName
+              - string
+              - ✓
+              - 類別名称(PMDA)
+            - - pmdaMiddleClassName
+              - string
+              - ✓
+              - 中分類名(PMDA)
+            - - pmdaCode
+              - string
+              - ✓
+              - コード(PMDA)
+            - - pmdaGeneralName
+              - string
+              - ✓
+              - 一般的名称(PMDA)
+            - - pmdaGeneralNameDefinition
+              - string
+              - ✓
+              - 一般的名称定義
+            - - pmdaClassification
+              - string
+              - ✓
+              - クラス分類
+            - - pmdaGhtfRule
+              - string
+              - ✓
+              - GHTFルール
+            - - pmdaSpecificMaintenance
+              - string
+              - ✓
+              - 特定保守
+            - - pmdaInstallManagement
+              - string
+              - ✓
+              - 設置管理
+            - - pmdaRepairCategory
+              - string
+              - ✓
+              - 修理区分
+            - - pmdaQms316
+              - string
+              - ✓
+              - QMS告示316号
+            - - pmdaOldGeneralNameCode
+              - string
+              - ✓
+              - 旧一般的名称コード
+            - - pmdaOldGeneralName
+              - string
+              - ✓
+              - 旧一般的名称
+            - - pmdaOldClassification
+              - string
+              - ✓
+              - 旧クラス分類
+            - - pmdaOldRepairType
+              - string
+              - ✓
+              - 旧修理種別
+            - - pmdaRevisionCount
+              - string
+              - ✓
+              - 改正回数
+            - - pmdaLastUpdatedOn
+              - date
+              - ✓
+              - 最終更新日
+            - - registrationStatus
+              - string
+              - ✓
+              - 登録状況
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutShipAssetMasterAssetsByShipAssetMasterIdResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象 SHIP 資産マスタまたは指定した JMDN登録品目が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 組み合わせ重複
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': ShipAssetMasterDetailResponse
+      x-word-response-title: レスポンス（200：ShipAssetMasterDetailResponse）
+      x-word-response-subtable-titles:
+        - item要素（ShipAssetMasterSummary）
+        - fixedDetails要素（ShipAssetMasterFixedDetails）
+      x-word-response-subtables:
+        - Title: item要素（ShipAssetMasterSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - shipAssetMasterId
+              - int64
+              - ✓
+              - 資産マスタID
+            - - categoryId
+              - int64
+              - ✓
+              - Category ID
+            - - categoryName
+              - string
+              - ✓
+              - Category 名
+            - - largeClassId
+              - int64
+              - ✓
+              - 大分類 ID
+            - - largeClassName
+              - string
+              - ✓
+              - 大分類名
+            - - mediumClassId
+              - int64
+              - ✓
+              - 中分類 ID
+            - - mediumClassName
+              - string
+              - ✓
+              - 中分類名
+            - - detailType
+              - string
+              - ✓
+              - 明細区分
+            - - assetItemId
+              - int64
+              - ✓
+              - 品目 ID
+            - - assetItemName
+              - string
+              - ✓
+              - 品目名
+            - - manufacturerId
+              - int64
+              - ✓
+              - メーカー ID
+            - - manufacturerName
+              - string
+              - ✓
+              - メーカー名
+            - - modelId
+              - int64
+              - ✓
+              - 型式 ID
+            - - modelName
+              - string
+              - ✓
+              - 型式名
+            - - jmdnRegisteredItemId
+              - int64
+              - ✓
+              - JMDN登録品目 ID
+            - - classCode
+              - string
+              - ✓
+              - 類別コード
+            - - className
+              - string
+              - ✓
+              - 類別名称
+            - - jmdnMediumClassificationName
+              - string
+              - ✓
+              - JMDN中分類名
+            - - generalName
+              - string
+              - ✓
+              - 一般的名称
+            - - jmdnCode
+              - string
+              - ✓
+              - JMDNコード
+            - - marketingName
+              - string
+              - ✓
+              - 販売名
+            - - marketingAuthorizationHolderName
+              - string
+              - ✓
+              - 製造販売業者等
+            - - attachmentDocumentFileName
+              - string
+              - ✓
+              - JMDN登録品目に紐づく添付文書ファイル名
+            - - attachmentDocumentUrl
+              - string
+              - ✓
+              - JMDN登録品目に紐づく添付文書 URL
+            - - fixedDetails
+              - ShipAssetMasterFixedDetails
+              - ✓
+              - 薬事 / 設備情報 / 資産情報 / PMDA提供 / 登録状況の固定属性。全項目必須
+            - - createdAt
+              - datetime
+              - ✓
+              - 作成日時
+            - - updatedAt
+              - datetime
+              - ✓
+              - 更新日時
+        - Title: fixedDetails要素（ShipAssetMasterFixedDetails）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - pharmaceuticalAffairs
+              - string
+              - ✓
+              - 薬事
+            - - drawingNo
+              - string
+              - ✓
+              - 図面No.
+            - - layoutReflection
+              - string
+              - ✓
+              - レイアウト反映
+            - - specialEquipment
+              - string
+              - ✓
+              - 特殊設備
+            - - masterStandardDrawing
+              - string
+              - ✓
+              - Master標準図
+            - - widthValue
+              - string
+              - ✓
+              - 幅(W)
+            - - depthValue
+              - string
+              - ✓
+              - 奥行(D)
+            - - heightValue
+              - string
+              - ✓
+              - 高さ(H)
+            - - powerConnection
+              - string
+              - ✓
+              - 電源接続
+            - - powerType
+              - string
+              - ✓
+              - 電源種別
+            - - powerConsumption
+              - string
+              - ✓
+              - 消費電力
+            - - waterSupplySize
+              - string
+              - ✓
+              - 給水
+            - - hotWaterSize
+              - string
+              - ✓
+              - 給湯
+            - - drainageSize
+              - string
+              - ✓
+              - 排水
+            - - exhaustSize
+              - string
+              - ✓
+              - 排気サイズ
+            - - exhaustVolume
+              - string
+              - ✓
+              - 排気風量
+            - - steamSize
+              - string
+              - ✓
+              - 蒸気
+            - - gas
+              - string
+              - ✓
+              - ガス
+            - - weightKg
+              - string
+              - ✓
+              - 重量(kg)
+            - - reinforcement
+              - string
+              - ✓
+              - 補強
+            - - mountAnchor
+              - string
+              - ✓
+              - 架台・アンカー
+            - - floorLowering
+              - string
+              - ✓
+              - 床下げ
+            - - equipmentRemarks
+              - string
+              - ✓
+              - 設備備考
+            - - legalServiceLife
+              - string
+              - ✓
+              - 耐用年数(法定)
+            - - serviceLifePeriod
+              - string
+              - ✓
+              - 耐用期間
+            - - endOfSales
+              - string
+              - ✓
+              - EOS:販売終了
+            - - endOfMaintenance
+              - string
+              - ✓
+              - EOS:メンテ終了
+            - - dedicatedConsumables
+              - string
+              - ✓
+              - 専用消耗品
+            - - catalogDocument
+              - string
+              - ✓
+              - カタログ
+            - - operationManual
+              - string
+              - ✓
+              - 操作マニュアル
+            - - otherPdf
+              - string
+              - ✓
+              - その他PDF
+            - - pmdaClassNotification
+              - string
+              - ✓
+              - クラス分類告示
+            - - pmdaMaintenanceNotification
+              - string
+              - ✓
+              - 特定保守告示
+            - - pmdaInstallNotification
+              - string
+              - ✓
+              - 設置管理告示
+            - - pmdaClassCode
+              - string
+              - ✓
+              - 類別コード(PMDA)
+            - - pmdaClassName
+              - string
+              - ✓
+              - 類別名称(PMDA)
+            - - pmdaMiddleClassName
+              - string
+              - ✓
+              - 中分類名(PMDA)
+            - - pmdaCode
+              - string
+              - ✓
+              - コード(PMDA)
+            - - pmdaGeneralName
+              - string
+              - ✓
+              - 一般的名称(PMDA)
+            - - pmdaGeneralNameDefinition
+              - string
+              - ✓
+              - 一般的名称定義
+            - - pmdaClassification
+              - string
+              - ✓
+              - クラス分類
+            - - pmdaGhtfRule
+              - string
+              - ✓
+              - GHTFルール
+            - - pmdaSpecificMaintenance
+              - string
+              - ✓
+              - 特定保守
+            - - pmdaInstallManagement
+              - string
+              - ✓
+              - 設置管理
+            - - pmdaRepairCategory
+              - string
+              - ✓
+              - 修理区分
+            - - pmdaQms316
+              - string
+              - ✓
+              - QMS告示316号
+            - - pmdaOldGeneralNameCode
+              - string
+              - ✓
+              - 旧一般的名称コード
+            - - pmdaOldGeneralName
+              - string
+              - ✓
+              - 旧一般的名称
+            - - pmdaOldClassification
+              - string
+              - ✓
+              - 旧クラス分類
+            - - pmdaOldRepairType
+              - string
+              - ✓
+              - 旧修理種別
+            - - pmdaRevisionCount
+              - string
+              - ✓
+              - 改正回数
+            - - pmdaLastUpdatedOn
+              - date
+              - ✓
+              - 最終更新日
+            - - registrationStatus
+              - string
+              - ✓
+              - 登録状況
+    delete:
+      tags:
+        - SHIP資産マスタ
+      operationId: deleteShipAssetMasterAssetsByShipAssetMasterId
+      summary: 資産マスタ削除
+      description: 指定した SHIP 資産マスタを論理削除する。既存資産・編集リストからの参照は維持する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_master_edit
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: shipAssetMasterId
+          in: path
+          required: true
+          description: 削除対象の資産マスタID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象 SHIP 資産マスタが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス
+      x-word-response-lines:
+        - 'Body: なし'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    ShipAssetMasterListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 絞り込み後の一覧件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipAssetMasterSummary'
+          description: 資産マスタ一覧
+          x-word-subtable-title: items要素（ShipAssetMasterSummary）
+        pharmaceuticalAffairs:
+          type: string
+          description: 薬事
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        drawingNo:
+          type: string
+          description: 図面No.
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        layoutReflection:
+          type: string
+          description: レイアウト反映
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        specialEquipment:
+          type: string
+          description: 特殊設備
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        masterStandardDrawing:
+          type: string
+          description: Master標準図
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        widthValue:
+          type: string
+          description: 幅(W)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        depthValue:
+          type: string
+          description: 奥行(D)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        heightValue:
+          type: string
+          description: 高さ(H)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerConnection:
+          type: string
+          description: 電源接続
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerType:
+          type: string
+          description: 電源種別
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerConsumption:
+          type: string
+          description: 消費電力
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        waterSupplySize:
+          type: string
+          description: 給水
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        hotWaterSize:
+          type: string
+          description: 給湯
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        drainageSize:
+          type: string
+          description: 排水
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        exhaustSize:
+          type: string
+          description: 排気サイズ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        exhaustVolume:
+          type: string
+          description: 排気風量
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        steamSize:
+          type: string
+          description: 蒸気
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        gas:
+          type: string
+          description: ガス
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        weightKg:
+          type: string
+          description: 重量(kg)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        reinforcement:
+          type: string
+          description: 補強
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        mountAnchor:
+          type: string
+          description: 架台・アンカー
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        floorLowering:
+          type: string
+          description: 床下げ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        equipmentRemarks:
+          type: string
+          description: 設備備考
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        legalServiceLife:
+          type: string
+          description: 耐用年数(法定)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        serviceLifePeriod:
+          type: string
+          description: 耐用期間
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        endOfSales:
+          type: string
+          description: EOS:販売終了
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        endOfMaintenance:
+          type: string
+          description: EOS:メンテ終了
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        dedicatedConsumables:
+          type: string
+          description: 専用消耗品
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        catalogDocument:
+          type: string
+          description: カタログ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        operationManual:
+          type: string
+          description: 操作マニュアル
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        otherPdf:
+          type: string
+          description: その他PDF
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassNotification:
+          type: string
+          description: クラス分類告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaMaintenanceNotification:
+          type: string
+          description: 特定保守告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaInstallNotification:
+          type: string
+          description: 設置管理告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassCode:
+          type: string
+          description: 類別コード(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassName:
+          type: string
+          description: 類別名称(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaMiddleClassName:
+          type: string
+          description: 中分類名(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaCode:
+          type: string
+          description: コード(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGeneralName:
+          type: string
+          description: 一般的名称(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGeneralNameDefinition:
+          type: string
+          description: 一般的名称定義
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassification:
+          type: string
+          description: クラス分類
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGhtfRule:
+          type: string
+          description: GHTFルール
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaSpecificMaintenance:
+          type: string
+          description: 特定保守
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaInstallManagement:
+          type: string
+          description: 設置管理
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaRepairCategory:
+          type: string
+          description: 修理区分
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaQms316:
+          type: string
+          description: QMS告示316号
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldGeneralNameCode:
+          type: string
+          description: 旧一般的名称コード
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldGeneralName:
+          type: string
+          description: 旧一般的名称
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldClassification:
+          type: string
+          description: 旧クラス分類
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldRepairType:
+          type: string
+          description: 旧修理種別
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaRevisionCount:
+          type: string
+          description: 改正回数
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaLastUpdatedOn:
+          type: string
+          format: date
+          description: 最終更新日
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        registrationStatus:
+          type: string
+          description: 登録状況
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+    ShipAssetMasterSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - shipAssetMasterId
+        - categoryId
+        - categoryName
+        - largeClassId
+        - largeClassName
+        - mediumClassId
+        - mediumClassName
+        - detailType
+        - assetItemId
+        - assetItemName
+        - manufacturerId
+        - manufacturerName
+        - modelId
+        - modelName
+        - jmdnRegisteredItemId
+        - classCode
+        - className
+        - jmdnMediumClassificationName
+        - generalName
+        - jmdnCode
+        - marketingName
+        - marketingAuthorizationHolderName
+        - attachmentDocumentFileName
+        - attachmentDocumentUrl
+        - fixedDetails
+        - createdAt
+        - updatedAt
+      properties:
+        shipAssetMasterId:
+          type: integer
+          format: int64
+          description: 資産マスタID
+        categoryId:
+          type: integer
+          format: int64
+          description: Category ID
+        categoryName:
+          type: string
+          description: Category 名
+        largeClassId:
+          type: integer
+          format: int64
+          description: 大分類 ID
+        largeClassName:
+          type: string
+          description: 大分類名
+        mediumClassId:
+          type: integer
+          format: int64
+          description: 中分類 ID
+        mediumClassName:
+          type: string
+          description: 中分類名
+        detailType:
+          type: string
+          description: 明細区分
+        assetItemId:
+          type: integer
+          format: int64
+          description: 品目 ID
+        assetItemName:
+          type: string
+          description: 品目名
+        manufacturerId:
+          type: integer
+          format: int64
+          description: メーカー ID
+        manufacturerName:
+          type: string
+          description: メーカー名
+        modelId:
+          type: integer
+          format: int64
+          description: 型式 ID
+        modelName:
+          type: string
+          description: 型式名
+        jmdnRegisteredItemId:
+          type: integer
+          format: int64
+          description: JMDN登録品目 ID
+        classCode:
+          type: string
+          description: 類別コード
+        className:
+          type: string
+          description: 類別名称
+        jmdnMediumClassificationName:
+          type: string
+          description: JMDN中分類名
+        generalName:
+          type: string
+          description: 一般的名称
+        jmdnCode:
+          type: string
+          description: JMDNコード
+        marketingName:
+          type: string
+          description: 販売名
+        marketingAuthorizationHolderName:
+          type: string
+          description: 製造販売業者等
+        attachmentDocumentFileName:
+          type: string
+          description: JMDN登録品目に紐づく添付文書ファイル名
+        attachmentDocumentUrl:
+          type: string
+          description: JMDN登録品目に紐づく添付文書 URL
+        fixedDetails:
+          $ref: '#/components/schemas/ShipAssetMasterFixedDetails'
+          description: 薬事 / 設備情報 / 資産情報 / PMDA提供 / 登録状況の固定属性。全項目必須
+          x-word-subtable-title: fixedDetails要素（ShipAssetMasterFixedDetails）
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+        pharmaceuticalAffairs:
+          type: string
+          description: 薬事
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        drawingNo:
+          type: string
+          description: 図面No.
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        layoutReflection:
+          type: string
+          description: レイアウト反映
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        specialEquipment:
+          type: string
+          description: 特殊設備
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        masterStandardDrawing:
+          type: string
+          description: Master標準図
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        widthValue:
+          type: string
+          description: 幅(W)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        depthValue:
+          type: string
+          description: 奥行(D)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        heightValue:
+          type: string
+          description: 高さ(H)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerConnection:
+          type: string
+          description: 電源接続
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerType:
+          type: string
+          description: 電源種別
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerConsumption:
+          type: string
+          description: 消費電力
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        waterSupplySize:
+          type: string
+          description: 給水
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        hotWaterSize:
+          type: string
+          description: 給湯
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        drainageSize:
+          type: string
+          description: 排水
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        exhaustSize:
+          type: string
+          description: 排気サイズ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        exhaustVolume:
+          type: string
+          description: 排気風量
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        steamSize:
+          type: string
+          description: 蒸気
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        gas:
+          type: string
+          description: ガス
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        weightKg:
+          type: string
+          description: 重量(kg)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        reinforcement:
+          type: string
+          description: 補強
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        mountAnchor:
+          type: string
+          description: 架台・アンカー
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        floorLowering:
+          type: string
+          description: 床下げ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        equipmentRemarks:
+          type: string
+          description: 設備備考
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        legalServiceLife:
+          type: string
+          description: 耐用年数(法定)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        serviceLifePeriod:
+          type: string
+          description: 耐用期間
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        endOfSales:
+          type: string
+          description: EOS:販売終了
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        endOfMaintenance:
+          type: string
+          description: EOS:メンテ終了
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        dedicatedConsumables:
+          type: string
+          description: 専用消耗品
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        catalogDocument:
+          type: string
+          description: カタログ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        operationManual:
+          type: string
+          description: 操作マニュアル
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        otherPdf:
+          type: string
+          description: その他PDF
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassNotification:
+          type: string
+          description: クラス分類告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaMaintenanceNotification:
+          type: string
+          description: 特定保守告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaInstallNotification:
+          type: string
+          description: 設置管理告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassCode:
+          type: string
+          description: 類別コード(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassName:
+          type: string
+          description: 類別名称(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaMiddleClassName:
+          type: string
+          description: 中分類名(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaCode:
+          type: string
+          description: コード(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGeneralName:
+          type: string
+          description: 一般的名称(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGeneralNameDefinition:
+          type: string
+          description: 一般的名称定義
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassification:
+          type: string
+          description: クラス分類
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGhtfRule:
+          type: string
+          description: GHTFルール
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaSpecificMaintenance:
+          type: string
+          description: 特定保守
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaInstallManagement:
+          type: string
+          description: 設置管理
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaRepairCategory:
+          type: string
+          description: 修理区分
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaQms316:
+          type: string
+          description: QMS告示316号
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldGeneralNameCode:
+          type: string
+          description: 旧一般的名称コード
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldGeneralName:
+          type: string
+          description: 旧一般的名称
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldClassification:
+          type: string
+          description: 旧クラス分類
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldRepairType:
+          type: string
+          description: 旧修理種別
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaRevisionCount:
+          type: string
+          description: 改正回数
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaLastUpdatedOn:
+          type: string
+          format: date
+          description: 最終更新日
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        registrationStatus:
+          type: string
+          description: 登録状況
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+    ShipAssetMasterFixedDetails:
+      type: object
+      additionalProperties: false
+      required:
+        - pharmaceuticalAffairs
+        - drawingNo
+        - layoutReflection
+        - specialEquipment
+        - masterStandardDrawing
+        - widthValue
+        - depthValue
+        - heightValue
+        - powerConnection
+        - powerType
+        - powerConsumption
+        - waterSupplySize
+        - hotWaterSize
+        - drainageSize
+        - exhaustSize
+        - exhaustVolume
+        - steamSize
+        - gas
+        - weightKg
+        - reinforcement
+        - mountAnchor
+        - floorLowering
+        - equipmentRemarks
+        - legalServiceLife
+        - serviceLifePeriod
+        - endOfSales
+        - endOfMaintenance
+        - dedicatedConsumables
+        - catalogDocument
+        - operationManual
+        - otherPdf
+        - pmdaClassNotification
+        - pmdaMaintenanceNotification
+        - pmdaInstallNotification
+        - pmdaClassCode
+        - pmdaClassName
+        - pmdaMiddleClassName
+        - pmdaCode
+        - pmdaGeneralName
+        - pmdaGeneralNameDefinition
+        - pmdaClassification
+        - pmdaGhtfRule
+        - pmdaSpecificMaintenance
+        - pmdaInstallManagement
+        - pmdaRepairCategory
+        - pmdaQms316
+        - pmdaOldGeneralNameCode
+        - pmdaOldGeneralName
+        - pmdaOldClassification
+        - pmdaOldRepairType
+        - pmdaRevisionCount
+        - pmdaLastUpdatedOn
+        - registrationStatus
+      properties:
+        pharmaceuticalAffairs:
+          type: string
+          description: 薬事
+        drawingNo:
+          type: string
+          description: 図面No.
+        layoutReflection:
+          type: string
+          description: レイアウト反映
+        specialEquipment:
+          type: string
+          description: 特殊設備
+        masterStandardDrawing:
+          type: string
+          description: Master標準図
+        widthValue:
+          type: string
+          description: 幅(W)
+        depthValue:
+          type: string
+          description: 奥行(D)
+        heightValue:
+          type: string
+          description: 高さ(H)
+        powerConnection:
+          type: string
+          description: 電源接続
+        powerType:
+          type: string
+          description: 電源種別
+        powerConsumption:
+          type: string
+          description: 消費電力
+        waterSupplySize:
+          type: string
+          description: 給水
+        hotWaterSize:
+          type: string
+          description: 給湯
+        drainageSize:
+          type: string
+          description: 排水
+        exhaustSize:
+          type: string
+          description: 排気サイズ
+        exhaustVolume:
+          type: string
+          description: 排気風量
+        steamSize:
+          type: string
+          description: 蒸気
+        gas:
+          type: string
+          description: ガス
+        weightKg:
+          type: string
+          description: 重量(kg)
+        reinforcement:
+          type: string
+          description: 補強
+        mountAnchor:
+          type: string
+          description: 架台・アンカー
+        floorLowering:
+          type: string
+          description: 床下げ
+        equipmentRemarks:
+          type: string
+          description: 設備備考
+        legalServiceLife:
+          type: string
+          description: 耐用年数(法定)
+        serviceLifePeriod:
+          type: string
+          description: 耐用期間
+        endOfSales:
+          type: string
+          description: EOS:販売終了
+        endOfMaintenance:
+          type: string
+          description: EOS:メンテ終了
+        dedicatedConsumables:
+          type: string
+          description: 専用消耗品
+        catalogDocument:
+          type: string
+          description: カタログ
+        operationManual:
+          type: string
+          description: 操作マニュアル
+        otherPdf:
+          type: string
+          description: その他PDF
+        pmdaClassNotification:
+          type: string
+          description: クラス分類告示
+        pmdaMaintenanceNotification:
+          type: string
+          description: 特定保守告示
+        pmdaInstallNotification:
+          type: string
+          description: 設置管理告示
+        pmdaClassCode:
+          type: string
+          description: 類別コード(PMDA)
+        pmdaClassName:
+          type: string
+          description: 類別名称(PMDA)
+        pmdaMiddleClassName:
+          type: string
+          description: 中分類名(PMDA)
+        pmdaCode:
+          type: string
+          description: コード(PMDA)
+        pmdaGeneralName:
+          type: string
+          description: 一般的名称(PMDA)
+        pmdaGeneralNameDefinition:
+          type: string
+          description: 一般的名称定義
+        pmdaClassification:
+          type: string
+          description: クラス分類
+        pmdaGhtfRule:
+          type: string
+          description: GHTFルール
+        pmdaSpecificMaintenance:
+          type: string
+          description: 特定保守
+        pmdaInstallManagement:
+          type: string
+          description: 設置管理
+        pmdaRepairCategory:
+          type: string
+          description: 修理区分
+        pmdaQms316:
+          type: string
+          description: QMS告示316号
+        pmdaOldGeneralNameCode:
+          type: string
+          description: 旧一般的名称コード
+        pmdaOldGeneralName:
+          type: string
+          description: 旧一般的名称
+        pmdaOldClassification:
+          type: string
+          description: 旧クラス分類
+        pmdaOldRepairType:
+          type: string
+          description: 旧修理種別
+        pmdaRevisionCount:
+          type: string
+          description: 改正回数
+        pmdaLastUpdatedOn:
+          type: string
+          format: date
+          description: 最終更新日
+        registrationStatus:
+          type: string
+          description: 登録状況
+    PostShipAssetMasterAssetsImportPreviewRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: 取込対象の Excel ファイル（.xlsx / .xls）
+    ShipAssetMasterImportPreviewResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - previewId
+        - fileName
+        - totalRows
+        - validRows
+        - errorRows
+        - expiresAt
+        - rows
+      properties:
+        previewId:
+          type: string
+          description: プレビュー識別子
+        fileName:
+          type: string
+          description: アップロードファイル名
+        totalRows:
+          type: integer
+          format: int32
+          description: 総行数
+        validRows:
+          type: integer
+          format: int32
+          description: 取込可能行数
+        errorRows:
+          type: integer
+          format: int32
+          description: エラー行数
+        expiresAt:
+          type: string
+          format: date-time
+          description: プレビュー有効期限
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipAssetMasterImportPreviewRow'
+          description: 行ごとの検証結果
+          x-word-subtable-title: rows要素（ShipAssetMasterImportPreviewRow）
+        pharmaceuticalAffairs:
+          type: string
+          description: 薬事
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        drawingNo:
+          type: string
+          description: 図面No.
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        layoutReflection:
+          type: string
+          description: レイアウト反映
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        specialEquipment:
+          type: string
+          description: 特殊設備
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        masterStandardDrawing:
+          type: string
+          description: Master標準図
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        widthValue:
+          type: string
+          description: 幅(W)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        depthValue:
+          type: string
+          description: 奥行(D)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        heightValue:
+          type: string
+          description: 高さ(H)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerConnection:
+          type: string
+          description: 電源接続
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerType:
+          type: string
+          description: 電源種別
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerConsumption:
+          type: string
+          description: 消費電力
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        waterSupplySize:
+          type: string
+          description: 給水
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        hotWaterSize:
+          type: string
+          description: 給湯
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        drainageSize:
+          type: string
+          description: 排水
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        exhaustSize:
+          type: string
+          description: 排気サイズ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        exhaustVolume:
+          type: string
+          description: 排気風量
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        steamSize:
+          type: string
+          description: 蒸気
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        gas:
+          type: string
+          description: ガス
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        weightKg:
+          type: string
+          description: 重量(kg)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        reinforcement:
+          type: string
+          description: 補強
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        mountAnchor:
+          type: string
+          description: 架台・アンカー
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        floorLowering:
+          type: string
+          description: 床下げ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        equipmentRemarks:
+          type: string
+          description: 設備備考
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        legalServiceLife:
+          type: string
+          description: 耐用年数(法定)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        serviceLifePeriod:
+          type: string
+          description: 耐用期間
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        endOfSales:
+          type: string
+          description: EOS:販売終了
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        endOfMaintenance:
+          type: string
+          description: EOS:メンテ終了
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        dedicatedConsumables:
+          type: string
+          description: 専用消耗品
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        catalogDocument:
+          type: string
+          description: カタログ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        operationManual:
+          type: string
+          description: 操作マニュアル
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        otherPdf:
+          type: string
+          description: その他PDF
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassNotification:
+          type: string
+          description: クラス分類告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaMaintenanceNotification:
+          type: string
+          description: 特定保守告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaInstallNotification:
+          type: string
+          description: 設置管理告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassCode:
+          type: string
+          description: 類別コード(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassName:
+          type: string
+          description: 類別名称(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaMiddleClassName:
+          type: string
+          description: 中分類名(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaCode:
+          type: string
+          description: コード(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGeneralName:
+          type: string
+          description: 一般的名称(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGeneralNameDefinition:
+          type: string
+          description: 一般的名称定義
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassification:
+          type: string
+          description: クラス分類
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGhtfRule:
+          type: string
+          description: GHTFルール
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaSpecificMaintenance:
+          type: string
+          description: 特定保守
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaInstallManagement:
+          type: string
+          description: 設置管理
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaRepairCategory:
+          type: string
+          description: 修理区分
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaQms316:
+          type: string
+          description: QMS告示316号
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldGeneralNameCode:
+          type: string
+          description: 旧一般的名称コード
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldGeneralName:
+          type: string
+          description: 旧一般的名称
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldClassification:
+          type: string
+          description: 旧クラス分類
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldRepairType:
+          type: string
+          description: 旧修理種別
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaRevisionCount:
+          type: string
+          description: 改正回数
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaLastUpdatedOn:
+          type: string
+          format: date
+          description: 最終更新日
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        registrationStatus:
+          type: string
+          description: 登録状況
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+    ShipAssetMasterImportPreviewRow:
+      type: object
+      additionalProperties: false
+      required:
+        - rowNo
+        - categoryName
+        - largeClassName
+        - mediumClassName
+        - detailType
+        - assetItemName
+        - manufacturerName
+        - modelName
+        - classCode
+        - className
+        - jmdnMediumClassificationName
+        - generalName
+        - jmdnCode
+        - marketingName
+        - marketingAuthorizationHolderName
+        - attachmentDocumentFileName
+        - attachmentDocumentUrl
+        - fixedDetails
+        - resolvedAction
+        - resolvedJmdnAction
+        - validationErrors
+      properties:
+        rowNo:
+          type: integer
+          format: int32
+          description: Excel 上の行番号
+        shipAssetMasterId:
+          type: integer
+          format: int64
+          description: 資産マスタID。空欄時は新規候補
+        categoryName:
+          type: string
+          description: Category 名
+        largeClassName:
+          type: string
+          description: 大分類名
+        mediumClassName:
+          type: string
+          description: 中分類名
+        detailType:
+          type: string
+          description: 明細区分
+        assetItemName:
+          type: string
+          description: 品目名
+        manufacturerName:
+          type: string
+          description: メーカー名
+        modelName:
+          type: string
+          description: 型式名
+        classCode:
+          type: string
+          description: 類別コード
+        className:
+          type: string
+          description: 類別名称
+        jmdnMediumClassificationName:
+          type: string
+          description: JMDN中分類名
+        generalName:
+          type: string
+          description: 一般的名称
+        jmdnCode:
+          type: string
+          description: JMDNコード
+        marketingName:
+          type: string
+          description: 販売名
+        marketingAuthorizationHolderName:
+          type: string
+          description: 製造販売業者等
+        attachmentDocumentFileName:
+          type: string
+          description: JMDN登録品目に紐づく添付文書ファイル名
+        attachmentDocumentUrl:
+          type: string
+          description: JMDN登録品目に紐づく添付文書 URL
+        fixedDetails:
+          $ref: '#/components/schemas/ShipAssetMasterFixedDetails'
+          description: 薬事 / 設備情報 / 資産情報 / PMDA提供 / 登録状況の固定属性。全項目必須
+          x-word-subtable-title: fixedDetails要素（ShipAssetMasterFixedDetails）
+        resolvedAction:
+          type: string
+          description: サーバー解決結果。CREATE / UPDATE / REACTIVATE のいずれか
+        resolvedJmdnAction:
+          type: string
+          description: JMDN 解決結果。REUSE_REGISTERED_ITEM / CREATE_REGISTERED_ITEM のいずれか
+        validationErrors:
+          type: array
+          items:
+            type: string
+          description: 行エラー一覧。正常行は空配列
+    ShipAssetMasterImportRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - previewId
+        - importMode
+      properties:
+        previewId:
+          type: string
+          description: プレビュー識別子
+        importMode:
+          type: string
+          description: APPEND または REPLACE
+    ShipAssetMasterImportResultResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - previewId
+        - importMode
+        - processedRows
+        - createdCount
+        - updatedCount
+        - reactivatedCount
+        - logicallyDeletedCount
+        - importedAt
+      properties:
+        previewId:
+          type: string
+          description: プレビュー識別子
+        importMode:
+          type: string
+          description: 実行モード
+        processedRows:
+          type: integer
+          format: int32
+          description: 処理対象行数
+        createdCount:
+          type: integer
+          format: int32
+          description: 新規作成件数
+        updatedCount:
+          type: integer
+          format: int32
+          description: 更新件数
+        reactivatedCount:
+          type: integer
+          format: int32
+          description: 再有効化件数
+        logicallyDeletedCount:
+          type: integer
+          format: int32
+          description: 置換時に論理削除した件数
+        importedAt:
+          type: string
+          format: date-time
+          description: 取込実行日時
+    JmdnRegisteredItemSearchResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 返却件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/JmdnRegisteredItemSummary'
+          description: 検索結果一覧
+          x-word-subtable-title: items要素（JmdnRegisteredItemSummary）
+    JmdnRegisteredItemSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - jmdnRegisteredItemId
+        - jmdnClassificationId
+        - classCode
+        - className
+        - jmdnMediumClassificationName
+        - generalName
+        - jmdnCode
+        - marketingName
+        - marketingAuthorizationHolderName
+        - attachmentDocumentFileName
+        - attachmentDocumentUrl
+      properties:
+        jmdnRegisteredItemId:
+          type: integer
+          format: int64
+          description: JMDN登録品目 ID
+        jmdnClassificationId:
+          type: integer
+          format: int64
+          description: JMDN分類・一般的名称 ID
+        classCode:
+          type: string
+          description: 類別コード
+        className:
+          type: string
+          description: 類別名称
+        jmdnMediumClassificationName:
+          type: string
+          description: JMDN中分類名
+        generalName:
+          type: string
+          description: 一般的名称
+        jmdnCode:
+          type: string
+          description: JMDNコード
+        marketingName:
+          type: string
+          description: 販売名
+        marketingAuthorizationHolderName:
+          type: string
+          description: 製造販売業者等
+        attachmentDocumentFileName:
+          type: string
+          description: JMDN登録品目に紐づく添付文書ファイル名
+        attachmentDocumentUrl:
+          type: string
+          description: JMDN登録品目に紐づく添付文書 URL
+    JmdnRegisteredItemUpsertRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - classCode
+        - className
+        - jmdnMediumClassificationName
+        - generalName
+        - jmdnCode
+        - marketingName
+        - marketingAuthorizationHolderName
+        - attachmentDocumentFileName
+        - attachmentDocumentUrl
+      properties:
+        classCode:
+          type: string
+          description: 類別コード
+        className:
+          type: string
+          description: 類別名称
+        jmdnMediumClassificationName:
+          type: string
+          description: JMDN中分類名
+        generalName:
+          type: string
+          description: 一般的名称
+        jmdnCode:
+          type: string
+          description: JMDNコード
+        marketingName:
+          type: string
+          description: 販売名
+        marketingAuthorizationHolderName:
+          type: string
+          description: 製造販売業者等
+        attachmentDocumentFileName:
+          type: string
+          description: JMDN登録品目に紐づく添付文書ファイル名
+        attachmentDocumentUrl:
+          type: string
+          description: JMDN登録品目に紐づく添付文書 URL
+    JmdnRegisteredItemUpsertResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - createdClassification
+        - createdRegisteredItem
+        - item
+      properties:
+        createdClassification:
+          type: boolean
+          description: JMDN分類・一般的名称を新規作成した場合は true
+        createdRegisteredItem:
+          type: boolean
+          description: JMDN登録品目を新規作成した場合は true
+        item:
+          $ref: '#/components/schemas/JmdnRegisteredItemSummary'
+          description: 資産マスタへ設定する JMDN登録品目
+          x-word-subtable-title: item要素（JmdnRegisteredItemSummary）
+    ShipAssetMasterCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - categoryId
+        - largeClassName
+        - mediumClassName
+        - detailType
+        - assetItemName
+        - manufacturerName
+        - modelName
+        - jmdnRegisteredItemId
+        - fixedDetails
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+          description: Category ID
+        largeClassName:
+          type: string
+          description: 大分類名
+        mediumClassName:
+          type: string
+          description: 中分類名
+        detailType:
+          type: string
+          description: 明細区分
+        assetItemName:
+          type: string
+          description: 品目名
+        manufacturerName:
+          type: string
+          description: メーカー名
+        modelName:
+          type: string
+          description: 型式名
+        jmdnRegisteredItemId:
+          type: integer
+          format: int64
+          description: JMDN登録品目 ID
+        fixedDetails:
+          $ref: '#/components/schemas/ShipAssetMasterFixedDetailsUpsert'
+          description: 薬事 / 設備情報 / 資産情報 / PMDA提供 / 登録状況の固定属性。全項目必須
+          x-word-subtable-title: fixedDetails要素（ShipAssetMasterFixedDetailsUpsert）
+    PostShipAssetMasterAssetsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/ShipAssetMasterSummary'
+          description: 登録後の SHIP 資産マスタ
+          x-word-subtable-title: item要素（ShipAssetMasterSummary）
+        pharmaceuticalAffairs:
+          type: string
+          description: 薬事
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        drawingNo:
+          type: string
+          description: 図面No.
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        layoutReflection:
+          type: string
+          description: レイアウト反映
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        specialEquipment:
+          type: string
+          description: 特殊設備
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        masterStandardDrawing:
+          type: string
+          description: Master標準図
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        widthValue:
+          type: string
+          description: 幅(W)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        depthValue:
+          type: string
+          description: 奥行(D)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        heightValue:
+          type: string
+          description: 高さ(H)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerConnection:
+          type: string
+          description: 電源接続
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerType:
+          type: string
+          description: 電源種別
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerConsumption:
+          type: string
+          description: 消費電力
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        waterSupplySize:
+          type: string
+          description: 給水
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        hotWaterSize:
+          type: string
+          description: 給湯
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        drainageSize:
+          type: string
+          description: 排水
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        exhaustSize:
+          type: string
+          description: 排気サイズ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        exhaustVolume:
+          type: string
+          description: 排気風量
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        steamSize:
+          type: string
+          description: 蒸気
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        gas:
+          type: string
+          description: ガス
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        weightKg:
+          type: string
+          description: 重量(kg)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        reinforcement:
+          type: string
+          description: 補強
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        mountAnchor:
+          type: string
+          description: 架台・アンカー
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        floorLowering:
+          type: string
+          description: 床下げ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        equipmentRemarks:
+          type: string
+          description: 設備備考
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        legalServiceLife:
+          type: string
+          description: 耐用年数(法定)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        serviceLifePeriod:
+          type: string
+          description: 耐用期間
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        endOfSales:
+          type: string
+          description: EOS:販売終了
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        endOfMaintenance:
+          type: string
+          description: EOS:メンテ終了
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        dedicatedConsumables:
+          type: string
+          description: 専用消耗品
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        catalogDocument:
+          type: string
+          description: カタログ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        operationManual:
+          type: string
+          description: 操作マニュアル
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        otherPdf:
+          type: string
+          description: その他PDF
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassNotification:
+          type: string
+          description: クラス分類告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaMaintenanceNotification:
+          type: string
+          description: 特定保守告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaInstallNotification:
+          type: string
+          description: 設置管理告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassCode:
+          type: string
+          description: 類別コード(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassName:
+          type: string
+          description: 類別名称(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaMiddleClassName:
+          type: string
+          description: 中分類名(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaCode:
+          type: string
+          description: コード(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGeneralName:
+          type: string
+          description: 一般的名称(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGeneralNameDefinition:
+          type: string
+          description: 一般的名称定義
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassification:
+          type: string
+          description: クラス分類
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGhtfRule:
+          type: string
+          description: GHTFルール
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaSpecificMaintenance:
+          type: string
+          description: 特定保守
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaInstallManagement:
+          type: string
+          description: 設置管理
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaRepairCategory:
+          type: string
+          description: 修理区分
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaQms316:
+          type: string
+          description: QMS告示316号
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldGeneralNameCode:
+          type: string
+          description: 旧一般的名称コード
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldGeneralName:
+          type: string
+          description: 旧一般的名称
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldClassification:
+          type: string
+          description: 旧クラス分類
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldRepairType:
+          type: string
+          description: 旧修理種別
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaRevisionCount:
+          type: string
+          description: 改正回数
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaLastUpdatedOn:
+          type: string
+          format: date
+          description: 最終更新日
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        registrationStatus:
+          type: string
+          description: 登録状況
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+    ShipAssetMasterFixedDetailsUpsert:
+      type: object
+      additionalProperties: false
+      required:
+        - pharmaceuticalAffairs
+        - drawingNo
+        - layoutReflection
+        - specialEquipment
+        - masterStandardDrawing
+        - widthValue
+        - depthValue
+        - heightValue
+        - powerConnection
+        - powerType
+        - powerConsumption
+        - waterSupplySize
+        - hotWaterSize
+        - drainageSize
+        - exhaustSize
+        - exhaustVolume
+        - steamSize
+        - gas
+        - weightKg
+        - reinforcement
+        - mountAnchor
+        - floorLowering
+        - equipmentRemarks
+        - legalServiceLife
+        - serviceLifePeriod
+        - endOfSales
+        - endOfMaintenance
+        - dedicatedConsumables
+        - catalogDocument
+        - operationManual
+        - otherPdf
+        - pmdaClassNotification
+        - pmdaMaintenanceNotification
+        - pmdaInstallNotification
+        - pmdaClassCode
+        - pmdaClassName
+        - pmdaMiddleClassName
+        - pmdaCode
+        - pmdaGeneralName
+        - pmdaGeneralNameDefinition
+        - pmdaClassification
+        - pmdaGhtfRule
+        - pmdaSpecificMaintenance
+        - pmdaInstallManagement
+        - pmdaRepairCategory
+        - pmdaQms316
+        - pmdaOldGeneralNameCode
+        - pmdaOldGeneralName
+        - pmdaOldClassification
+        - pmdaOldRepairType
+        - pmdaRevisionCount
+        - pmdaLastUpdatedOn
+        - registrationStatus
+      properties:
+        pharmaceuticalAffairs:
+          type: string
+          description: 薬事
+        drawingNo:
+          type: string
+          description: 図面No.
+        layoutReflection:
+          type: string
+          description: レイアウト反映
+        specialEquipment:
+          type: string
+          description: 特殊設備
+        masterStandardDrawing:
+          type: string
+          description: Master標準図
+        widthValue:
+          type: string
+          description: 幅(W)
+        depthValue:
+          type: string
+          description: 奥行(D)
+        heightValue:
+          type: string
+          description: 高さ(H)
+        powerConnection:
+          type: string
+          description: 電源接続
+        powerType:
+          type: string
+          description: 電源種別
+        powerConsumption:
+          type: string
+          description: 消費電力
+        waterSupplySize:
+          type: string
+          description: 給水
+        hotWaterSize:
+          type: string
+          description: 給湯
+        drainageSize:
+          type: string
+          description: 排水
+        exhaustSize:
+          type: string
+          description: 排気サイズ
+        exhaustVolume:
+          type: string
+          description: 排気風量
+        steamSize:
+          type: string
+          description: 蒸気
+        gas:
+          type: string
+          description: ガス
+        weightKg:
+          type: string
+          description: 重量(kg)
+        reinforcement:
+          type: string
+          description: 補強
+        mountAnchor:
+          type: string
+          description: 架台・アンカー
+        floorLowering:
+          type: string
+          description: 床下げ
+        equipmentRemarks:
+          type: string
+          description: 設備備考
+        legalServiceLife:
+          type: string
+          description: 耐用年数(法定)
+        serviceLifePeriod:
+          type: string
+          description: 耐用期間
+        endOfSales:
+          type: string
+          description: EOS:販売終了
+        endOfMaintenance:
+          type: string
+          description: EOS:メンテ終了
+        dedicatedConsumables:
+          type: string
+          description: 専用消耗品
+        catalogDocument:
+          type: string
+          description: カタログ
+        operationManual:
+          type: string
+          description: 操作マニュアル
+        otherPdf:
+          type: string
+          description: その他PDF
+        pmdaClassNotification:
+          type: string
+          description: クラス分類告示
+        pmdaMaintenanceNotification:
+          type: string
+          description: 特定保守告示
+        pmdaInstallNotification:
+          type: string
+          description: 設置管理告示
+        pmdaClassCode:
+          type: string
+          description: 類別コード(PMDA)
+        pmdaClassName:
+          type: string
+          description: 類別名称(PMDA)
+        pmdaMiddleClassName:
+          type: string
+          description: 中分類名(PMDA)
+        pmdaCode:
+          type: string
+          description: コード(PMDA)
+        pmdaGeneralName:
+          type: string
+          description: 一般的名称(PMDA)
+        pmdaGeneralNameDefinition:
+          type: string
+          description: 一般的名称定義
+        pmdaClassification:
+          type: string
+          description: クラス分類
+        pmdaGhtfRule:
+          type: string
+          description: GHTFルール
+        pmdaSpecificMaintenance:
+          type: string
+          description: 特定保守
+        pmdaInstallManagement:
+          type: string
+          description: 設置管理
+        pmdaRepairCategory:
+          type: string
+          description: 修理区分
+        pmdaQms316:
+          type: string
+          description: QMS告示316号
+        pmdaOldGeneralNameCode:
+          type: string
+          description: 旧一般的名称コード
+        pmdaOldGeneralName:
+          type: string
+          description: 旧一般的名称
+        pmdaOldClassification:
+          type: string
+          description: 旧クラス分類
+        pmdaOldRepairType:
+          type: string
+          description: 旧修理種別
+        pmdaRevisionCount:
+          type: string
+          description: 改正回数
+        pmdaLastUpdatedOn:
+          type: string
+          format: date
+          description: 最終更新日
+        registrationStatus:
+          type: string
+          description: 登録状況
+    ShipAssetMasterUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - categoryId
+        - largeClassName
+        - mediumClassName
+        - detailType
+        - assetItemName
+        - manufacturerName
+        - modelName
+        - jmdnRegisteredItemId
+        - fixedDetails
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+          description: Category ID
+        largeClassName:
+          type: string
+          description: 大分類名
+        mediumClassName:
+          type: string
+          description: 中分類名
+        detailType:
+          type: string
+          description: 明細区分
+        assetItemName:
+          type: string
+          description: 品目名
+        manufacturerName:
+          type: string
+          description: メーカー名
+        modelName:
+          type: string
+          description: 型式名
+        jmdnRegisteredItemId:
+          type: integer
+          format: int64
+          description: JMDN登録品目 ID
+        fixedDetails:
+          $ref: '#/components/schemas/ShipAssetMasterFixedDetailsUpsert'
+          description: 薬事 / 設備情報 / 資産情報 / PMDA提供 / 登録状況の固定属性。全項目必須
+          x-word-subtable-title: fixedDetails要素（ShipAssetMasterFixedDetailsUpsert）
+    PutShipAssetMasterAssetsByShipAssetMasterIdResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/ShipAssetMasterSummary'
+          description: 更新後の SHIP 資産マスタ
+          x-word-subtable-title: item要素（ShipAssetMasterSummary）
+        pharmaceuticalAffairs:
+          type: string
+          description: 薬事
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        drawingNo:
+          type: string
+          description: 図面No.
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        layoutReflection:
+          type: string
+          description: レイアウト反映
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        specialEquipment:
+          type: string
+          description: 特殊設備
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        masterStandardDrawing:
+          type: string
+          description: Master標準図
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        widthValue:
+          type: string
+          description: 幅(W)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        depthValue:
+          type: string
+          description: 奥行(D)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        heightValue:
+          type: string
+          description: 高さ(H)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerConnection:
+          type: string
+          description: 電源接続
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerType:
+          type: string
+          description: 電源種別
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        powerConsumption:
+          type: string
+          description: 消費電力
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        waterSupplySize:
+          type: string
+          description: 給水
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        hotWaterSize:
+          type: string
+          description: 給湯
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        drainageSize:
+          type: string
+          description: 排水
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        exhaustSize:
+          type: string
+          description: 排気サイズ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        exhaustVolume:
+          type: string
+          description: 排気風量
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        steamSize:
+          type: string
+          description: 蒸気
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        gas:
+          type: string
+          description: ガス
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        weightKg:
+          type: string
+          description: 重量(kg)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        reinforcement:
+          type: string
+          description: 補強
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        mountAnchor:
+          type: string
+          description: 架台・アンカー
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        floorLowering:
+          type: string
+          description: 床下げ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        equipmentRemarks:
+          type: string
+          description: 設備備考
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        legalServiceLife:
+          type: string
+          description: 耐用年数(法定)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        serviceLifePeriod:
+          type: string
+          description: 耐用期間
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        endOfSales:
+          type: string
+          description: EOS:販売終了
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        endOfMaintenance:
+          type: string
+          description: EOS:メンテ終了
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        dedicatedConsumables:
+          type: string
+          description: 専用消耗品
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        catalogDocument:
+          type: string
+          description: カタログ
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        operationManual:
+          type: string
+          description: 操作マニュアル
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        otherPdf:
+          type: string
+          description: その他PDF
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassNotification:
+          type: string
+          description: クラス分類告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaMaintenanceNotification:
+          type: string
+          description: 特定保守告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaInstallNotification:
+          type: string
+          description: 設置管理告示
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassCode:
+          type: string
+          description: 類別コード(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassName:
+          type: string
+          description: 類別名称(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaMiddleClassName:
+          type: string
+          description: 中分類名(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaCode:
+          type: string
+          description: コード(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGeneralName:
+          type: string
+          description: 一般的名称(PMDA)
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGeneralNameDefinition:
+          type: string
+          description: 一般的名称定義
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaClassification:
+          type: string
+          description: クラス分類
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaGhtfRule:
+          type: string
+          description: GHTFルール
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaSpecificMaintenance:
+          type: string
+          description: 特定保守
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaInstallManagement:
+          type: string
+          description: 設置管理
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaRepairCategory:
+          type: string
+          description: 修理区分
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaQms316:
+          type: string
+          description: QMS告示316号
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldGeneralNameCode:
+          type: string
+          description: 旧一般的名称コード
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldGeneralName:
+          type: string
+          description: 旧一般的名称
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldClassification:
+          type: string
+          description: 旧クラス分類
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaOldRepairType:
+          type: string
+          description: 旧修理種別
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaRevisionCount:
+          type: string
+          description: 改正回数
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        pmdaLastUpdatedOn:
+          type: string
+          format: date
+          description: 最終更新日
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+        registrationStatus:
+          type: string
+          description: 登録状況
+          x-word-omit-row: true
+          x-required-when: fixedDetails要素（ShipAssetMasterFixedDetails）
+          x-word-required-label: ✓
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

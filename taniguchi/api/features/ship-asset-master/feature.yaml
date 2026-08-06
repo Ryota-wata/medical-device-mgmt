@@ -1,0 +1,54 @@
+$schema: ../../feature.schema.json
+id: API-014
+slug: ship-asset-master
+title: SHIP資産マスタ
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /ship-asset-master
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/ship-asset-master.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_SHIP資産マスタ.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-009
+  - API-010
+  - API-011
+  - API-012
+  - API-014A
+
+dbTables:
+  - asset_categories
+  - asset_large_classes
+  - asset_medium_classes
+  - asset_items
+  - manufacturers
+  - models
+  - ship_asset_masters
+  - ship_asset_master_details
+  - jmdn_classifications
+  - jmdn_registered_items
+  - facilities
+  - users
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+
+permissionCodes:
+  - asset_master_list
+  - asset_master_edit

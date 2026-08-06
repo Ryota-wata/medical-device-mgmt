@@ -1,0 +1,1447 @@
+openapi: 3.0.4
+info:
+  title: 個別部署マスタ API API
+  version: '1.1'
+  description: 個別部署マスタで利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 個別部署マスタ
+    description: 個別部署マスタ APIのAPI
+paths:
+  /hospital-facility-master/facilities:
+    get:
+      tags:
+        - 個別部署マスタ
+      operationId: getHospitalFacilityMasterFacilities
+      summary: 対象施設候補取得
+      description: 施設選択コンボボックスで利用する施設候補を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '500'
+      x-feature-code: hospital_dept_master_list
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          description: 施設名の部分一致検索条件
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacilityOptionResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで実効 hospital_dept_master_list を持つ担当施設がない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：FacilityOptionResponse）
+      x-word-response-subtable-titles:
+        - items要素（FacilityOption）
+      x-word-response-subtables:
+        - Title: items要素（FacilityOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+  /hospital-facility-master/ship-departments:
+    get:
+      tags:
+        - 個別部署マスタ
+      operationId: getHospitalFacilityMasterShipDepartments
+      summary: SHIP部署候補取得
+      description: 共通マスタの部門/部署候補を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '500'
+      x-feature-code: hospital_dept_master_list
+      parameters:
+        - name: divisionName
+          in: query
+          required: false
+          description: 部門名で候補を絞り込む
+          schema:
+            type: string
+        - name: keyword
+          in: query
+          required: false
+          description: 部門名/部署名の部分一致検索条件
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipDepartmentOptionResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで実効 hospital_dept_master_list を持つ担当施設がない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：ShipDepartmentOptionResponse）
+      x-word-response-subtable-titles:
+        - items要素（ShipDepartmentOption）
+      x-word-response-subtables:
+        - Title: items要素（ShipDepartmentOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - shipDepartmentId
+              - int64
+              - ✓
+              - SHIP部署ID
+            - - divisionName
+              - string
+              - ✓
+              - 部門名
+            - - departmentName
+              - string
+              - ✓
+              - 部署名
+  /hospital-facility-master/ship-room-categories:
+    get:
+      tags:
+        - 個別部署マスタ
+      operationId: getHospitalFacilityMasterShipRoomCategories
+      summary: SHIP諸室区分候補取得
+      description: 共通マスタの諸室区分候補を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '500'
+      x-feature-code: hospital_dept_master_list
+      parameters:
+        - name: roomCategory1
+          in: query
+          required: false
+          description: 諸室区分①で候補を絞り込む
+          schema:
+            type: string
+        - name: keyword
+          in: query
+          required: false
+          description: 諸室区分①/②の部分一致検索条件
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipRoomCategoryOptionResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで実効 hospital_dept_master_list を持つ担当施設がない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：ShipRoomCategoryOptionResponse）
+      x-word-response-subtable-titles:
+        - items要素（ShipRoomCategoryOption）
+      x-word-response-subtables:
+        - Title: items要素（ShipRoomCategoryOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - shipRoomCategoryId
+              - int64
+              - ✓
+              - SHIP諸室区分ID
+            - - roomCategory1
+              - string
+              - ✓
+              - 諸室区分①
+            - - roomCategory2
+              - string
+              - ✓
+              - 諸室区分②
+  /hospital-facility-master/departments:
+    get:
+      tags:
+        - 個別部署マスタ
+      operationId: getHospitalFacilityMasterDepartments
+      summary: 個別部署マスタ一覧取得
+      description: 選択施設の個別部署マスタ一覧を取得する。facility_locations と facility_location_remodels を結合した1行DTOとして返却する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: hospital_dept_master_list
+      parameters:
+        - name: facilityId
+          in: query
+          required: false
+          description: 選択施設ID。対象施設が1件に確定できる場合は省略可
+          schema:
+            type: integer
+            format: int64
+          x-word-required-label: 条件付き
+        - name: shipDivisionName
+          in: query
+          required: false
+          description: 共通マスタ-部門の部分一致条件
+          schema:
+            type: string
+        - name: shipDepartmentName
+          in: query
+          required: false
+          description: 共通マスタ-部署の部分一致条件
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HospitalFacilityLocationListResponse'
+        '400':
+          description: 施設未選択など不正な検索条件
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対する実効 hospital_dept_master_list なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：HospitalFacilityLocationListResponse）
+      x-word-response-subtable-titles:
+        - selectedFacility（FacilityOption）
+        - items要素（HospitalFacilityLocationSummary）
+      x-word-response-subtables:
+        - Title: selectedFacility（FacilityOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+        - Title: items要素（HospitalFacilityLocationSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityLocationId
+              - int64
+              - ✓
+              - 施設ロケーションID
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - shipDepartmentId
+              - int64
+              - '-'
+              - 現行側SHIP部署ID
+            - - shipDivisionName
+              - string
+              - '-'
+              - 現行側SHIP部門名
+            - - shipDepartmentName
+              - string
+              - '-'
+              - 現行側SHIP部署名
+            - - shipRoomCategoryId
+              - int64
+              - '-'
+              - 現行側SHIP諸室区分ID
+            - - shipRoomCategory1
+              - string
+              - '-'
+              - 現行側諸室区分①
+            - - shipRoomCategory2
+              - string
+              - '-'
+              - 現行側諸室区分②
+            - - divisionId
+              - string
+              - '-'
+              - 旧_部門ID
+            - - departmentId
+              - string
+              - ✓
+              - 旧_部署ID
+            - - roomId
+              - string
+              - '-'
+              - 旧_諸室ID
+            - - building
+              - string
+              - '-'
+              - 旧_棟
+            - - floor
+              - string
+              - '-'
+              - 旧_階
+            - - departmentName
+              - string
+              - '-'
+              - 旧_部門
+            - - sectionName
+              - string
+              - '-'
+              - 旧_部署
+            - - roomName
+              - string
+              - '-'
+              - 旧_諸室
+            - - targetShipDepartmentId
+              - int64
+              - '-'
+              - 新側SHIP部署ID
+            - - targetShipDivisionName
+              - string
+              - '-'
+              - 新側SHIP部門名
+            - - targetShipDepartmentName
+              - string
+              - '-'
+              - 新側SHIP部署名
+            - - targetShipRoomCategoryId
+              - int64
+              - '-'
+              - 新側SHIP諸室区分ID
+            - - targetShipRoomCategory1
+              - string
+              - '-'
+              - 新側諸室区分①
+            - - targetShipRoomCategory2
+              - string
+              - '-'
+              - 新側諸室区分②
+            - - targetBuilding
+              - string
+              - '-'
+              - 新_棟
+            - - targetFloor
+              - string
+              - '-'
+              - 新_階
+            - - targetDepartmentName
+              - string
+              - '-'
+              - 新_部門
+            - - targetSectionName
+              - string
+              - '-'
+              - 新_部署
+            - - targetRoomName
+              - string
+              - '-'
+              - 新_諸室
+            - - targetRoomCount
+              - int32
+              - '-'
+              - 新_室数
+            - - updatedAt
+              - datetime
+              - ✓
+              - 更新日時
+    post:
+      tags:
+        - 個別部署マスタ
+      operationId: postHospitalFacilityMasterDepartments
+      summary: 個別部署マスタ新規作成
+      description: 個別部署マスタ1行を新規登録する。リモデル先項目が入力されている場合は子レコードも同時作成する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: hospital_dept_master_edit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostHospitalFacilityMasterDepartmentsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostHospitalFacilityMasterDepartmentsResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対する実効 hospital_dept_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 同一施設・同一部署IDの名称不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '201': HospitalFacilityLocationResponse
+      x-word-response-title: レスポンス（201：HospitalFacilityLocationResponse）
+  /hospital-facility-master/departments/export:
+    get:
+      tags:
+        - 個別部署マスタ
+      operationId: getHospitalFacilityMasterDepartmentsExport
+      summary: 個別部署マスタエクスポート
+      description: 選択施設の個別部署マスタ一覧を Excel ファイルとして返却する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: hospital_dept_master_list
+      parameters:
+        - name: facilityId
+          in: query
+          required: false
+          description: 選択施設ID。対象施設が1件に確定できる場合は省略可
+          schema:
+            type: integer
+            format: int64
+          x-word-required-label: 条件付き
+        - name: shipDivisionName
+          in: query
+          required: false
+          description: 共通マスタ-部門の部分一致条件
+          schema:
+            type: string
+        - name: shipDepartmentName
+          in: query
+          required: false
+          description: 共通マスタ-部署の部分一致条件
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 出力成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 施設未選択など不正な検索条件
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対する実効 hospital_dept_master_list なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': Excel File
+        '400': ErrorResponse
+        '401': ErrorResponse
+        '403': ErrorResponse
+        '404': ErrorResponse
+        '500': ErrorResponse
+      x-word-response-title: レスポンス（200：Excel File）
+      x-word-response-lines:
+        - 'Body: 絞り込み結果を先頭シート 個別部署マスタ として返却する。'
+        - 'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  /hospital-facility-master/departments/template:
+    get:
+      tags:
+        - 個別部署マスタ
+      operationId: getHospitalFacilityMasterDepartmentsTemplate
+      summary: 個別部署マスタテンプレート取得
+      description: インポート用テンプレートを返却する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '500'
+      x-feature-code: hospital_dept_master_list
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで実効 hospital_dept_master_list を持つ担当施設がない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': Excel File
+        '401': ErrorResponse
+        '403': ErrorResponse
+        '500': ErrorResponse
+      x-word-response-title: レスポンス（200：Excel File）
+      x-word-response-lines:
+        - 'Body: ヘッダー行のみを保持したテンプレートファイルを返却する。'
+        - 'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  /hospital-facility-master/departments/import-preview:
+    post:
+      tags:
+        - 個別部署マスタ
+      operationId: postHospitalFacilityMasterDepartmentsImportPreview
+      summary: 個別部署マスタインポートプレビュー
+      description: アップロードされた Excel ファイルを解析し、取込可否とエラー内容を返却する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: hospital_dept_master_edit
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostHospitalFacilityMasterDepartmentsImportPreviewRequest'
+      x-word-request-title: リクエスト（multipart/form-data）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: プレビュー完了（行エラーを含む場合あり）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HospitalFacilityImportPreviewResponse'
+        '400':
+          description: ファイル形式不正、ヘッダー不正、非空データ行が0件、または選択施設との不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対する実効 hospital_dept_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：HospitalFacilityImportPreviewResponse）
+      x-word-response-subtable-titles:
+        - errors要素（ImportPreviewError）
+      x-word-response-subtables:
+        - Title: errors要素（ImportPreviewError）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - rowNumber
+              - int32
+              - ✓
+              - Excel上の行番号
+            - - message
+              - string
+              - ✓
+              - エラー内容
+  /hospital-facility-master/departments/import:
+    post:
+      tags:
+        - 個別部署マスタ
+      operationId: postHospitalFacilityMasterDepartmentsImport
+      summary: 個別部署マスタインポート実行
+      description: プレビュー済みデータを追加または置換モードで反映する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: hospital_dept_master_edit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostHospitalFacilityMasterDepartmentsImportRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 取込成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HospitalFacilityImportResultResponse'
+        '400':
+          description: previewToken 未指定/無効、またはモード不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対する実効 hospital_dept_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 同一施設・同一部署IDの名称不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：HospitalFacilityImportResultResponse）
+  /hospital-facility-master/departments/{facilityLocationId}:
+    put:
+      tags:
+        - 個別部署マスタ
+      operationId: putHospitalFacilityMasterDepartmentsByFacilityLocationId
+      summary: 個別部署マスタ更新
+      description: 既存の個別部署マスタ1行を更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: hospital_dept_master_edit
+      parameters:
+        - name: facilityLocationId
+          in: path
+          required: true
+          description: 更新対象ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutHospitalFacilityMasterDepartmentsByFacilityLocationIdRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutHospitalFacilityMasterDepartmentsByFacilityLocationIdResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対する実効 hospital_dept_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ロケーションまたは対象施設が存在しない/削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 同一施設・同一部署IDの名称不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': HospitalFacilityLocationResponse
+      x-word-response-title: レスポンス（200：HospitalFacilityLocationResponse）
+    delete:
+      tags:
+        - 個別部署マスタ
+      operationId: deleteHospitalFacilityMasterDepartmentsByFacilityLocationId
+      summary: 個別部署マスタ削除
+      description: 指定した個別部署マスタ1行を削除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: hospital_dept_master_edit
+      parameters:
+        - name: facilityLocationId
+          in: path
+          required: true
+          description: 削除対象ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対する実効 hospital_dept_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ロケーションまたは対象施設が存在しない/削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：No Content）
+      x-word-response-lines:
+        - Body は返却しない。
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    FacilityOptionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 返却件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacilityOption'
+          description: 施設候補一覧
+          x-word-subtable-title: items要素（FacilityOption）
+    FacilityOption:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        facilityName:
+          type: string
+          description: 施設名
+    ShipDepartmentOptionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 返却件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipDepartmentOption'
+          description: SHIP部署候補一覧
+          x-word-subtable-title: items要素（ShipDepartmentOption）
+    ShipDepartmentOption:
+      type: object
+      additionalProperties: false
+      required:
+        - shipDepartmentId
+        - divisionName
+        - departmentName
+      properties:
+        shipDepartmentId:
+          type: integer
+          format: int64
+          description: SHIP部署ID
+        divisionName:
+          type: string
+          description: 部門名
+        departmentName:
+          type: string
+          description: 部署名
+    ShipRoomCategoryOptionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 返却件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipRoomCategoryOption'
+          description: SHIP諸室区分候補一覧
+          x-word-subtable-title: items要素（ShipRoomCategoryOption）
+    ShipRoomCategoryOption:
+      type: object
+      additionalProperties: false
+      required:
+        - shipRoomCategoryId
+        - roomCategory1
+        - roomCategory2
+      properties:
+        shipRoomCategoryId:
+          type: integer
+          format: int64
+          description: SHIP諸室区分ID
+        roomCategory1:
+          type: string
+          description: 諸室区分①
+        roomCategory2:
+          type: string
+          description: 諸室区分②
+    HospitalFacilityLocationListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - selectedFacility
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 絞り込み後件数
+        selectedFacility:
+          $ref: '#/components/schemas/FacilityOption'
+          description: 選択中施設
+          x-word-subtable-title: selectedFacility（FacilityOption）
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/HospitalFacilityLocationSummary'
+          description: 個別部署マスタ一覧
+          x-word-subtable-title: items要素（HospitalFacilityLocationSummary）
+    HospitalFacilityLocationSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityLocationId
+        - facilityId
+        - departmentId
+        - updatedAt
+      properties:
+        facilityLocationId:
+          type: integer
+          format: int64
+          description: 施設ロケーションID
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        shipDepartmentId:
+          type: integer
+          format: int64
+          description: 現行側SHIP部署ID
+        shipDivisionName:
+          type: string
+          description: 現行側SHIP部門名
+        shipDepartmentName:
+          type: string
+          description: 現行側SHIP部署名
+        shipRoomCategoryId:
+          type: integer
+          format: int64
+          description: 現行側SHIP諸室区分ID
+        shipRoomCategory1:
+          type: string
+          description: 現行側諸室区分①
+        shipRoomCategory2:
+          type: string
+          description: 現行側諸室区分②
+        divisionId:
+          type: string
+          description: 旧_部門ID
+        departmentId:
+          type: string
+          description: 旧_部署ID
+        roomId:
+          type: string
+          description: 旧_諸室ID
+        building:
+          type: string
+          description: 旧_棟
+        floor:
+          type: string
+          description: 旧_階
+        departmentName:
+          type: string
+          description: 旧_部門
+        sectionName:
+          type: string
+          description: 旧_部署
+        roomName:
+          type: string
+          description: 旧_諸室
+        targetShipDepartmentId:
+          type: integer
+          format: int64
+          description: 新側SHIP部署ID
+        targetShipDivisionName:
+          type: string
+          description: 新側SHIP部門名
+        targetShipDepartmentName:
+          type: string
+          description: 新側SHIP部署名
+        targetShipRoomCategoryId:
+          type: integer
+          format: int64
+          description: 新側SHIP諸室区分ID
+        targetShipRoomCategory1:
+          type: string
+          description: 新側諸室区分①
+        targetShipRoomCategory2:
+          type: string
+          description: 新側諸室区分②
+        targetBuilding:
+          type: string
+          description: 新_棟
+        targetFloor:
+          type: string
+          description: 新_階
+        targetDepartmentName:
+          type: string
+          description: 新_部門
+        targetSectionName:
+          type: string
+          description: 新_部署
+        targetRoomName:
+          type: string
+          description: 新_諸室
+        targetRoomCount:
+          type: integer
+          format: int32
+          description: 新_室数
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PostHospitalFacilityMasterDepartmentsImportPreviewRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - file
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 選択施設ID（facilities.facility_id）
+        file:
+          type: string
+          format: binary
+          description: .xlsx / .xls ファイル
+    HospitalFacilityImportPreviewResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - validRowCount
+        - errorCount
+      properties:
+        previewToken:
+          type: string
+          description: errorCount=0 かつ validRowCount>0 の場合に発行するプレビュー識別子
+        validRowCount:
+          type: integer
+          format: int32
+          description: 取込可能件数
+        errorCount:
+          type: integer
+          format: int32
+          description: エラー件数
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportPreviewError'
+          description: errorCount>0 の場合は必須。要素数は errorCount と一致し、errorCount=0 の場合は空配列または省略
+          x-word-subtable-title: errors要素（ImportPreviewError）
+    ImportPreviewError:
+      type: object
+      additionalProperties: false
+      required:
+        - rowNumber
+        - message
+      properties:
+        rowNumber:
+          type: integer
+          format: int32
+          description: Excel上の行番号
+        message:
+          type: string
+          description: エラー内容
+    PostHospitalFacilityMasterDepartmentsImportRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - previewToken
+        - mode
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 選択施設ID
+        previewToken:
+          type: string
+          description: プレビュー識別子
+        mode:
+          type: string
+          description: ADD または REPLACE
+    HospitalFacilityImportResultResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - importedCount
+        - updatedCount
+        - deletedCount
+      properties:
+        importedCount:
+          type: integer
+          format: int32
+          description: 反映件数
+        updatedCount:
+          type: integer
+          format: int32
+          description: 更新件数
+        deletedCount:
+          type: integer
+          format: int32
+          description: 置換時に削除した件数
+    PostHospitalFacilityMasterDepartmentsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - departmentId
+        - floor
+        - departmentName
+        - roomName
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID
+        shipDepartmentId:
+          type: integer
+          format: int64
+          description: 現行側SHIP部署ID
+        shipRoomCategoryId:
+          type: integer
+          format: int64
+          description: 現行側SHIP諸室区分ID
+        divisionId:
+          type: string
+          description: 旧_部門ID
+        departmentId:
+          type: string
+          description: 旧_部署ID
+        roomId:
+          type: string
+          description: 旧_諸室ID
+        building:
+          type: string
+          description: 旧_棟
+        floor:
+          type: string
+          description: 旧_階
+        departmentName:
+          type: string
+          description: 旧_部門
+        sectionName:
+          type: string
+          description: 旧_部署
+        roomName:
+          type: string
+          description: 旧_諸室
+        targetShipDepartmentId:
+          type: integer
+          format: int64
+          description: 新側SHIP部署ID
+        targetShipRoomCategoryId:
+          type: integer
+          format: int64
+          description: 新側SHIP諸室区分ID
+        targetBuilding:
+          type: string
+          description: 新_棟
+        targetFloor:
+          type: string
+          description: 新_階
+        targetDepartmentName:
+          type: string
+          description: 新_部門
+        targetSectionName:
+          type: string
+          description: 新_部署
+        targetRoomName:
+          type: string
+          description: 新_諸室
+        targetRoomCount:
+          type: integer
+          format: int32
+          description: 新_室数
+    PostHospitalFacilityMasterDepartmentsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/HospitalFacilityLocationSummary'
+          description: 登録後の1行DTO
+          x-word-omit-subtable: true
+    PutHospitalFacilityMasterDepartmentsByFacilityLocationIdRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - departmentId
+        - floor
+        - departmentName
+        - roomName
+      properties:
+        shipDepartmentId:
+          type: integer
+          format: int64
+          description: 現行側SHIP部署ID
+        shipRoomCategoryId:
+          type: integer
+          format: int64
+          description: 現行側SHIP諸室区分ID
+        divisionId:
+          type: string
+          description: 旧_部門ID
+        departmentId:
+          type: string
+          description: 旧_部署ID
+        roomId:
+          type: string
+          description: 旧_諸室ID
+        building:
+          type: string
+          description: 旧_棟
+        floor:
+          type: string
+          description: 旧_階
+        departmentName:
+          type: string
+          description: 旧_部門
+        sectionName:
+          type: string
+          description: 旧_部署
+        roomName:
+          type: string
+          description: 旧_諸室
+        targetShipDepartmentId:
+          type: integer
+          format: int64
+          description: 新側SHIP部署ID
+        targetShipRoomCategoryId:
+          type: integer
+          format: int64
+          description: 新側SHIP諸室区分ID
+        targetBuilding:
+          type: string
+          description: 新_棟
+        targetFloor:
+          type: string
+          description: 新_階
+        targetDepartmentName:
+          type: string
+          description: 新_部門
+        targetSectionName:
+          type: string
+          description: 新_部署
+        targetRoomName:
+          type: string
+          description: 新_諸室
+        targetRoomCount:
+          type: integer
+          format: int32
+          description: 新_室数
+    PutHospitalFacilityMasterDepartmentsByFacilityLocationIdResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/HospitalFacilityLocationSummary'
+          description: 更新後の1行DTO
+          x-word-omit-subtable: true
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

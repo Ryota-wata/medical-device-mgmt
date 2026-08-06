@@ -1,0 +1,47 @@
+$schema: ../../feature.schema.json
+id: API-018
+slug: hospital-facility-master
+title: 個別部署マスタ
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /hospital-facility-master
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/hospital-facility-master.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_個別部署マスタ.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-015
+  - API-019
+  - API-024
+
+dbTables:
+  - facilities
+  - users
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+  - ship_departments
+  - ship_room_categories
+  - facility_locations
+  - facility_location_remodels
+
+permissionCodes:
+  - hospital_dept_master_list
+  - hospital_dept_master_edit

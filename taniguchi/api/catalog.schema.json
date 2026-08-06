@@ -1,0 +1,206 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://medical-device-mgmt.local/schemas/api-catalog.schema.json",
+  "title": "API design catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "sourceIndex",
+    "defaults",
+    "features"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "sourceIndex": {
+      "type": "string",
+      "minLength": 1
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "openapiVersion",
+        "requirements",
+        "database",
+        "legacySpecRoot",
+        "approvedWordRoot"
+      ],
+      "properties": {
+        "openapiVersion": {
+          "const": "3.0.4"
+        },
+        "requirements": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Internal working-memo reference for traceability; not part of the developer handoff or implementation source of truth."
+        },
+        "database": {
+          "type": "string",
+          "minLength": 1
+        },
+        "legacySpecRoot": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approvedWordRoot": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "features": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/feature"
+      }
+    }
+  },
+  "definitions": {
+    "feature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "legacyNo",
+        "slug",
+        "title",
+        "phase",
+        "status",
+        "authoringMode"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^API-[0-9]{3}[A-Z]?$"
+        },
+        "legacyNo": {
+          "type": "string",
+          "pattern": "^[0-9]+[a-z]?$"
+        },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "phase": {
+          "type": "integer",
+          "enum": [1, 2]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Fix", "作成済み", "未着手", "不要", "旧版"]
+        },
+        "authoringMode": {
+          "type": "string",
+          "enum": ["legacy-ps1", "openapi", "none"]
+        },
+        "manifest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "migrationManifest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "legacySpec": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*\\.ps1$"
+        },
+        "approvedWord": {
+          "type": "string",
+          "pattern": "^API設計書_.+\\.docx$",
+          "description": "Delivery target or last approved Word snapshot; freshness is verified only by the delivery audit."
+        },
+        "coveredBy": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^API-[0-9]{3}[A-Z]?$"
+          }
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "authoringMode": {
+                "const": "legacy-ps1"
+              }
+            }
+          },
+          "then": {
+            "required": ["legacySpec"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authoringMode": {
+                "const": "openapi"
+              }
+            }
+          },
+          "then": {
+            "required": ["manifest"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "authoringMode": {
+                "const": "none"
+              }
+            }
+          },
+          "then": {
+            "required": ["rationale"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "Fix"
+              }
+            }
+          },
+          "then": {
+            "required": ["approvedWord"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "不要"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authoringMode": {
+                "const": "none"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,1763 @@
+openapi: 3.0.4
+info:
+  title: 医療機器管理システム 棚卸し API
+  version: '1.1'
+  description: 棚卸しで利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: inventory
+    description: 医療機器管理システム 棚卸しのAPI
+paths:
+  /inventory/sessions/current:
+    get:
+      tags:
+        - inventory
+      operationId: getInventorySessionsCurrent
+      summary: 進行中セッション取得
+      description: 作業対象施設に IN_PROGRESS の棚卸しセッションがあるかを取得する。存在する場合は同施設ユーザーが同じセッションへ参加し、存在しない場合は画面で棚卸し開始を表示する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: inventory
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      parameters:
+        - name: targetFacilityId
+          in: query
+          required: false
+          description: 対象施設ID。Bearer トークン上の作業対象施設と一致必須
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryCurrentSessionResponse'
+        '400':
+          description: 対象施設不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inventory なし、または共有システム管理者で作業対象施設が削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：InventoryCurrentSessionResponse）
+  /inventory/sessions:
+    post:
+      tags:
+        - inventory
+      operationId: postInventorySessions
+      summary: 棚卸し開始
+      description: 作業対象施設の棚卸しセッションを開始し、棚卸し対象資産を inventory_items に UNCHECKED 明細として生成する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: inventory
+      x-word-status-order:
+        - '201'
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '409'
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一開始操作を識別する冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストヘッダー
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostInventorySessionsRequest'
+      x-word-request-title: リクエストボディ
+      responses:
+        '200':
+          description: 同一 Idempotency-Key の再送を既存結果で受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventorySessionCreateResponse'
+        '201':
+          description: 開始成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventorySessionCreateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inventory なし、または共有システム管理者で作業対象施設が削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 進行中棚卸しが既に存在、または冪等キー再利用不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：InventorySessionCreateResponse）
+  /inventory/sessions/{inventorySessionId}:
+    get:
+      tags:
+        - inventory
+      operationId: getInventorySessionsByInventorySessionId
+      summary: 棚卸しセッション詳細取得
+      description: 指定した棚卸しセッションの明細、進捗、フィルター候補、移動先候補、完了確認サマリを取得する。画面再読込や他ユーザー更新後の最新化で利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: inventory
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '502'
+      parameters:
+        - name: inventorySessionId
+          in: path
+          required: true
+          description: 棚卸しセッションID
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          required: false
+          description: UNCHECKED / CONFIRMED / TRANSFER_PLANNED / DISPOSAL_PLANNED / ACTION_REQUIRED
+          schema:
+            type: string
+        - name: building
+          in: query
+          required: false
+          description: 棟
+          schema:
+            type: string
+        - name: floor
+          in: query
+          required: false
+          description: 階
+          schema:
+            type: string
+        - name: managementDepartmentName
+          in: query
+          required: false
+          description: 管理部署名
+          schema:
+            type: string
+        - name: locationDepartmentName
+          in: query
+          required: false
+          description: 設置場所の部門名
+          schema:
+            type: string
+        - name: locationSectionName
+          in: query
+          required: false
+          description: 設置場所の部署名
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          required: false
+          description: Category ID
+          schema:
+            type: integer
+            format: int64
+        - name: largeClassName
+          in: query
+          required: false
+          description: 大分類名
+          schema:
+            type: string
+        - name: mediumClassName
+          in: query
+          required: false
+          description: 中分類名
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: 取得件数。未指定時100、最大500
+          schema:
+            type: integer
+            format: int32
+        - name: cursor
+          in: query
+          required: false
+          description: 次ページ取得用カーソル
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventorySessionDetailResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inventory なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: セッションが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 の資産画像表示URL発行に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：InventorySessionDetailResponse）
+  /inventory/items/{inventoryItemId}:
+    patch:
+      tags:
+        - inventory
+      operationId: patchInventoryItemsByInventoryItemId
+      summary: 棚卸し明細更新
+      description: 棚卸し明細1行の作業状態を即時保存する。確認済、移動予定、廃棄予定、要対応の各操作で呼び出す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: inventory
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一明細更新操作を識別する冪等キー
+          schema:
+            type: string
+        - name: inventoryItemId
+          in: path
+          required: true
+          description: 棚卸し明細ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストヘッダー / パス
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchInventoryItemsByInventoryItemIdRequest'
+      x-word-request-title: リクエストボディ
+      responses:
+        '200':
+          description: 更新成功、または同一 Idempotency-Key の再送を既存結果で受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryItemUpdateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inventory なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 明細または移動先が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 明細更新競合、セッション完了済み/取消済み、冪等キー再利用不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：InventoryItemUpdateResponse）
+  /inventory/sessions/{inventorySessionId}/items/bulk-update:
+    post:
+      tags:
+        - inventory
+      operationId: postInventorySessionsByInventorySessionIdItemsBulkUpdate
+      summary: 棚卸し明細一括更新
+      description: 選択した棚卸し明細を一括で確認済、移動予定、廃棄予定、要対応に更新する。一括操作の確認済、移動申請へ、廃棄（除却）申請へ、要対応（保留）で利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: inventory
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一一括更新操作を識別する冪等キー
+          schema:
+            type: string
+        - name: inventorySessionId
+          in: path
+          required: true
+          description: 棚卸しセッションID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストヘッダー / パス
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostInventorySessionsByInventorySessionIdItemsBulkUpdateRequest'
+      x-word-request-title: リクエストボディ
+      responses:
+        '200':
+          description: 一括更新成功、または同一 Idempotency-Key の再送を既存結果で受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryBulkUpdateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inventory なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: セッションまたは明細が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 1件以上の明細更新競合、セッション完了済み/取消済み、冪等キー再利用不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：InventoryBulkUpdateResponse）
+  /inventory/items/{inventoryItemId}/documents:
+    post:
+      tags:
+        - inventory
+      operationId: postInventoryItemsByInventoryItemIdDocuments
+      summary: 棚卸し明細添付登録
+      description: >-
+        廃棄予定登録時に選択した添付ファイルを、棚卸し明細に紐づくドキュメントとして登録する。ファイル本体はAmazon
+        S3へ保存し、棚卸し完了前は申請を作成せず、application_documents.owner_type='INVENTORY_ITEM' でメタデータを保持する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: inventory
+      x-word-status-order:
+        - '201'
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一添付登録操作を識別する冪等キー
+          schema:
+            type: string
+        - name: inventoryItemId
+          in: path
+          required: true
+          description: 棚卸し明細ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストヘッダー / パス
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostInventoryItemsByInventoryItemIdDocumentsRequest'
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      responses:
+        '200':
+          description: 同一 Idempotency-Key の再送を既存結果で受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryDocumentCreateResponse'
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryDocumentCreateResponse'
+        '400':
+          description: 入力不正、ファイル不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inventory なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 明細が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: セッション完了済み/取消済み、冪等キー再利用不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 への添付ファイル保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：InventoryDocumentCreateResponse）
+  /inventory/items/{inventoryItemId}/documents/{applicationDocumentId}:
+    delete:
+      tags:
+        - inventory
+      operationId: deleteInventoryItemsByInventoryItemIdDocumentsByApplicationDocumentId
+      summary: 棚卸し明細添付削除
+      description: 棚卸し明細に紐づく添付ファイルを削除する。API内でAmazon S3の実ファイルをDeleteObjectし、application_documents.deleted_at を設定してメタデータを監査用に残す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: inventory
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一添付削除操作を識別する冪等キー
+          schema:
+            type: string
+        - name: inventoryItemId
+          in: path
+          required: true
+          description: 棚卸し明細ID
+          schema:
+            type: integer
+            format: int64
+        - name: applicationDocumentId
+          in: path
+          required: true
+          description: 削除対象ドキュメントID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストヘッダー / パス
+      responses:
+        '200':
+          description: 削除成功、または同一 Idempotency-Key の再送を既存結果で受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryDocumentDeleteResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inventory なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 明細または添付ファイルが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: セッション完了済み/取消済み、冪等キー再利用不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 の添付ファイル削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：InventoryDocumentDeleteResponse）
+  /inventory/sessions/{inventorySessionId}/completion-preview:
+    get:
+      tags:
+        - inventory
+      operationId: getInventorySessionsByInventorySessionIdCompletionPreview
+      summary: 棚卸し完了確認取得
+      description: 棚卸し完了確認モーダル表示時に、最新の棚卸し結果、完了可否、自動作成予定の移動申請/廃棄申請件数を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: inventory_complete
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      parameters:
+        - name: inventorySessionId
+          in: path
+          required: true
+          description: 棚卸しセッションID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryCompletionPreview'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inventory_complete なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: セッションが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: セッションが進行中ではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：InventoryCompletionPreview）
+  /inventory/sessions/{inventorySessionId}/complete:
+    post:
+      tags:
+        - inventory
+      operationId: postInventorySessionsByInventorySessionIdComplete
+      summary: 棚卸し完了
+      description: 棚卸しセッションを完了する。未確認明細と要対応明細がないことを検証し、資産台帳の最終棚卸情報更新、移動予定からの移動申請、廃棄予定からの廃棄申請の自動起票を同一トランザクションで行う。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: inventory_complete
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一完了操作を識別する冪等キー
+          schema:
+            type: string
+        - name: inventorySessionId
+          in: path
+          required: true
+          description: 棚卸しセッションID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストヘッダー / パス
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostInventorySessionsByInventorySessionIdCompleteRequest'
+      x-word-request-title: リクエストボディ
+      responses:
+        '200':
+          description: 棚卸し完了成功、または同一 Idempotency-Key の再送を既存結果で受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryCompleteResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inventory_complete なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: セッションが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: セッション競合、未確認明細あり、要対応明細あり、初期ステータス不備、冪等キー再利用不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：InventoryCompleteResponse）
+  /inventory/sessions/{inventorySessionId}/export:
+    get:
+      tags:
+        - inventory
+      operationId: getInventorySessionsByInventorySessionIdExport
+      summary: 棚卸し結果Excel出力
+      description: 棚卸し完了確認モーダルの「棚卸し結果をExcel出力」ボタンから、現在の棚卸し結果をExcel形式で出力する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: inventory_complete
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: inventorySessionId
+          in: path
+          required: true
+          description: 棚卸しセッションID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 出力成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/binary'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inventory_complete なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: セッションが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 帳票生成失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：binary）
+  /inventory/sessions/{inventorySessionId}/cancel:
+    post:
+      tags:
+        - inventory
+      operationId: postInventorySessionsByInventorySessionIdCancel
+      summary: 棚卸し取消
+      description: 進行中の棚卸しセッションを取消する。明細は削除せず、監査用に CANCELLED 状態として保持する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: inventory_complete
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一取消操作を識別する冪等キー
+          schema:
+            type: string
+        - name: inventorySessionId
+          in: path
+          required: true
+          description: 棚卸しセッションID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストヘッダー / パス
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostInventorySessionsByInventorySessionIdCancelRequest'
+      x-word-request-title: リクエストボディ
+      responses:
+        '200':
+          description: 取消成功、または同一 Idempotency-Key の再送を既存結果で受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryCancelResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inventory_complete なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: セッションが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: セッション競合、完了済み/取消済み、冪等キー再利用不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：InventoryCancelResponse）
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    InventoryCurrentSessionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - hasActiveSession
+        - canStart
+      properties:
+        hasActiveSession:
+          type: boolean
+          description: 進行中棚卸しの有無
+        session:
+          $ref: '#/components/schemas/InventorySessionSummary'
+          description: 進行中セッション。存在する場合のみ
+          x-word-subtable-title: session要素（InventorySessionSummary）
+        canStart:
+          type: boolean
+          description: 棚卸し開始可能か
+    InventorySessionSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - inventorySessionId
+        - facilityId
+        - sessionStatus
+        - inventoryBaseDate
+        - progress
+        - lockVersion
+        - createdByUserId
+        - createdAt
+      properties:
+        inventorySessionId:
+          type: integer
+          format: int64
+          description: 棚卸しセッションID
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        sessionStatus:
+          type: string
+          description: IN_PROGRESS
+        inventoryBaseDate:
+          type: string
+          format: date
+          description: 棚卸し基準日
+        progress:
+          $ref: '#/components/schemas/InventoryProgress'
+          description: 進捗サマリ
+          x-word-omit-subtable: true
+        lockVersion:
+          type: integer
+          format: int64
+          description: セッション排他制御版
+        createdByUserId:
+          type: integer
+          format: int64
+          description: 開始ユーザーID
+        createdAt:
+          type: string
+          format: date-time
+          description: 開始日時
+    PostInventorySessionsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        targetFacilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID。Bearer トークン上の作業対象施設と一致必須
+        inventoryBaseDate:
+          type: string
+          format: date
+          description: 棚卸し基準日。未指定時はサーバー日付
+    InventorySessionCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inventorySessionId
+        - sessionStatus
+        - createdItemCount
+        - lockVersion
+      properties:
+        inventorySessionId:
+          type: integer
+          format: int64
+          description: 作成した棚卸しセッションID
+        sessionStatus:
+          type: string
+          description: IN_PROGRESS
+        createdItemCount:
+          type: integer
+          format: int32
+          description: 生成した棚卸し明細件数
+        lockVersion:
+          type: integer
+          format: int64
+          description: セッション排他制御版
+    InventorySessionDetailResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - session
+        - progress
+        - completionPreview
+        - items
+        - filterOptions
+        - locationOptions
+      properties:
+        session:
+          $ref: '#/components/schemas/InventorySessionSummary'
+          description: 棚卸しセッション
+          x-word-omit-subtable: true
+        progress:
+          $ref: '#/components/schemas/InventoryProgress'
+          description: 進捗サマリ
+          x-word-subtable-title: progress要素（InventoryProgress）
+        completionPreview:
+          $ref: '#/components/schemas/InventoryCompletionPreview'
+          description: 棚卸し完了確認モーダル用サマリ
+          x-word-subtable-title: completionPreview要素（InventoryCompletionPreview）
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItemDetail'
+          description: 棚卸し明細一覧
+          x-word-subtable-title: items要素（InventoryItemDetail）
+        filterOptions:
+          $ref: '#/components/schemas/InventoryFilterOptions'
+          description: フィルター候補
+          x-word-subtable-title: filterOptions要素（InventoryFilterOptions）
+        locationOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacilityLocationOption'
+          description: 移動先候補
+          x-word-subtable-title: locationOptions要素（FacilityLocationOption）
+        nextCursor:
+          type: string
+          description: 次ページ取得用カーソル
+    InventoryProgress:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - uncheckedCount
+        - confirmedCount
+        - confirmedOnlyCount
+        - transferPlannedCount
+        - disposalPlannedCount
+        - actionRequiredCount
+        - progressRate
+        - canComplete
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 対象件数
+        uncheckedCount:
+          type: integer
+          format: int32
+          description: 未確認件数
+        confirmedCount:
+          type: integer
+          format: int32
+          description: 進捗上の確認済件数。CONFIRMED / TRANSFER_PLANNED / DISPOSAL_PLANNED の合計
+        confirmedOnlyCount:
+          type: integer
+          format: int32
+          description: 現状維持の確認済件数
+        transferPlannedCount:
+          type: integer
+          format: int32
+          description: 移動予定件数
+        disposalPlannedCount:
+          type: integer
+          format: int32
+          description: 廃棄予定件数
+        actionRequiredCount:
+          type: integer
+          format: int32
+          description: 要対応件数
+        progressRate:
+          type: number
+          description: confirmedCount / totalCount。小数第2位まで
+        canComplete:
+          type: boolean
+          description: 未確認0件、要対応0件、全明細が CONFIRMED / TRANSFER_PLANNED / DISPOSAL_PLANNED の場合 true
+    InventoryCompletionPreview:
+      type: object
+      additionalProperties: false
+      required:
+        - inventorySessionId
+        - totalCount
+        - confirmedCount
+        - confirmedOnlyCount
+        - transferPlannedItemCount
+        - disposalPlannedItemCount
+        - actionRequiredCount
+        - transferApplicationCount
+        - disposalApplicationCount
+        - canComplete
+        - blockingReasonCodes
+      properties:
+        inventorySessionId:
+          type: integer
+          format: int64
+          description: 棚卸しセッションID
+        totalCount:
+          type: integer
+          format: int32
+          description: 対象件数
+        confirmedCount:
+          type: integer
+          format: int32
+          description: 確認済み件数。CONFIRMED / TRANSFER_PLANNED / DISPOSAL_PLANNED の合計
+        confirmedOnlyCount:
+          type: integer
+          format: int32
+          description: 現状維持の確認済件数
+        transferPlannedItemCount:
+          type: integer
+          format: int32
+          description: 移動予定明細件数
+        disposalPlannedItemCount:
+          type: integer
+          format: int32
+          description: 廃棄予定明細件数
+        actionRequiredCount:
+          type: integer
+          format: int32
+          description: 要対応件数
+        transferApplicationCount:
+          type: integer
+          format: int32
+          description: 完了時に自動作成予定の移動申請ヘッダー件数
+        disposalApplicationCount:
+          type: integer
+          format: int32
+          description: 完了時に自動作成予定の廃棄申請ヘッダー件数
+        canComplete:
+          type: boolean
+          description: 完了実行可能か
+        blockingReasonCodes:
+          type: array
+          items:
+            type: string
+          description: 完了不可理由。UNCHECKED_REMAIN / ACTION_REQUIRED_REMAIN など
+    InventoryItemDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - inventoryItemId
+        - assetLedgerId
+        - itemName
+        - inventoryStatus
+        - sourceLocation
+        - attachedDocuments
+        - lockVersion
+        - updatedAt
+      properties:
+        inventoryItemId:
+          type: integer
+          format: int64
+          description: 棚卸し明細ID
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳ID
+        qrCodeValue:
+          type: string
+          description: QRコード値
+        assetNo:
+          type: string
+          description: 固定資産番号。資産台帳の asset_no
+        managementNo:
+          type: string
+          description: 管理機器番号
+        itemName:
+          type: string
+          description: 品目
+        assetImageUrl:
+          type: string
+          description: 資産カードに表示する画像URL。未登録時はNULL
+        managementDepartmentName:
+          type: string
+          description: 管理部署
+        makerName:
+          type: string
+          description: メーカー
+        modelName:
+          type: string
+          description: 型式
+        serialNo:
+          type: string
+          description: シリアルNo.
+        categoryName:
+          type: string
+          description: Category
+        largeClassName:
+          type: string
+          description: 大分類
+        mediumClassName:
+          type: string
+          description: 中分類
+        inventoryStatus:
+          type: string
+          description: UNCHECKED / CONFIRMED / TRANSFER_PLANNED / DISPOSAL_PLANNED / ACTION_REQUIRED
+        sourceLocation:
+          $ref: '#/components/schemas/InventoryLocationSnapshot'
+          description: 開始時点の現設置場所
+          x-word-subtable-title: sourceLocation / destinationLocation要素（InventoryLocationSnapshot）
+        destinationFacilityLocationId:
+          type: integer
+          format: int64
+          description: 移動先施設ロケーションID
+        destinationLocation:
+          $ref: '#/components/schemas/InventoryLocationSnapshot'
+          description: 移動予定登録時点の移動先スナップショット
+          x-word-omit-subtable: true
+        transferReason:
+          type: string
+          description: 移動予定の移動理由・コメント
+        disposalReasonCode:
+          type: string
+          description: 廃棄理由コード
+        disposalReasonText:
+          type: string
+          description: 廃棄理由詳細
+        actionRequiredComment:
+          type: string
+          description: 要対応コメント
+        attachedDocuments:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryDocument'
+          description: 棚卸し明細に紐づく添付ファイル一覧。未添付時は空配列
+          x-word-subtable-title: attachedDocuments要素（InventoryDocument）
+        generatedApplicationId:
+          type: integer
+          format: int64
+          description: 完了時に自動起票した申請ID
+        generatedApplicationAssetId:
+          type: integer
+          format: int64
+          description: 完了時に自動起票した申請明細ID
+        confirmedAt:
+          type: string
+          format: date-time
+          description: CONFIRMED / TRANSFER_PLANNED / DISPOSAL_PLANNED / ACTION_REQUIRED に確定した日時
+        lockVersion:
+          type: integer
+          format: int64
+          description: 明細排他制御版
+        updatedByUserId:
+          type: integer
+          format: int64
+          description: 最終更新者ユーザーID
+        updatedAt:
+          type: string
+          format: date-time
+          description: 最終更新日時
+    InventoryLocationSnapshot:
+      type: object
+      additionalProperties: false
+      properties:
+        facilityLocationId:
+          type: integer
+          format: int64
+          description: 施設ロケーションID
+        buildingName:
+          type: string
+          description: 棟
+        floorName:
+          type: string
+          description: 階
+        departmentName:
+          type: string
+          description: 部門
+        sectionName:
+          type: string
+          description: 部署
+        roomName:
+          type: string
+          description: 室名
+    InventoryFilterOptions:
+      type: object
+      additionalProperties: false
+      required:
+        - statusOptions
+        - managementDepartmentOptions
+        - locationDepartmentOptions
+        - locationSectionOptions
+        - categoryOptions
+        - largeClassOptions
+        - mediumClassOptions
+      properties:
+        statusOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryFilterOption'
+          description: ステータス候補。UNCHECKED / CONFIRMED / TRANSFER_PLANNED / DISPOSAL_PLANNED / ACTION_REQUIRED
+          x-word-subtable-title: filterOptions配列要素（InventoryFilterOption）
+        managementDepartmentOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryFilterOption'
+          description: 管理部署候補
+          x-word-omit-subtable: true
+        locationDepartmentOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryFilterOption'
+          description: 設置場所の部門候補
+          x-word-omit-subtable: true
+        locationSectionOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryFilterOption'
+          description: 設置場所の部署候補
+          x-word-omit-subtable: true
+        categoryOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryFilterOption'
+          description: Category候補
+          x-word-omit-subtable: true
+        largeClassOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryFilterOption'
+          description: 大分類候補
+          x-word-omit-subtable: true
+        mediumClassOptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryFilterOption'
+          description: 中分類候補
+          x-word-omit-subtable: true
+    InventoryFilterOption:
+      type: object
+      additionalProperties: false
+      required:
+        - value
+        - label
+      properties:
+        value:
+          type: string
+          description: 絞り込みに指定する値
+        label:
+          type: string
+          description: 画面表示名
+        count:
+          type: integer
+          format: int32
+          description: 当該候補に該当する明細件数
+    FacilityLocationOption:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityLocationId
+      properties:
+        facilityLocationId:
+          type: integer
+          format: int64
+          description: 施設ロケーションID
+        buildingName:
+          type: string
+          description: 棟
+        floorName:
+          type: string
+          description: 階
+        departmentName:
+          type: string
+          description: 部門
+        sectionName:
+          type: string
+          description: 部署
+        roomName:
+          type: string
+          description: 室名
+    InventoryDocument:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationDocumentId
+        - fileName
+        - uploadedAt
+        - uploadedByUserId
+      properties:
+        applicationDocumentId:
+          type: integer
+          format: int64
+          description: ドキュメントID
+        fileName:
+          type: string
+          description: ファイル名
+        mimeType:
+          type: string
+          description: MIMEタイプ
+        fileSizeBytes:
+          type: integer
+          format: int64
+          description: ファイルサイズ
+        uploadedAt:
+          type: string
+          format: date-time
+          description: 登録日時
+        uploadedByUserId:
+          type: integer
+          format: int64
+          description: 登録者ユーザーID
+    PatchInventoryItemsByInventoryItemIdRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedLockVersion
+        - inventoryStatus
+      properties:
+        expectedLockVersion:
+          type: integer
+          format: int64
+          description: 画面取得時点の明細 lockVersion
+        inventoryStatus:
+          type: string
+          description: CONFIRMED / TRANSFER_PLANNED / DISPOSAL_PLANNED / ACTION_REQUIRED。未確認へ戻す場合は UNCHECKED
+        destinationFacilityLocationId:
+          type: integer
+          format: int64
+          description: TRANSFER_PLANNED の場合必須。作業対象施設の未削除ロケーションに限定
+          x-word-required-label: 条件付き
+        destinationLocation:
+          $ref: '#/components/schemas/InventoryLocationInput'
+          description: TRANSFER_PLANNED の移動先スナップショット。未指定時は destinationFacilityLocationId からサーバー補完
+          x-word-subtable-title: destinationLocation要素（InventoryLocationInput）
+        transferReason:
+          type: string
+          description: TRANSFER_PLANNED の移動理由・コメント
+        disposalReasonCode:
+          type: string
+          description: DISPOSAL_PLANNED の場合必須。OTHER の場合は disposalReasonText も必須
+          x-word-required-label: 条件付き
+        disposalReasonText:
+          type: string
+          description: DISPOSAL_PLANNED の廃棄理由詳細。disposalReasonCode=OTHER の場合必須
+          x-word-required-label: 条件付き
+        actionRequiredComment:
+          type: string
+          description: ACTION_REQUIRED の理由
+    InventoryItemUpdateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+        - progress
+      properties:
+        item:
+          $ref: '#/components/schemas/InventoryItemDetail'
+          description: 更新後の棚卸し明細
+          x-word-omit-subtable: true
+        progress:
+          $ref: '#/components/schemas/InventoryProgress'
+          description: 更新後の進捗サマリ
+          x-word-omit-subtable: true
+    InventoryLocationInput:
+      type: object
+      additionalProperties: false
+      properties:
+        buildingName:
+          type: string
+          description: 移動先棟
+        floorName:
+          type: string
+          description: 移動先フロア
+        departmentName:
+          type: string
+          description: 移動先部門
+        sectionName:
+          type: string
+          description: 移動先部署
+        roomName:
+          type: string
+          description: 移動先室名
+    PostInventorySessionsByInventorySessionIdItemsBulkUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - inventoryStatus
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkInventoryItemInput'
+          description: 対象明細と expectedLockVersion。1件以上
+          x-word-subtable-title: items要素（BulkInventoryItemInput）
+        inventoryStatus:
+          type: string
+          description: CONFIRMED / TRANSFER_PLANNED / DISPOSAL_PLANNED / ACTION_REQUIRED
+        destinationFacilityLocationId:
+          type: integer
+          format: int64
+          description: TRANSFER_PLANNED の場合必須。作業対象施設の未削除ロケーションに限定
+          x-word-required-label: 条件付き
+        destinationLocation:
+          $ref: '#/components/schemas/InventoryLocationInput'
+          description: TRANSFER_PLANNED の移動先スナップショット。未指定時は destinationFacilityLocationId からサーバー補完
+          x-word-subtable-title: destinationLocation要素（InventoryLocationInput）
+        transferReason:
+          type: string
+          description: TRANSFER_PLANNED の移動理由・コメント
+        disposalReasonCode:
+          type: string
+          description: DISPOSAL_PLANNED の場合必須。OTHER の場合は disposalReasonText も必須
+          x-word-required-label: 条件付き
+        disposalReasonText:
+          type: string
+          description: DISPOSAL_PLANNED の廃棄理由詳細。disposalReasonCode=OTHER の場合必須
+          x-word-required-label: 条件付き
+        actionRequiredComment:
+          type: string
+          description: ACTION_REQUIRED の共通理由
+    InventoryBulkUpdateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - updatedCount
+        - items
+        - progress
+      properties:
+        updatedCount:
+          type: integer
+          format: int32
+          description: 更新した明細件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItemDetail'
+          description: 更新後明細
+          x-word-omit-subtable: true
+        progress:
+          $ref: '#/components/schemas/InventoryProgress'
+          description: 更新後の進捗サマリ
+          x-word-omit-subtable: true
+    BulkInventoryItemInput:
+      type: object
+      additionalProperties: false
+      required:
+        - inventoryItemId
+        - expectedLockVersion
+      properties:
+        inventoryItemId:
+          type: integer
+          format: int64
+          description: 棚卸し明細ID
+        expectedLockVersion:
+          type: integer
+          format: int64
+          description: 画面取得時点の明細 lockVersion
+    PostInventoryItemsByInventoryItemIdDocumentsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: 添付ファイル本体
+        fileName:
+          type: string
+          description: 画面表示用ファイル名。未指定時はアップロードファイル名
+        documentType:
+          type: string
+          description: 文書種別。未指定時は 廃棄申請添付
+        sortOrder:
+          type: integer
+          format: int32
+          description: 添付ファイル一覧の表示順
+    InventoryDocumentCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - document
+      properties:
+        document:
+          $ref: '#/components/schemas/InventoryDocument'
+          description: 登録した添付ファイルメタデータ
+          x-word-subtable-title: document要素（InventoryDocument）
+    InventoryDocumentDeleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationDocumentId
+        - deletedAt
+      properties:
+        applicationDocumentId:
+          type: integer
+          format: int64
+          description: 削除したドキュメントID
+        deletedAt:
+          type: string
+          format: date-time
+          description: 削除日時
+    PostInventorySessionsByInventorySessionIdCompleteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedSessionLockVersion
+      properties:
+        expectedSessionLockVersion:
+          type: integer
+          format: int64
+          description: 画面取得時点のセッション lockVersion
+        completedOn:
+          type: string
+          format: date
+          description: 棚卸実施日。未指定時はサーバー日付
+    InventoryCompleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inventorySessionId
+        - sessionStatus
+        - completedOn
+        - completedAt
+        - lockVersion
+        - updatedAssetCount
+        - confirmedCount
+        - confirmedOnlyCount
+        - transferPlannedItemCount
+        - disposalPlannedItemCount
+        - actionRequiredCount
+        - transferApplicationCount
+        - disposalApplicationCount
+        - createdApplications
+      properties:
+        inventorySessionId:
+          type: integer
+          format: int64
+          description: 棚卸しセッションID
+        sessionStatus:
+          type: string
+          description: COMPLETED
+        completedOn:
+          type: string
+          format: date
+          description: 棚卸実施日
+        completedAt:
+          type: string
+          format: date-time
+          description: 棚卸し完了日時
+        lockVersion:
+          type: integer
+          format: int64
+          description: 更新後セッション排他制御版
+        updatedAssetCount:
+          type: integer
+          format: int32
+          description: 最終棚卸情報を更新した資産件数
+        confirmedCount:
+          type: integer
+          format: int32
+          description: 確認済み件数。CONFIRMED / TRANSFER_PLANNED / DISPOSAL_PLANNED の合計
+        confirmedOnlyCount:
+          type: integer
+          format: int32
+          description: 現状維持の確認済件数
+        transferPlannedItemCount:
+          type: integer
+          format: int32
+          description: 移動予定明細件数
+        disposalPlannedItemCount:
+          type: integer
+          format: int32
+          description: 廃棄予定明細件数
+        actionRequiredCount:
+          type: integer
+          format: int32
+          description: 要対応件数。完了成功時は0
+        transferApplicationCount:
+          type: integer
+          format: int32
+          description: 自動作成した移動申請ヘッダー件数
+        disposalApplicationCount:
+          type: integer
+          format: int32
+          description: 自動作成した廃棄申請ヘッダー件数
+        createdApplications:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryCreatedApplication'
+          description: 自動起票した移動/廃棄申請
+          x-word-subtable-title: createdApplications要素（InventoryCreatedApplication）
+    InventoryCreatedApplication:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationId
+        - applicationNo
+        - applicationType
+        - status
+        - createdAssetCount
+        - sourceInventoryItemIds
+      properties:
+        applicationId:
+          type: integer
+          format: int64
+          description: 作成した申請ID
+        applicationNo:
+          type: string
+          description: 作成した申請番号
+        applicationType:
+          type: string
+          description: TRANSFER / DISPOSAL
+        status:
+          type: string
+          description: 初期ステータス
+        createdAssetCount:
+          type: integer
+          format: int32
+          description: 申請明細件数
+        sourceInventoryItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 起票元の棚卸し明細ID
+    binary:
+      type: object
+      additionalProperties: false
+      required:
+        - body
+        - contentType
+        - fileName
+      properties:
+        body:
+          type: string
+          format: binary
+          description: 棚卸し結果Excelファイル
+        contentType:
+          type: string
+          description: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+        fileName:
+          type: string
+          description: '例: inventory-result_{inventorySessionId}_{yyyyMMdd}.xlsx'
+    PostInventorySessionsByInventorySessionIdCancelRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedSessionLockVersion
+        - cancelReason
+      properties:
+        expectedSessionLockVersion:
+          type: integer
+          format: int64
+          description: 画面取得時点のセッション lockVersion
+        cancelReason:
+          type: string
+          description: 取消理由
+    InventoryCancelResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inventorySessionId
+        - sessionStatus
+        - lockVersion
+        - canceledAt
+      properties:
+        inventorySessionId:
+          type: integer
+          format: int64
+          description: 棚卸しセッションID
+        sessionStatus:
+          type: string
+          description: CANCELLED
+        lockVersion:
+          type: integer
+          format: int64
+          description: 更新後セッション排他制御版
+        canceledAt:
+          type: string
+          format: date-time
+          description: 取消日時
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

@@ -1,0 +1,1678 @@
+openapi: 3.0.4
+info:
+  title: SHIP施設マスタ API
+  version: '1.1'
+  description: SHIP施設マスタで利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: SHIP施設マスタ
+    description: SHIP施設マスタのAPI
+paths:
+  /ship-facility-master/facilities:
+    get:
+      tags:
+        - SHIP施設マスタ
+      operationId: getShipFacilityMasterFacilities
+      summary: 施設マスタ一覧取得
+      description: SHIP施設マスタ一覧と表示件数を取得する。都道府県、経営主体、医療機関コード、施設名で絞り込み可能とする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: facility_master_list
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: prefecture
+          in: query
+          required: false
+          description: 都道府県の部分一致条件
+          schema:
+            type: string
+        - name: establishmentName
+          in: query
+          required: false
+          description: 経営主体名（establishments.establishment_name）の部分一致条件
+          schema:
+            type: string
+        - name: medicalInstitutionCode
+          in: query
+          required: false
+          description: 医療機関コード（facilities.facility_code）の部分一致条件
+          schema:
+            type: string
+        - name: facilityName
+          in: query
+          required: false
+          description: 施設名の部分一致条件
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipFacilityListResponse'
+        '400':
+          description: 不正な検索条件
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 facility_master_list なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：ShipFacilityListResponse）
+      x-word-response-subtable-titles:
+        - items要素（ShipFacilitySummary）
+      x-word-response-subtables:
+        - Title: items要素（ShipFacilitySummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID（facilities.facility_id）。編集・削除操作で利用するAPI制御項目
+            - - establishmentId
+              - int64
+              - ✓
+              - 経営主体ID（establishments.establishment_id）
+            - - medicalInstitutionCode
+              - string
+              - ✓
+              - 医療機関コード。保存先は facilities.facility_code
+            - - facilityName
+              - string
+              - ✓
+              - 施設名（facilities.facility_name）
+            - - establishmentName
+              - string
+              - ✓
+              - 経営主体名。保存元は establishments.establishment_name
+            - - prefecture
+              - string
+              - ✓
+              - 都道府県（facilities.prefecture）
+            - - city
+              - string
+              - ✓
+              - 市区町村（facility_details.city）
+            - - secondaryMedicalAreaName
+              - string
+              - ✓
+              - 二次医療圏名（facility_details.secondary_medical_area_name）
+            - - rebuildFiscalYear
+              - string
+              - ✓
+              - 建替年度。4桁年度（facility_details.rebuild_fiscal_year）
+            - - buildingArea
+              - decimal
+              - ✓
+              - 建物面積。decimal(12,2)（facility_details.building_area）
+            - - emergencyCenterCertified
+              - boolean
+              - ✓
+              - 救命救急センター認定（facility_details.emergency_center_certified）
+            - - emergencyHospitalCertificationType
+              - string
+              - ✓
+              - 2次救急・3次救急病院認定区分。NONE / SECONDARY / TERTIARY / SECONDARY_TERTIARY
+            - - perinatalCenterCertificationType
+              - string
+              - ✓
+              - 周産期母子医療センター認定区分。NONE / GENERAL / REGIONAL
+            - - disasterBaseHospitalCertified
+              - boolean
+              - ✓
+              - 災害拠点病院認定（facility_details.disaster_base_hospital_certified）
+            - - cancerRegionalBaseHospitalCertified
+              - boolean
+              - ✓
+              - がん診療連携拠点病院認定（国指定）（facility_details.cancer_regional_base_hospital_certified）
+            - - regionalMedicalSupportHospitalCertified
+              - boolean
+              - ✓
+              - 地域医療支援病院認定（facility_details.regional_medical_support_hospital_certified）
+            - - emergencyInitialCareRoomCount
+              - int32
+              - ✓
+              - 救急初療室数（facility_details.emergency_initial_care_room_count）
+            - - centralTreatmentBedCount
+              - int32
+              - ✓
+              - 中央処置ベッド数（facility_details.central_treatment_bed_count）
+            - - chemotherapyBedCount
+              - int32
+              - ✓
+              - 化学療法ベッド数（facility_details.chemotherapy_bed_count）
+            - - deliveryRoomCount
+              - int32
+              - ✓
+              - 分娩室数（facility_details.delivery_room_count）
+            - - endoscopyRoomCount
+              - int32
+              - ✓
+              - 内視鏡室数（facility_details.endoscopy_room_count）
+            - - dialysisBedCount
+              - int32
+              - ✓
+              - 人工透析ベッド数（facility_details.dialysis_bed_count）
+            - - operatingRoomCount
+              - int32
+              - ✓
+              - 手術室数（facility_details.operating_room_count）
+            - - centralBloodCollectionUnitCount
+              - int32
+              - ✓
+              - 中央採血台数（facility_details.central_blood_collection_unit_count）
+            - - totalBedCount
+              - int32
+              - ✓
+              - 総病床数。保存先は facilities.bed_count
+            - - emergencyWardBedCount
+              - int32
+              - ✓
+              - 救急病棟病床数（facility_details.emergency_ward_bed_count）
+            - - eicuBedCount
+              - int32
+              - ✓
+              - E-ICU（遠隔集中治療室）病床数（facility_details.eicu_bed_count）
+            - - icuBedCount
+              - int32
+              - ✓
+              - ICU（集中治療室）病床数（facility_details.icu_bed_count）
+            - - hcuBedCount
+              - int32
+              - ✓
+              - HCU（ハイケアユニット）病床数（facility_details.hcu_bed_count）
+            - - gicuBedCount
+              - int32
+              - ✓
+              - G-ICU（総合集中治療室）病床数（facility_details.gicu_bed_count）
+            - - ccuBedCount
+              - int32
+              - ✓
+              - CCU（冠疾患集中治療室）病床数（facility_details.ccu_bed_count）
+            - - scuBedCount
+              - int32
+              - ✓
+              - SCU（脳卒中ケアユニット）病床数（facility_details.scu_bed_count）
+            - - nicuBedCount
+              - int32
+              - ✓
+              - NICU（新生児集中治療室）病床数（facility_details.nicu_bed_count）
+            - - gcuBedCount
+              - int32
+              - ✓
+              - GCU（新生児回復治療室）病床数（facility_details.gcu_bed_count）
+            - - mficuBedCount
+              - int32
+              - ✓
+              - MFICU（母体・胎児集中治療室）病床数（facility_details.mficu_bed_count）
+            - - generalBedCount
+              - int32
+              - ✓
+              - 一般病床数（facility_details.general_bed_count）
+            - - cleanRoomBedCount
+              - int32
+              - ✓
+              - 一般病床（無菌病棟）数（facility_details.clean_room_bed_count）
+            - - palliativeCareBedCount
+              - int32
+              - ✓
+              - 一般病床（緩和ケア）数（facility_details.palliative_care_bed_count）
+            - - rehabilitationBedCount
+              - int32
+              - ✓
+              - 一般病床（回復期リハ）数（facility_details.rehabilitation_bed_count）
+            - - communityCareBedCount
+              - int32
+              - ✓
+              - 一般病床（地域包括ケア）数（facility_details.community_care_bed_count）
+            - - chronicCareBedCount
+              - int32
+              - ✓
+              - 療養病床数（facility_details.chronic_care_bed_count）
+            - - psychiatricBedCount
+              - int32
+              - ✓
+              - 精神病床数（facility_details.psychiatric_bed_count）
+            - - infectiousTuberculosisBedCount
+              - int32
+              - ✓
+              - 感染症・結核病床数（facility_details.infectious_tuberculosis_bed_count）
+            - - updatedAt
+              - datetime
+              - ✓
+              - 最終更新日時。facilities.updated_at と facility_details.updated_at のうち最新の日時
+    post:
+      tags:
+        - SHIP施設マスタ
+      operationId: postShipFacilityMasterFacilities
+      summary: 施設マスタ新規作成
+      description: 施設マスタを新規登録する。経営主体は既存候補選択または新規名称入力のいずれかを受け付け、一覧固定カラムをすべて必須入力として登録する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: facility_master_edit
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacilityCreateRequest'
+      x-word-request-title: リクエスト（FacilityCreateRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacilityUpsertResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 facility_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設または指定した経営主体が存在しない/削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 医療機関コード重複
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：FacilityUpsertResponse）
+  /ship-facility-master/establishments:
+    get:
+      tags:
+        - SHIP施設マスタ
+      operationId: getShipFacilityMasterEstablishments
+      summary: 経営主体候補取得
+      description: 施設マスタ新規作成/編集モーダルの経営主体コンボボックスで使用する既存候補を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: facility_master_list
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          description: 経営主体名（establishments.establishment_name）の部分一致検索条件
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstablishmentCandidateResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 facility_master_list なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：EstablishmentCandidateResponse）
+      x-word-response-subtable-titles:
+        - items要素（EstablishmentOption）
+      x-word-response-subtables:
+        - Title: items要素（EstablishmentOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - establishmentId
+              - int64
+              - ✓
+              - 経営主体ID（establishments.establishment_id）
+            - - establishmentName
+              - string
+              - ✓
+              - 経営主体名（establishments.establishment_name）
+  /ship-facility-master/facilities/export:
+    get:
+      tags:
+        - SHIP施設マスタ
+      operationId: getShipFacilityMasterFacilitiesExport
+      summary: 施設マスタエクスポート
+      description: 現在の絞り込み条件に一致する施設マスタ一覧を Excel ファイルとして出力する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: facility_master_list
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: prefecture
+          in: query
+          required: false
+          description: 都道府県の部分一致条件
+          schema:
+            type: string
+        - name: establishmentName
+          in: query
+          required: false
+          description: 経営主体名（establishments.establishment_name）の部分一致条件
+          schema:
+            type: string
+        - name: medicalInstitutionCode
+          in: query
+          required: false
+          description: 医療機関コード（facilities.facility_code）の部分一致条件
+          schema:
+            type: string
+        - name: facilityName
+          in: query
+          required: false
+          description: 施設名の部分一致条件
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 出力成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 facility_master_list なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': Excel File
+        '401': ErrorResponse
+        '403': ErrorResponse
+        '404': ErrorResponse
+        '500': ErrorResponse
+      x-word-response-title: レスポンス（200：Excel File）
+      x-word-response-subtable-titles:
+        - Headers
+        - 出力列
+      x-word-response-subtables:
+        - Title: Headers
+          Headers:
+            - ヘッダー名
+            - 必須
+            - 形式
+            - 説明
+          Rows:
+            - - Content-Type
+              - ✓
+              - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+              - Excel 形式で返却する
+            - - Content-Disposition
+              - ✓
+              - attachment; filename="SHIP施設マスタ_YYYYMMDD.xlsx"
+              - ダウンロードファイル名
+        - Title: 出力列
+          Headers:
+            - 列名
+            - 対応APIフィールド
+            - 保存元
+          Rows:
+            - - 医療機関コード
+              - medicalInstitutionCode
+              - facilities.facility_code
+            - - 施設名
+              - facilityName
+              - facilities.facility_name
+            - - 経営主体
+              - establishmentName
+              - establishments.establishment_name
+            - - 都道府県
+              - prefecture
+              - facilities.prefecture
+            - - 市区町村
+              - city
+              - facility_details.city
+            - - 二次医療圏名
+              - secondaryMedicalAreaName
+              - facility_details.secondary_medical_area_name
+            - - 建替年度
+              - rebuildFiscalYear
+              - facility_details.rebuild_fiscal_year
+            - - 建物面積
+              - buildingArea
+              - facility_details.building_area
+            - - 救命救急センター認定
+              - emergencyCenterCertified
+              - facility_details.emergency_center_certified
+            - - ２次救急・３次救急病院認定
+              - emergencyHospitalCertificationType
+              - facility_details.emergency_hospital_certification_type
+            - - 周産期母子医療センター 認定（総合・地域）
+              - perinatalCenterCertificationType
+              - facility_details.perinatal_center_certification_type
+            - - 災害拠点病院認定
+              - disasterBaseHospitalCertified
+              - facility_details.disaster_base_hospital_certified
+            - - がん診療連携拠点病院認定（国指定）
+              - cancerRegionalBaseHospitalCertified
+              - facility_details.cancer_regional_base_hospital_certified
+            - - 地域医療支援病院認定
+              - regionalMedicalSupportHospitalCertified
+              - facility_details.regional_medical_support_hospital_certified
+            - - 救急初療室数
+              - emergencyInitialCareRoomCount
+              - facility_details.emergency_initial_care_room_count
+            - - 中央処置ベッド数
+              - centralTreatmentBedCount
+              - facility_details.central_treatment_bed_count
+            - - 化学療法ベッド数
+              - chemotherapyBedCount
+              - facility_details.chemotherapy_bed_count
+            - - 分娩室数
+              - deliveryRoomCount
+              - facility_details.delivery_room_count
+            - - 内視鏡室数
+              - endoscopyRoomCount
+              - facility_details.endoscopy_room_count
+            - - 人工透析ベッド数
+              - dialysisBedCount
+              - facility_details.dialysis_bed_count
+            - - 手術室数
+              - operatingRoomCount
+              - facility_details.operating_room_count
+            - - 中央採血台数
+              - centralBloodCollectionUnitCount
+              - facility_details.central_blood_collection_unit_count
+            - - 総病床数
+              - totalBedCount
+              - facilities.bed_count
+            - - 救急病棟
+              - emergencyWardBedCount
+              - facility_details.emergency_ward_bed_count
+            - - E-ICU (遠隔集中治療室)
+              - eicuBedCount
+              - facility_details.eicu_bed_count
+            - - ICU (集中治療室)
+              - icuBedCount
+              - facility_details.icu_bed_count
+            - - HCU (ハイケアユニット)
+              - hcuBedCount
+              - facility_details.hcu_bed_count
+            - - G-ICU (総合集中治療室)
+              - gicuBedCount
+              - facility_details.gicu_bed_count
+            - - CCU (冠疾患集中治療室)
+              - ccuBedCount
+              - facility_details.ccu_bed_count
+            - - SCU (脳卒中ケアユニット)
+              - scuBedCount
+              - facility_details.scu_bed_count
+            - - NICU (新生児集中治療室)
+              - nicuBedCount
+              - facility_details.nicu_bed_count
+            - - GCU (新生児回復治療室)
+              - gcuBedCount
+              - facility_details.gcu_bed_count
+            - - MFICU (母体･胎児集中治療室)
+              - mficuBedCount
+              - facility_details.mficu_bed_count
+            - - 一般病床
+              - generalBedCount
+              - facility_details.general_bed_count
+            - - 一般病床 (無菌病棟)
+              - cleanRoomBedCount
+              - facility_details.clean_room_bed_count
+            - - 一般病床 (緩和ケア)
+              - palliativeCareBedCount
+              - facility_details.palliative_care_bed_count
+            - - 一般病床 (回復期リハ)
+              - rehabilitationBedCount
+              - facility_details.rehabilitation_bed_count
+            - - 一般病床 (地域包括ケア)
+              - communityCareBedCount
+              - facility_details.community_care_bed_count
+            - - 療養病床
+              - chronicCareBedCount
+              - facility_details.chronic_care_bed_count
+            - - 精神病床
+              - psychiatricBedCount
+              - facility_details.psychiatric_bed_count
+            - - 感染症･結核病床
+              - infectiousTuberculosisBedCount
+              - facility_details.infectious_tuberculosis_bed_count
+      x-word-response-lines:
+        - 'Body: フィルタ適用後の施設マスタ一覧を Excel バイナリで返却する。'
+        - 出力列はSHIP施設マスタ画面の一覧固定カラムと同一とし、基本情報、認定情報、諸室情報、病床情報の順で出力する。
+  /ship-facility-master/facilities/{facilityId}:
+    put:
+      tags:
+        - SHIP施設マスタ
+      operationId: putShipFacilityMasterFacilitiesByFacilityId
+      summary: 施設マスタ更新
+      description: 既存の施設マスタを更新する。経営主体変更時は既存候補への付け替え、または新規経営主体登録後の付け替えを行い、一覧固定カラムをすべて必須入力として更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: facility_master_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: facilityId
+          in: path
+          required: true
+          description: 更新対象の施設ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacilityUpdateRequest'
+      x-word-request-title: リクエスト（FacilityUpdateRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacilityUpsertResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 facility_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設、対象施設、または指定した経営主体が存在しない/削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 医療機関コード重複
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：FacilityUpsertResponse）
+    delete:
+      tags:
+        - SHIP施設マスタ
+      operationId: deleteShipFacilityMasterFacilitiesByFacilityId
+      summary: 施設マスタ削除
+      description: 指定した施設マスタを削除する。施設レコードは論理削除とし、経営主体自体は削除しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: facility_master_edit
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: facilityId
+          in: path
+          required: true
+          description: 削除対象の施設ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 facility_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設または対象施設が存在しない/削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス
+      x-word-response-lines:
+        - 'Body: なし'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    ShipFacilityListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 絞り込み後の一覧件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipFacilitySummary'
+          description: 施設マスタ一覧
+          x-word-subtable-title: items要素（ShipFacilitySummary）
+    ShipFacilitySummary:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - establishmentId
+        - medicalInstitutionCode
+        - facilityName
+        - establishmentName
+        - prefecture
+        - city
+        - secondaryMedicalAreaName
+        - rebuildFiscalYear
+        - buildingArea
+        - emergencyCenterCertified
+        - emergencyHospitalCertificationType
+        - perinatalCenterCertificationType
+        - disasterBaseHospitalCertified
+        - cancerRegionalBaseHospitalCertified
+        - regionalMedicalSupportHospitalCertified
+        - emergencyInitialCareRoomCount
+        - centralTreatmentBedCount
+        - chemotherapyBedCount
+        - deliveryRoomCount
+        - endoscopyRoomCount
+        - dialysisBedCount
+        - operatingRoomCount
+        - centralBloodCollectionUnitCount
+        - totalBedCount
+        - emergencyWardBedCount
+        - eicuBedCount
+        - icuBedCount
+        - hcuBedCount
+        - gicuBedCount
+        - ccuBedCount
+        - scuBedCount
+        - nicuBedCount
+        - gcuBedCount
+        - mficuBedCount
+        - generalBedCount
+        - cleanRoomBedCount
+        - palliativeCareBedCount
+        - rehabilitationBedCount
+        - communityCareBedCount
+        - chronicCareBedCount
+        - psychiatricBedCount
+        - infectiousTuberculosisBedCount
+        - updatedAt
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID（facilities.facility_id）。編集・削除操作で利用するAPI制御項目
+        establishmentId:
+          type: integer
+          format: int64
+          description: 経営主体ID（establishments.establishment_id）
+        medicalInstitutionCode:
+          type: string
+          description: 医療機関コード。保存先は facilities.facility_code
+        facilityName:
+          type: string
+          description: 施設名（facilities.facility_name）
+        establishmentName:
+          type: string
+          description: 経営主体名。保存元は establishments.establishment_name
+        prefecture:
+          type: string
+          description: 都道府県（facilities.prefecture）
+        city:
+          type: string
+          description: 市区町村（facility_details.city）
+        secondaryMedicalAreaName:
+          type: string
+          description: 二次医療圏名（facility_details.secondary_medical_area_name）
+        rebuildFiscalYear:
+          type: string
+          description: 建替年度。4桁年度（facility_details.rebuild_fiscal_year）
+        buildingArea:
+          type: number
+          description: 建物面積。decimal(12,2)（facility_details.building_area）
+        emergencyCenterCertified:
+          type: boolean
+          description: 救命救急センター認定（facility_details.emergency_center_certified）
+        emergencyHospitalCertificationType:
+          type: string
+          description: 2次救急・3次救急病院認定区分。NONE / SECONDARY / TERTIARY / SECONDARY_TERTIARY
+        perinatalCenterCertificationType:
+          type: string
+          description: 周産期母子医療センター認定区分。NONE / GENERAL / REGIONAL
+        disasterBaseHospitalCertified:
+          type: boolean
+          description: 災害拠点病院認定（facility_details.disaster_base_hospital_certified）
+        cancerRegionalBaseHospitalCertified:
+          type: boolean
+          description: がん診療連携拠点病院認定（国指定）（facility_details.cancer_regional_base_hospital_certified）
+        regionalMedicalSupportHospitalCertified:
+          type: boolean
+          description: 地域医療支援病院認定（facility_details.regional_medical_support_hospital_certified）
+        emergencyInitialCareRoomCount:
+          type: integer
+          format: int32
+          description: 救急初療室数（facility_details.emergency_initial_care_room_count）
+        centralTreatmentBedCount:
+          type: integer
+          format: int32
+          description: 中央処置ベッド数（facility_details.central_treatment_bed_count）
+        chemotherapyBedCount:
+          type: integer
+          format: int32
+          description: 化学療法ベッド数（facility_details.chemotherapy_bed_count）
+        deliveryRoomCount:
+          type: integer
+          format: int32
+          description: 分娩室数（facility_details.delivery_room_count）
+        endoscopyRoomCount:
+          type: integer
+          format: int32
+          description: 内視鏡室数（facility_details.endoscopy_room_count）
+        dialysisBedCount:
+          type: integer
+          format: int32
+          description: 人工透析ベッド数（facility_details.dialysis_bed_count）
+        operatingRoomCount:
+          type: integer
+          format: int32
+          description: 手術室数（facility_details.operating_room_count）
+        centralBloodCollectionUnitCount:
+          type: integer
+          format: int32
+          description: 中央採血台数（facility_details.central_blood_collection_unit_count）
+        totalBedCount:
+          type: integer
+          format: int32
+          description: 総病床数。保存先は facilities.bed_count
+        emergencyWardBedCount:
+          type: integer
+          format: int32
+          description: 救急病棟病床数（facility_details.emergency_ward_bed_count）
+        eicuBedCount:
+          type: integer
+          format: int32
+          description: E-ICU（遠隔集中治療室）病床数（facility_details.eicu_bed_count）
+        icuBedCount:
+          type: integer
+          format: int32
+          description: ICU（集中治療室）病床数（facility_details.icu_bed_count）
+        hcuBedCount:
+          type: integer
+          format: int32
+          description: HCU（ハイケアユニット）病床数（facility_details.hcu_bed_count）
+        gicuBedCount:
+          type: integer
+          format: int32
+          description: G-ICU（総合集中治療室）病床数（facility_details.gicu_bed_count）
+        ccuBedCount:
+          type: integer
+          format: int32
+          description: CCU（冠疾患集中治療室）病床数（facility_details.ccu_bed_count）
+        scuBedCount:
+          type: integer
+          format: int32
+          description: SCU（脳卒中ケアユニット）病床数（facility_details.scu_bed_count）
+        nicuBedCount:
+          type: integer
+          format: int32
+          description: NICU（新生児集中治療室）病床数（facility_details.nicu_bed_count）
+        gcuBedCount:
+          type: integer
+          format: int32
+          description: GCU（新生児回復治療室）病床数（facility_details.gcu_bed_count）
+        mficuBedCount:
+          type: integer
+          format: int32
+          description: MFICU（母体・胎児集中治療室）病床数（facility_details.mficu_bed_count）
+        generalBedCount:
+          type: integer
+          format: int32
+          description: 一般病床数（facility_details.general_bed_count）
+        cleanRoomBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（無菌病棟）数（facility_details.clean_room_bed_count）
+        palliativeCareBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（緩和ケア）数（facility_details.palliative_care_bed_count）
+        rehabilitationBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（回復期リハ）数（facility_details.rehabilitation_bed_count）
+        communityCareBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（地域包括ケア）数（facility_details.community_care_bed_count）
+        chronicCareBedCount:
+          type: integer
+          format: int32
+          description: 療養病床数（facility_details.chronic_care_bed_count）
+        psychiatricBedCount:
+          type: integer
+          format: int32
+          description: 精神病床数（facility_details.psychiatric_bed_count）
+        infectiousTuberculosisBedCount:
+          type: integer
+          format: int32
+          description: 感染症・結核病床数（facility_details.infectious_tuberculosis_bed_count）
+        updatedAt:
+          type: string
+          format: date-time
+          description: 最終更新日時。facilities.updated_at と facility_details.updated_at のうち最新の日時
+    EstablishmentCandidateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 返却候補件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EstablishmentOption'
+          description: 経営主体候補一覧
+          x-word-subtable-title: items要素（EstablishmentOption）
+    EstablishmentOption:
+      type: object
+      additionalProperties: false
+      required:
+        - establishmentId
+        - establishmentName
+      properties:
+        establishmentId:
+          type: integer
+          format: int64
+          description: 経営主体ID（establishments.establishment_id）
+        establishmentName:
+          type: string
+          description: 経営主体名（establishments.establishment_name）
+    FacilityCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - medicalInstitutionCode
+        - facilityName
+        - prefecture
+        - city
+        - secondaryMedicalAreaName
+        - rebuildFiscalYear
+        - buildingArea
+        - emergencyCenterCertified
+        - emergencyHospitalCertificationType
+        - perinatalCenterCertificationType
+        - disasterBaseHospitalCertified
+        - cancerRegionalBaseHospitalCertified
+        - regionalMedicalSupportHospitalCertified
+        - emergencyInitialCareRoomCount
+        - centralTreatmentBedCount
+        - chemotherapyBedCount
+        - deliveryRoomCount
+        - endoscopyRoomCount
+        - dialysisBedCount
+        - operatingRoomCount
+        - centralBloodCollectionUnitCount
+        - totalBedCount
+        - emergencyWardBedCount
+        - eicuBedCount
+        - icuBedCount
+        - hcuBedCount
+        - gicuBedCount
+        - ccuBedCount
+        - scuBedCount
+        - nicuBedCount
+        - gcuBedCount
+        - mficuBedCount
+        - generalBedCount
+        - cleanRoomBedCount
+        - palliativeCareBedCount
+        - rehabilitationBedCount
+        - communityCareBedCount
+        - chronicCareBedCount
+        - psychiatricBedCount
+        - infectiousTuberculosisBedCount
+      properties:
+        establishmentId:
+          type: integer
+          format: int64
+          description: 既存の経営主体を選択する場合に指定する。保存先は facilities.establishment_id
+          x-word-required-label: 条件付き
+        newEstablishmentName:
+          type: string
+          description: 新規の経営主体名を入力する場合に指定する。establishmentId と排他的に指定する
+          x-word-required-label: 条件付き
+        medicalInstitutionCode:
+          type: string
+          description: 医療機関コード。保存先は facilities.facility_code
+        facilityName:
+          type: string
+          description: 施設名
+        prefecture:
+          type: string
+          description: 都道府県
+        city:
+          type: string
+          description: 市区町村
+        secondaryMedicalAreaName:
+          type: string
+          description: 二次医療圏名
+        rebuildFiscalYear:
+          type: string
+          description: 建替年度。4桁年度で指定する
+        buildingArea:
+          type: number
+          description: 建物面積。decimal(12,2)、0以上
+        emergencyCenterCertified:
+          type: boolean
+          description: 救命救急センター認定
+        emergencyHospitalCertificationType:
+          type: string
+          description: 2次救急・3次救急病院認定区分。NONE / SECONDARY / TERTIARY / SECONDARY_TERTIARY
+        perinatalCenterCertificationType:
+          type: string
+          description: 周産期母子医療センター認定区分。NONE / GENERAL / REGIONAL
+        disasterBaseHospitalCertified:
+          type: boolean
+          description: 災害拠点病院認定
+        cancerRegionalBaseHospitalCertified:
+          type: boolean
+          description: がん診療連携拠点病院認定（国指定）
+        regionalMedicalSupportHospitalCertified:
+          type: boolean
+          description: 地域医療支援病院認定
+        emergencyInitialCareRoomCount:
+          type: integer
+          format: int32
+          description: 救急初療室数。0以上の整数
+        centralTreatmentBedCount:
+          type: integer
+          format: int32
+          description: 中央処置ベッド数。0以上の整数
+        chemotherapyBedCount:
+          type: integer
+          format: int32
+          description: 化学療法ベッド数。0以上の整数
+        deliveryRoomCount:
+          type: integer
+          format: int32
+          description: 分娩室数。0以上の整数
+        endoscopyRoomCount:
+          type: integer
+          format: int32
+          description: 内視鏡室数。0以上の整数
+        dialysisBedCount:
+          type: integer
+          format: int32
+          description: 人工透析ベッド数。0以上の整数
+        operatingRoomCount:
+          type: integer
+          format: int32
+          description: 手術室数。0以上の整数
+        centralBloodCollectionUnitCount:
+          type: integer
+          format: int32
+          description: 中央採血台数。0以上の整数
+        totalBedCount:
+          type: integer
+          format: int32
+          description: 総病床数。保存先は facilities.bed_count。0以上の整数
+        emergencyWardBedCount:
+          type: integer
+          format: int32
+          description: 救急病棟病床数。0以上の整数
+        eicuBedCount:
+          type: integer
+          format: int32
+          description: E-ICU（遠隔集中治療室）病床数。0以上の整数
+        icuBedCount:
+          type: integer
+          format: int32
+          description: ICU（集中治療室）病床数。0以上の整数
+        hcuBedCount:
+          type: integer
+          format: int32
+          description: HCU（ハイケアユニット）病床数。0以上の整数
+        gicuBedCount:
+          type: integer
+          format: int32
+          description: G-ICU（総合集中治療室）病床数。0以上の整数
+        ccuBedCount:
+          type: integer
+          format: int32
+          description: CCU（冠疾患集中治療室）病床数。0以上の整数
+        scuBedCount:
+          type: integer
+          format: int32
+          description: SCU（脳卒中ケアユニット）病床数。0以上の整数
+        nicuBedCount:
+          type: integer
+          format: int32
+          description: NICU（新生児集中治療室）病床数。0以上の整数
+        gcuBedCount:
+          type: integer
+          format: int32
+          description: GCU（新生児回復治療室）病床数。0以上の整数
+        mficuBedCount:
+          type: integer
+          format: int32
+          description: MFICU（母体・胎児集中治療室）病床数。0以上の整数
+        generalBedCount:
+          type: integer
+          format: int32
+          description: 一般病床数。0以上の整数
+        cleanRoomBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（無菌病棟）数。0以上の整数
+        palliativeCareBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（緩和ケア）数。0以上の整数
+        rehabilitationBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（回復期リハ）数。0以上の整数
+        communityCareBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（地域包括ケア）数。0以上の整数
+        chronicCareBedCount:
+          type: integer
+          format: int32
+          description: 療養病床数。0以上の整数
+        psychiatricBedCount:
+          type: integer
+          format: int32
+          description: 精神病床数。0以上の整数
+        infectiousTuberculosisBedCount:
+          type: integer
+          format: int32
+          description: 感染症・結核病床数。0以上の整数
+    FacilityUpsertResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - establishmentId
+        - medicalInstitutionCode
+        - facilityName
+        - establishmentName
+        - prefecture
+        - city
+        - secondaryMedicalAreaName
+        - rebuildFiscalYear
+        - buildingArea
+        - emergencyCenterCertified
+        - emergencyHospitalCertificationType
+        - perinatalCenterCertificationType
+        - disasterBaseHospitalCertified
+        - cancerRegionalBaseHospitalCertified
+        - regionalMedicalSupportHospitalCertified
+        - emergencyInitialCareRoomCount
+        - centralTreatmentBedCount
+        - chemotherapyBedCount
+        - deliveryRoomCount
+        - endoscopyRoomCount
+        - dialysisBedCount
+        - operatingRoomCount
+        - centralBloodCollectionUnitCount
+        - totalBedCount
+        - emergencyWardBedCount
+        - eicuBedCount
+        - icuBedCount
+        - hcuBedCount
+        - gicuBedCount
+        - ccuBedCount
+        - scuBedCount
+        - nicuBedCount
+        - gcuBedCount
+        - mficuBedCount
+        - generalBedCount
+        - cleanRoomBedCount
+        - palliativeCareBedCount
+        - rehabilitationBedCount
+        - communityCareBedCount
+        - chronicCareBedCount
+        - psychiatricBedCount
+        - infectiousTuberculosisBedCount
+        - updatedAt
+        - createdAt
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID（facilities.facility_id）。編集・削除操作で利用するAPI制御項目
+        establishmentId:
+          type: integer
+          format: int64
+          description: 経営主体ID（establishments.establishment_id）
+        medicalInstitutionCode:
+          type: string
+          description: 医療機関コード。保存先は facilities.facility_code
+        facilityName:
+          type: string
+          description: 施設名（facilities.facility_name）
+        establishmentName:
+          type: string
+          description: 経営主体名。保存元は establishments.establishment_name
+        prefecture:
+          type: string
+          description: 都道府県（facilities.prefecture）
+        city:
+          type: string
+          description: 市区町村（facility_details.city）
+        secondaryMedicalAreaName:
+          type: string
+          description: 二次医療圏名（facility_details.secondary_medical_area_name）
+        rebuildFiscalYear:
+          type: string
+          description: 建替年度。4桁年度（facility_details.rebuild_fiscal_year）
+        buildingArea:
+          type: number
+          description: 建物面積。decimal(12,2)（facility_details.building_area）
+        emergencyCenterCertified:
+          type: boolean
+          description: 救命救急センター認定（facility_details.emergency_center_certified）
+        emergencyHospitalCertificationType:
+          type: string
+          description: 2次救急・3次救急病院認定区分。NONE / SECONDARY / TERTIARY / SECONDARY_TERTIARY
+        perinatalCenterCertificationType:
+          type: string
+          description: 周産期母子医療センター認定区分。NONE / GENERAL / REGIONAL
+        disasterBaseHospitalCertified:
+          type: boolean
+          description: 災害拠点病院認定（facility_details.disaster_base_hospital_certified）
+        cancerRegionalBaseHospitalCertified:
+          type: boolean
+          description: がん診療連携拠点病院認定（国指定）（facility_details.cancer_regional_base_hospital_certified）
+        regionalMedicalSupportHospitalCertified:
+          type: boolean
+          description: 地域医療支援病院認定（facility_details.regional_medical_support_hospital_certified）
+        emergencyInitialCareRoomCount:
+          type: integer
+          format: int32
+          description: 救急初療室数（facility_details.emergency_initial_care_room_count）
+        centralTreatmentBedCount:
+          type: integer
+          format: int32
+          description: 中央処置ベッド数（facility_details.central_treatment_bed_count）
+        chemotherapyBedCount:
+          type: integer
+          format: int32
+          description: 化学療法ベッド数（facility_details.chemotherapy_bed_count）
+        deliveryRoomCount:
+          type: integer
+          format: int32
+          description: 分娩室数（facility_details.delivery_room_count）
+        endoscopyRoomCount:
+          type: integer
+          format: int32
+          description: 内視鏡室数（facility_details.endoscopy_room_count）
+        dialysisBedCount:
+          type: integer
+          format: int32
+          description: 人工透析ベッド数（facility_details.dialysis_bed_count）
+        operatingRoomCount:
+          type: integer
+          format: int32
+          description: 手術室数（facility_details.operating_room_count）
+        centralBloodCollectionUnitCount:
+          type: integer
+          format: int32
+          description: 中央採血台数（facility_details.central_blood_collection_unit_count）
+        totalBedCount:
+          type: integer
+          format: int32
+          description: 総病床数。保存先は facilities.bed_count
+        emergencyWardBedCount:
+          type: integer
+          format: int32
+          description: 救急病棟病床数（facility_details.emergency_ward_bed_count）
+        eicuBedCount:
+          type: integer
+          format: int32
+          description: E-ICU（遠隔集中治療室）病床数（facility_details.eicu_bed_count）
+        icuBedCount:
+          type: integer
+          format: int32
+          description: ICU（集中治療室）病床数（facility_details.icu_bed_count）
+        hcuBedCount:
+          type: integer
+          format: int32
+          description: HCU（ハイケアユニット）病床数（facility_details.hcu_bed_count）
+        gicuBedCount:
+          type: integer
+          format: int32
+          description: G-ICU（総合集中治療室）病床数（facility_details.gicu_bed_count）
+        ccuBedCount:
+          type: integer
+          format: int32
+          description: CCU（冠疾患集中治療室）病床数（facility_details.ccu_bed_count）
+        scuBedCount:
+          type: integer
+          format: int32
+          description: SCU（脳卒中ケアユニット）病床数（facility_details.scu_bed_count）
+        nicuBedCount:
+          type: integer
+          format: int32
+          description: NICU（新生児集中治療室）病床数（facility_details.nicu_bed_count）
+        gcuBedCount:
+          type: integer
+          format: int32
+          description: GCU（新生児回復治療室）病床数（facility_details.gcu_bed_count）
+        mficuBedCount:
+          type: integer
+          format: int32
+          description: MFICU（母体・胎児集中治療室）病床数（facility_details.mficu_bed_count）
+        generalBedCount:
+          type: integer
+          format: int32
+          description: 一般病床数（facility_details.general_bed_count）
+        cleanRoomBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（無菌病棟）数（facility_details.clean_room_bed_count）
+        palliativeCareBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（緩和ケア）数（facility_details.palliative_care_bed_count）
+        rehabilitationBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（回復期リハ）数（facility_details.rehabilitation_bed_count）
+        communityCareBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（地域包括ケア）数（facility_details.community_care_bed_count）
+        chronicCareBedCount:
+          type: integer
+          format: int32
+          description: 療養病床数（facility_details.chronic_care_bed_count）
+        psychiatricBedCount:
+          type: integer
+          format: int32
+          description: 精神病床数（facility_details.psychiatric_bed_count）
+        infectiousTuberculosisBedCount:
+          type: integer
+          format: int32
+          description: 感染症・結核病床数（facility_details.infectious_tuberculosis_bed_count）
+        updatedAt:
+          type: string
+          format: date-time
+          description: 最終更新日時。facilities.updated_at と facility_details.updated_at のうち最新の日時
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時（facilities.created_at）
+    FacilityUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - medicalInstitutionCode
+        - facilityName
+        - prefecture
+        - city
+        - secondaryMedicalAreaName
+        - rebuildFiscalYear
+        - buildingArea
+        - emergencyCenterCertified
+        - emergencyHospitalCertificationType
+        - perinatalCenterCertificationType
+        - disasterBaseHospitalCertified
+        - cancerRegionalBaseHospitalCertified
+        - regionalMedicalSupportHospitalCertified
+        - emergencyInitialCareRoomCount
+        - centralTreatmentBedCount
+        - chemotherapyBedCount
+        - deliveryRoomCount
+        - endoscopyRoomCount
+        - dialysisBedCount
+        - operatingRoomCount
+        - centralBloodCollectionUnitCount
+        - totalBedCount
+        - emergencyWardBedCount
+        - eicuBedCount
+        - icuBedCount
+        - hcuBedCount
+        - gicuBedCount
+        - ccuBedCount
+        - scuBedCount
+        - nicuBedCount
+        - gcuBedCount
+        - mficuBedCount
+        - generalBedCount
+        - cleanRoomBedCount
+        - palliativeCareBedCount
+        - rehabilitationBedCount
+        - communityCareBedCount
+        - chronicCareBedCount
+        - psychiatricBedCount
+        - infectiousTuberculosisBedCount
+      properties:
+        establishmentId:
+          type: integer
+          format: int64
+          description: 既存の経営主体を選択する場合に指定する。保存先は facilities.establishment_id
+          x-word-required-label: 条件付き
+        newEstablishmentName:
+          type: string
+          description: 新規の経営主体名を入力する場合に指定する。establishmentId と排他的に指定する
+          x-word-required-label: 条件付き
+        medicalInstitutionCode:
+          type: string
+          description: 医療機関コード。保存先は facilities.facility_code
+        facilityName:
+          type: string
+          description: 施設名
+        prefecture:
+          type: string
+          description: 都道府県
+        city:
+          type: string
+          description: 市区町村
+        secondaryMedicalAreaName:
+          type: string
+          description: 二次医療圏名
+        rebuildFiscalYear:
+          type: string
+          description: 建替年度。4桁年度で指定する
+        buildingArea:
+          type: number
+          description: 建物面積。decimal(12,2)、0以上
+        emergencyCenterCertified:
+          type: boolean
+          description: 救命救急センター認定
+        emergencyHospitalCertificationType:
+          type: string
+          description: 2次救急・3次救急病院認定区分。NONE / SECONDARY / TERTIARY / SECONDARY_TERTIARY
+        perinatalCenterCertificationType:
+          type: string
+          description: 周産期母子医療センター認定区分。NONE / GENERAL / REGIONAL
+        disasterBaseHospitalCertified:
+          type: boolean
+          description: 災害拠点病院認定
+        cancerRegionalBaseHospitalCertified:
+          type: boolean
+          description: がん診療連携拠点病院認定（国指定）
+        regionalMedicalSupportHospitalCertified:
+          type: boolean
+          description: 地域医療支援病院認定
+        emergencyInitialCareRoomCount:
+          type: integer
+          format: int32
+          description: 救急初療室数。0以上の整数
+        centralTreatmentBedCount:
+          type: integer
+          format: int32
+          description: 中央処置ベッド数。0以上の整数
+        chemotherapyBedCount:
+          type: integer
+          format: int32
+          description: 化学療法ベッド数。0以上の整数
+        deliveryRoomCount:
+          type: integer
+          format: int32
+          description: 分娩室数。0以上の整数
+        endoscopyRoomCount:
+          type: integer
+          format: int32
+          description: 内視鏡室数。0以上の整数
+        dialysisBedCount:
+          type: integer
+          format: int32
+          description: 人工透析ベッド数。0以上の整数
+        operatingRoomCount:
+          type: integer
+          format: int32
+          description: 手術室数。0以上の整数
+        centralBloodCollectionUnitCount:
+          type: integer
+          format: int32
+          description: 中央採血台数。0以上の整数
+        totalBedCount:
+          type: integer
+          format: int32
+          description: 総病床数。保存先は facilities.bed_count。0以上の整数
+        emergencyWardBedCount:
+          type: integer
+          format: int32
+          description: 救急病棟病床数。0以上の整数
+        eicuBedCount:
+          type: integer
+          format: int32
+          description: E-ICU（遠隔集中治療室）病床数。0以上の整数
+        icuBedCount:
+          type: integer
+          format: int32
+          description: ICU（集中治療室）病床数。0以上の整数
+        hcuBedCount:
+          type: integer
+          format: int32
+          description: HCU（ハイケアユニット）病床数。0以上の整数
+        gicuBedCount:
+          type: integer
+          format: int32
+          description: G-ICU（総合集中治療室）病床数。0以上の整数
+        ccuBedCount:
+          type: integer
+          format: int32
+          description: CCU（冠疾患集中治療室）病床数。0以上の整数
+        scuBedCount:
+          type: integer
+          format: int32
+          description: SCU（脳卒中ケアユニット）病床数。0以上の整数
+        nicuBedCount:
+          type: integer
+          format: int32
+          description: NICU（新生児集中治療室）病床数。0以上の整数
+        gcuBedCount:
+          type: integer
+          format: int32
+          description: GCU（新生児回復治療室）病床数。0以上の整数
+        mficuBedCount:
+          type: integer
+          format: int32
+          description: MFICU（母体・胎児集中治療室）病床数。0以上の整数
+        generalBedCount:
+          type: integer
+          format: int32
+          description: 一般病床数。0以上の整数
+        cleanRoomBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（無菌病棟）数。0以上の整数
+        palliativeCareBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（緩和ケア）数。0以上の整数
+        rehabilitationBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（回復期リハ）数。0以上の整数
+        communityCareBedCount:
+          type: integer
+          format: int32
+          description: 一般病床（地域包括ケア）数。0以上の整数
+        chronicCareBedCount:
+          type: integer
+          format: int32
+          description: 療養病床数。0以上の整数
+        psychiatricBedCount:
+          type: integer
+          format: int32
+          description: 精神病床数。0以上の整数
+        infectiousTuberculosisBedCount:
+          type: integer
+          format: int32
+          description: 感染症・結核病床数。0以上の整数
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

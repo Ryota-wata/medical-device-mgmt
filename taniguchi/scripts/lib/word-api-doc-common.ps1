@@ -387,6 +387,15 @@ function Get-SquareBulletListTemplate {
       $existing = $Document.ListTemplates.Item($i)
       try {
         if ([string]$existing.Name -eq $templateName) {
+          $existingLevel = $existing.ListLevels.Item(1)
+          $existingLevel.NumberStyle = $script:wdListNumberStyleBullet
+          $existingLevel.NumberFormat = [char]0x25A0
+          $existingLevel.TrailingCharacter = $script:wdTrailingTab
+          $existingLevel.NumberPosition = 0
+          $existingLevel.Alignment = $script:wdListLevelAlignLeft
+          $existingLevel.TextPosition = $WordApp.CentimetersToPoints(0.74)
+          $existingLevel.TabPosition = $WordApp.CentimetersToPoints(0.74)
+          Set-FontNameProperties -Font $existingLevel.Font -FontName 'Meiryo UI'
           return $existing
         }
       }
@@ -499,7 +508,7 @@ function Add-Table {
   $table.Style = $script:wdStyleTableGrid
   $table.AllowAutoFit = $true
   $table.Range.Style = $script:wdStyleNormal
-  $table.Rows.AllowBreakAcrossPages = $true
+  $table.Rows.AllowBreakAcrossPages = $false
   $table.Rows.Item(1).HeadingFormat = $true
   try {
     $table.AutoFitBehavior($script:wdAutoFitContent) | Out-Null
@@ -617,6 +626,13 @@ function Normalize-RevisionHistoryTable {
   $revisionTable.Rows.Item(1).HeadingFormat = $true
   try {
     $revisionTable.AutoFitBehavior($script:wdAutoFitWindow) | Out-Null
+    # Keep slash-separated dates (for example, 2026/8/4) on one line. The
+    # template's equal-width last columns leave the date column too narrow.
+    $revisionTable.AutoFitBehavior($script:wdAutoFitFixed) | Out-Null
+    $revisionTable.Columns.Item(1).Width = 70
+    $revisionTable.Columns.Item(2).Width = 82
+    $revisionTable.Columns.Item(3).Width = 180
+    $revisionTable.Columns.Item(4).Width = 119
   }
   catch {
   }
@@ -727,6 +743,7 @@ function Write-ApiDocSections {
       'Paragraph' { Add-Paragraph -Selection $Selection -Text $section.Text -Style $script:wdStyleNormal }
       'Bullets' { Add-BulletsAsParagraphs -Selection $Selection -Items $section.Items }
       'Numbered' { Add-NumberedAsParagraphs -Selection $Selection -Items $section.Items }
+      'PageBreak' { $Selection.InsertBreak($script:wdPageBreak) | Out-Null }
       'Table' { Add-Table -Document $Document -Selection $Selection -Headers $section.Headers -Rows $section.Rows }
       'EndpointBlocks' {
         foreach ($item in $section.Items) {
@@ -813,6 +830,9 @@ function Apply-ApiDocFormatting {
     $shape = $Document.Shapes.Item($i)
     if ($shape.TextFrame.HasText -eq -1) {
       Set-FontNameProperties -Font $shape.TextFrame.TextRange.Font -FontName $fontName
+      if ([string]::IsNullOrWhiteSpace([string]$shape.AlternativeText)) {
+        $shape.AlternativeText = '装飾用テキストボックス'
+      }
     }
   }
 
@@ -822,9 +842,11 @@ function Apply-ApiDocFormatting {
   Set-StyleFormatting -Document $Document -StyleRef $script:wdStyleHeading3 -FontName $fontName -FontSize 14 -Bold 1
   Set-StyleFormatting -Document $Document -StyleRef $script:wdStyleHeading4 -FontName $fontName -FontSize 12 -Bold 1
 
-  foreach ($styleName in @('目次の見出し', '目次 1', '目次 2', '目次 3', '表 (格子)')) {
-    Set-StyleFormatting -Document $Document -StyleRef $styleName -FontName $fontName -FontSize 11 -Bold 0
+  Set-StyleFormatting -Document $Document -StyleRef '目次の見出し' -FontName $fontName -FontSize 11 -Bold 0
+  foreach ($styleName in @('目次 1', '目次 2', '目次 3')) {
+    Set-StyleFormatting -Document $Document -StyleRef $styleName -FontName $fontName -FontSize 9 -Bold 0
   }
+  Set-StyleFormatting -Document $Document -StyleRef '表 (格子)' -FontName $fontName -FontSize 11 -Bold 0
 
   foreach ($paragraph in $Document.Paragraphs) {
     $styleName = ''
@@ -837,6 +859,35 @@ function Apply-ApiDocFormatting {
     if ($styleName -in @('見出し 1', '見出し 2', '見出し 3', '見出し 4')) {
       $paragraph.Range.Font.Bold = 1
     }
+  }
+}
+
+function Remove-TrailingEmptyBodyParagraph {
+  param(
+    [Parameter(Mandatory = $true)]$Document
+  )
+
+  if ($Document.Paragraphs.Count -le 1) {
+    return
+  }
+
+  $paragraph = $null
+  $range = $null
+  try {
+    $paragraph = $Document.Paragraphs.Item($Document.Paragraphs.Count)
+    $range = $paragraph.Range.Duplicate
+    if ($range.Information(12)) {
+      return
+    }
+
+    $text = ($range.Text -replace '[\r\a]', '').Trim()
+    if ([string]::IsNullOrWhiteSpace($text)) {
+      $range.Delete() | Out-Null
+    }
+  }
+  finally {
+    Release-ComObjectSafely -ComObject $range
+    Release-ComObjectSafely -ComObject $paragraph
   }
 }
 
@@ -910,6 +961,7 @@ function New-ApiWordDocumentFromSpec {
       $doc.TablesOfContents.Item(1).Update() | Out-Null
     }
     $doc.Fields.Update() | Out-Null
+    Remove-TrailingEmptyBodyParagraph -Document $doc
     $doc.Save()
   }
   finally {

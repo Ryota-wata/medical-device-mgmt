@@ -1,7 +1,7 @@
 ﻿$entryPermissionLines = @(
   '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` / `remodel_order` / `remodel_acceptance` 判定をバイパスする',
   '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-  '認可条件: 通常アカウントの場合、リモデル管理タブ入口は作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` / `remodel_order` / `remodel_acceptance` のいずれかが有効であれば参照可能とする',
+  '認可条件: 通常アカウントの場合、リモデル管理タブ入口は作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` / `remodel_order` / `remodel_acceptance` / `transfer_disposal` のいずれかが有効であれば参照可能とする',
   '認可条件: 個別操作APIでは、操作に対応する `feature_code` をサーバー側で再判定する'
 )
 
@@ -30,7 +30,7 @@ $transferDisposalPermissionLines = @(
   '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `transfer_disposal` 判定をバイパスする',
   '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
   '認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `transfer_disposal` が有効であること',
-  '認可条件: 対象RFQは `rfqs.management_type=''REMODEL''` かつ `workflow_type IN (''DISPOSAL'',''TRANSFER'')` かつ `deleted_at IS NULL` であること'
+  '認可条件: 対象は `REMODEL/RFQ` の通常RFQ、`DISPOSAL/RFQ` のリモデル起点廃棄グループ、または既存の移動ワークフローであり、`deleted_at IS NULL` であること。`REMODEL/DISPOSAL` の旧廃棄ワークフローは新規操作対象外とする'
 )
 
 $closePermissionLines = @(
@@ -61,7 +61,8 @@ $commonErrorRows = @(
   @('ORDER_QUOTATION_REQUIRED', '409', '発注登録用見積が確定済みでない', '発注登録時に `発注見積登録済` のRFQまたは採用見積が存在しない'),
   @('ORDER_NOT_FOUND', '404', '発注を参照できない', 'ID不存在、RFQ不一致、または対象発注データなし'),
   @('INDIVIDUAL_REGISTRATION_INCOMPLETE', '409', '検収登録済み個体が不足している', '資産登録時に対象発注明細分の `individuals` が未作成'),
-  @('REMODEL_CLOSE_BLOCKED', '409', 'リモデルクローズ条件を満たさない', '方針未決、新設置場所未入力、未終端ワークフロー、原本登録未完了、または作業ロック残存'),
+  @('REMODEL_CLOSE_NOT_READY', '409', 'リモデルクローズ条件を満たさない', '方針未決、新設置場所未入力、未終端RFQ/廃棄申請、廃棄済み未反映資産、原本登録未完了、または作業ロック残存'),
+  @('DISPOSAL_TASK_DELEGATED', '409', '廃棄申請タスクの後続操作は移動・廃棄管理へ委譲する', '`DISPOSAL/RFQ` に対してNo.24の承認・却下・完了APIを呼び出した'),
   @('REMODEL_FILE_502_S3_WRITE_FAILED', '502', 'Amazon S3 へのファイル保存またはロールバック削除に失敗した', '見積原本または検収写真のAmazon S3 PutObject、またはDB失敗時の保存済みS3オブジェクト破棄に失敗した'),
   @('VALIDATION_ERROR', '400', '入力値不正', '必須不足、列挙値不正、文字数超過、日付前後関係不正'),
   @('CONFLICT', '409', '競合更新', '`expectedUpdatedAt` または `Idempotency-Key` の競合'),
@@ -72,19 +73,22 @@ $taskSummaryRows = @(
   @('rfqGroupId', 'int64', '✓', '`rfqs.rfq_id`'),
   @('rfqNo', 'string', '✓', '`rfqs.rfq_no`。RFQは `RFQ-`、廃棄は `DISP-`、移動は `TRAN-` の採番値'),
   @('rfqGroupName', 'string', '✓', '`rfqs.rfq_group_name`'),
-  @('editListId', 'int64', '✓', '`rfqs.edit_list_id`'),
-  @('managementType', 'string', '✓', '`REMODEL` 固定'),
-  @('workflowType', 'string', '✓', '`RFQ` / `DISPOSAL` / `TRANSFER`'),
+  @('editListId', 'int64', '-', '通常リモデルRFQは `rfqs.edit_list_id`、リモデル起点廃棄は `rfq_applications.edit_list_id` から導出'),
+  @('managementType', 'string', '✓', '`REMODEL`（通常リモデルRFQ） / `DISPOSAL`（リモデル起点廃棄グループ）'),
+  @('workflowType', 'string', '✓', '通常リモデルRFQ・廃棄は `RFQ`。移設の既存ワークフローは別途定義に従う'),
   @('quotationType', 'string', '-', '`PURCHASE` / `LEASE` / `INSTALLMENT` / `RENTAL` / `TRIAL` / `BORROW` / `REPAIR` / `MAINTENANCE` / `INSPECTION` / `OTHER`。未指定可'),
   @('quotationPhase', 'string', '-', '`LIST_PRICE` / `ESTIMATE` / `ORDER_REGISTRATION` / `FINAL_ASSET_REGISTRATION`。未指定可'),
   @('status', 'string', '✓', '`rfq_status_definitions` の表示値'),
   @('deadlineLabel', 'string', '-', '見積提出期限、発注期限、登録期限、納入期限、納入年月日、検収年月日、却下日、承認日、完了日'),
   @('deadlineOn', 'date', '-', 'ステータスに対応する期限日または実績日'),
   @('applicationIds', 'int64[]', '✓', '`rfq_applications.application_id` の重複排除配列'),
+  @('isRemodelOrigin', 'boolean', '✓', '`DISPOSAL/RFQ` の場合、`rfq_applications.edit_list_id` / `edit_list_item_id` から判定'),
+  @('editListItemIds', 'int64[]', '✓', 'リモデル起点廃棄の編集リスト明細ID。該当なしは空配列'),
+  @('remodelCloseImpact', 'object', '✓', 'リモデルクローズへの影響。通常RFQ・対象外の場合は空の影響情報'),
   @('vendorRows', 'RfqVendorSummary[]', '✓', 'RFQは業者行へ展開、廃棄/移動は空配列または代表行'),
   @('amount', 'decimal', '-', '採用見積または発注の合計金額'),
   @('ownerName', 'string', '-', '作成者または担当者表示名'),
-  @('availableActions', 'string[]', '✓', 'ステータスから導出した操作コード')
+  @('availableActions', 'string[]', '✓', 'ステータス・管理種別・実効権限から導出。`DISPOSAL/RFQ` は `OPEN_DISPOSAL_TASK` のみ返し、No.24の承認・見積・発注操作は返さない')
 )
 
 $vendorRows = @(
@@ -310,7 +314,7 @@ $endpointBlocks = @(
 
   New-EndpointBlock `
     -Title 'リモデル管理タスク一覧取得' `
-    -Overview '編集リストから作成済みのリモデルRFQ、廃棄承認、移動承認を一覧取得する。' `
+    -Overview '編集リストから作成済みの通常リモデルRFQと、リモデル編集リスト起点の廃棄申請グループを一覧取得する。廃棄後続操作はNo.27へ委譲する。' `
     -Method 'GET' `
     -Path '/quotation-data-box/remodel-management/tasks' `
     -Auth 'Bearer' `
@@ -324,12 +328,12 @@ $endpointBlocks = @(
     ) `
     -PermissionLines $entryPermissionLines `
     -ProcessingLines @(
-      '`rfqs.management_type=''REMODEL''`、`deleted_at IS NULL` の行だけを対象とする。',
-      '通常見積は `workflow_type=''RFQ''`、廃棄は `DISPOSAL`、移動は `TRANSFER` として同一一覧へ返す。',
-      '見積区分または見積フェーズを指定した場合は `workflow_type=''RFQ''` かつ指定値に一致する行だけを返し、見積区分/見積フェーズを持たない廃棄・移動ワークフローは除外する。',
+      '通常リモデルRFQは `rfqs.management_type=''REMODEL''`、`workflow_type=''RFQ''`、廃棄グループは `rfqs.management_type=''DISPOSAL''`、`workflow_type=''RFQ''`、`deleted_at IS NULL` の行を対象とする。',
+      '廃棄グループは `rfq_applications.edit_list_id` / `edit_list_item_id` から対象 `edit_lists.list_type=''REMODEL''` へ辿れる行だけを関連表示する。`management_type=''REMODEL''` の廃棄グループや旧 `workflow_type=''DISPOSAL''` は新規対象に含めない。',
+      '通常RFQの見積区分または見積フェーズ指定時は `REMODEL/RFQ` だけを絞り込み、`DISPOSAL/RFQ` は見積区分・見積フェーズを持たないため除外する。',
       '`editListId` 未指定時は作業対象施設で参照可能なリモデル管理対象を横断表示する。',
       'RFQは `rfqs` 1件と `rfq_vendors` 複数件を画面表示用の業者行へ展開する。',
-      '操作可否はステータス、ワークフロー種別、実効権限からサーバー側で導出する。'
+      '操作可否はステータス、管理種別、起票元、実効権限からサーバー側で導出し、`DISPOSAL/RFQ` は `OPEN_DISPOSAL_TASK` と戻り先だけを返す。見積、発注、作業日、完了書類の登録・削除・プレビュー操作はNo.27へ委譲し、本APIでは返さない。'
     ) `
     -ResponseRows @(
       @('items', 'RemodelTaskSummary[]', '✓', 'リモデル管理一覧行'),
@@ -356,7 +360,7 @@ $endpointBlocks = @(
     ) `
     -PermissionLines $entryPermissionLines `
     -ProcessingLines @(
-      '対象RFQの `management_type=''REMODEL''` を検証する。',
+      '対象RFQの `management_type=''REMODEL''` を検証する。`DISPOSAL/RFQ` の期限更新は本APIでは受け付けず、No.27の廃棄作業日/納期登録APIへ委譲する。',
       'ステータス別に、見積提出期限、発注期限、登録期限、納入期限、納入年月日、検収年月日、却下日、承認日、完了日のいずれかとして保存する。',
       'RFQ系の期限は原則 `rfqs.due_on`、承認日/却下日/完了日は `approved_on` / `rejected_on` / `completed_on` に保存する。',
       '期限更新はステータス遷移ではないため `rfqs.last_status_changed_at` は更新しない。',
@@ -383,7 +387,8 @@ $endpointBlocks = @(
       '対象は `edit_lists.list_type=''REMODEL''` の編集リストのみとする。',
       'RFQ単位ではなく `editListId` 単位で集計する。',
       '新設置場所入力状況は廃棄方針の明細を集計対象外とする。',
-      'クローズ不可理由は、方針未決、新設置場所未入力、未終端ワークフロー、原本登録未完了、作業ロック残存に区分する。'
+      'リモデル起点廃棄は `rfq_applications` の行リンクから対象を集計し、`rfqs.status` が `完了` または `申請を見送る`、対象 `applications.status` が `完了` または `申請見送り`、登録済み資産が `asset_ledgers.status=''廃棄済''` であることを終端条件として扱う。',
+      'クローズ不可理由は、方針未決、新設置場所未入力、未終端通常RFQ、未終端リモデル起点廃棄申請、廃棄済み未反映資産、原本登録未完了、作業ロック残存に区分する。'
     ) `
     -ResponseRows @(
       @('editListId', 'int64', '-', '対象編集リストID'),
@@ -404,15 +409,15 @@ $endpointBlocks = @(
     -Auth 'Bearer' `
     -ParametersRows @(
       @('rfqGroupId', 'path', 'int64', '✓', '対象RFQグループID'),
-      @('managementType', 'query', 'string', '-', '指定時は `REMODEL` と正本値一致を検証する'),
+      @('managementType', 'query', 'string', '-', '指定時は `REMODEL`（通常RFQ）または `DISPOSAL`（リモデル起点廃棄）と正本値一致を検証する'),
       @('returnTo', 'query', 'string', '-', '未指定時は `/quotation-data-box/remodel-management` を返す')
     ) `
     -PermissionLines $entryPermissionLines `
     -ProcessingLines @(
-      '`rfqs.management_type=''REMODEL''` でない場合は拒否する。',
-      '`rfqGroupId` だけで遷移した場合でも、RFQ正本から `managementType`、`editListId`、既定戻り先を解決して返す。',
+      '`rfqs.management_type=''REMODEL''` かつ `workflow_type=''RFQ''` の通常リモデルRFQ、または `rfqs.management_type=''DISPOSAL''`、`workflow_type=''RFQ''` で `rfq_applications` からリモデル編集リストへ辿れる廃棄グループだけを対象とする。旧 `REMODEL/DISPOSAL` は新規詳細対象外とする。',
+      '`rfqGroupId` だけで遷移した場合でも、RFQ正本と `rfq_applications` から `managementType`、`isRemodelOrigin`、`editListId`、`editListItemIds`、`remodelCloseImpact`、既定戻り先を解決して返す。',
       'レスポンスにはRFQヘッダー、業者行、対象編集リスト明細、既存見積/発注/検収/資産登録状況を含める。',
-      '共通画面側は本レスポンスの `context.managementType` と `returnTo` を戻り先判定に利用する。'
+      '廃棄グループの場合、共通画面側は本レスポンスの `context.managementType=''DISPOSAL''`、`disposalTaskId=rfqGroupId`、`returnTo` を使ってNo.27の廃棄申請管理画面へ遷移し、No.24の後続操作を実行しない。完了書類はNo.27が `application_documents(owner_type=''RFQ'', rfq_id=disposalTaskId, step_code=''COMPLETE'', document_category=''COMPLETE'')` として管理する。'
     ) `
     -ResponseRows @(
       @('context', 'RfqContext', '✓', '管理区分、戻り先、次画面候補'),
@@ -428,32 +433,30 @@ $endpointBlocks = @(
     )
 
   New-EndpointBlock `
-    -Title '廃棄・移動ワークフロー操作' `
-    -Overview '廃棄/移動承認待ち、承認済みワークフローに対して承認、却下、完了を実行する。' `
+    -Title '移動ワークフロー操作（廃棄は旧データ移行境界）' `
+    -Overview '移動ワークフローの承認、却下、完了を実行する。新モデルの廃棄申請（`DISPOSAL/RFQ`）に対する承認・却下・完了は本APIでは実行せず、No.27へ委譲する。' `
     -Method 'POST' `
     -Path '/quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action' `
     -Auth 'Bearer' `
     -ParametersRows @(
-      @('rfqGroupId', 'path', 'int64', '✓', '対象廃棄/移動ワークフローID')
+      @('rfqGroupId', 'path', 'int64', '✓', '対象移動ワークフローID。新モデルの廃棄申請タスクには使用しない')
     ) `
     -RequestRows @(
-      @('action', 'string', '✓', '`APPROVE` / `REJECT` / `COMPLETE_DISPOSAL` / `COMPLETE_TRANSFER`'),
+      @('action', 'string', '✓', '`APPROVE` / `REJECT` / `COMPLETE_TRANSFER`。`COMPLETE_DISPOSAL` は新規APIでは受け付けない'),
       @('comment', 'string', '-', '画面入力欄はないため任意。指定時のみ備考として保存'),
       @('expectedUpdatedAt', 'datetime', '-', '競合検知用')
     ) `
     -PermissionLines $transferDisposalPermissionLines `
     -ProcessingLines @(
-      '本APIは画面から実行する承認、却下、完了操作だけを扱い、次状態はワークフロー種別と現在ステータスからサーバー側で検証する。',
-      '`APPROVE` は `廃棄承認待ち` から `廃棄承認済み`、または `移動承認待ち` から `移動承認済み` へ遷移する。',
-      '`REJECT` は承認待ち状態から `申請を見送る` へ遷移し、`rfqs.rejected_on` を設定する。',
-      '`COMPLETE_DISPOSAL` は `廃棄承認済み` から `廃棄完了`、`COMPLETE_TRANSFER` は `移動承認済み` から `移動完了` へ遷移する。',
-      'No.24内の廃棄/移動進行状態は `rfqs.status` を正本とし、`applications.status` は更新しない。',
-      '編集リスト起点の廃棄/移動ワークフローは `rfq_applications.application_id` を持つため、遷移成功時は対象申請ごとに更新前後の `rfqs.status` と操作コメントを `application_status_histories` へ記録する。',
+      '対象が `rfqs.management_type=''DISPOSAL''`、`workflow_type=''RFQ''` の場合は 409 (`DISPOSAL_TASK_DELEGATED`) を返し、No.27の廃棄申請管理APIを呼び出すよう案内する。`REMODEL/DISPOSAL` の旧データ更新も新APIでは実行せず、移行処理の対象とする。',
+      '本APIは `workflow_type=''TRANSFER''` の承認、却下、完了だけを扱い、次状態は現在ステータスからサーバー側で検証する。',
+      '`APPROVE` は `移動承認待ち` から `移動承認済み`、`REJECT` は承認待ちから `申請を見送る`、`COMPLETE_TRANSFER` は `移動承認済み` から `移動完了` へ遷移する。',
+      '移動操作では対象 `applications.status` を更新せず、既存の移動ワークフロー履歴方式に従う。',
       '遷移は `rfq_status_transitions` に存在する組み合わせだけ許可する。'
     ) `
     -ResponseRows @(
       @('rfqGroupId', 'int64', '✓', '対象ID'),
-      @('workflowType', 'string', '✓', '`DISPOSAL` / `TRANSFER`'),
+      @('workflowType', 'string', '✓', '`TRANSFER`。新モデルの廃棄は `DISPOSAL/RFQ` としてNo.27で管理'),
       @('status', 'string', '✓', '更新後ステータス'),
       @('approvedOn', 'date', '-', '承認日'),
       @('rejectedOn', 'date', '-', '却下日'),
@@ -986,9 +989,10 @@ $endpointBlocks = @(
       '対象 `edit_lists` 行をDBロックし、有効な `edit_list_work_locks` が存在しないことを検証する。',
       '全対象明細で方針が決定済みであることを検証する。',
       '廃棄以外の明細に `target_facility_id`、`target_building_name`、`target_floor_name`、`target_department_name`、`target_section_name`、`target_room_name`、`target_installation_location` の必要項目が入力済みであることを検証する。',
-      '当該編集リストに紐づく未削除 `rfqs` が全て終端状態であることを検証する。RFQは `完了` または `申請を見送る`、廃棄は `廃棄完了` または `申請を見送る`、移動は `移動完了` または `申請を見送る` を終端とする。',
+      '当該編集リストに紐づく未削除 `rfqs` が全て終端状態であることを検証する。通常リモデルRFQは `rfqs.status=''完了''` または `申請を見送る`、リモデル起点廃棄は `rfqs.status=''完了''` かつ対象 `applications.status=''完了''`、または `rfqs.status=''申請を見送る''` かつ対象 `applications.status=''申請見送り''`、移動は既存移動ワークフローの終端状態を確認する。',
+      'リモデル起点廃棄の登録済み資産は、No.27の完了登録で `asset_ledgers.status=''廃棄済''` になっていることを確認する。未完了の廃棄申請、廃棄済み未反映資産、または `remodelCloseImpact` の不足情報がある場合は409 (`REMODEL_CLOSE_NOT_READY`) を返す。',
       '原本登録未完了の対象が残る場合は拒否する。',
-      '`facility_location_remodels` に保持した新居情報を読み取り、追加/更新/移動/廃棄方針に応じて `asset_ledgers`、`facility_locations`、`asset_ledger_histories`、`edit_list_items.reflection_status`、`edit_lists.status/closed_at/closed_by_user_id` を同一トランザクションで更新する。',
+      '`facility_location_remodels` に保持した新居情報を読み取り、通常リモデルの追加/更新/移動方針に応じて `asset_ledgers`、`facility_locations`、`asset_ledger_histories`、`edit_list_items.reflection_status`、`edit_lists.status/closed_at/closed_by_user_id` を同一トランザクションで更新する。リモデル起点廃棄の資産台帳更新はNo.27に重複実装しない。',
       '新居情報を現状へ反映した `facility_location_remodels` は `deleted_at` を設定し、有効なリモデル先情報から除外する。',
       '`asset_ledger_histories` 作成時は `change_source_type=''EDIT_LIST_CLOSE''`、`change_source_id=editListId`、`change_type`、変更前後JSON、`changed_by_user_id`、`changed_at` を設定する。',
       '1件でも反映エラーが残る場合は `edit_lists.status=''CLOSED''` へ進めない。'
@@ -998,9 +1002,10 @@ $endpointBlocks = @(
       @('status', 'string', '✓', '`CLOSED`'),
       @('closedAt', 'datetime', '✓', 'クローズ日時'),
       @('closedByUserId', 'int64', '✓', '実行者ユーザーID'),
-      @('reflectedCount', 'int32', '✓', '原本反映件数'),
+      @('reflectedCount', 'int32', '✓', '通常リモデルの原本反映件数。廃棄資産の廃棄済み更新はNo.27で実施済み'),
       @('skippedCount', 'int32', '✓', '反映不要件数'),
-      @('closeBlockers', 'CloseBlocker[]', '✓', '空配列')
+      @('closeBlockers', 'CloseBlocker[]', '✓', '空配列。未達時は `REMODEL_CLOSE_NOT_READY` と不足対象を返す'),
+      @('remodelCloseImpact', 'object', '✓', 'No.27完了登録から引き継いだリモデル起点廃棄の終端・資産状態・原本登録状況')
     )
 )
 
@@ -1009,15 +1014,15 @@ $endpointBlocks = @(
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_リモデル管理.docx'
   ScreenLabel = 'リモデル管理'
   CoverDateText = '2026年5月30日'
-  RevisionVersionText = '1.0'
-  RevisionDateText = '2026/5/30'
-  RevisionSummaryText = '初版作成'
-  RevisionAuthorText = '-'
+  RevisionVersionText = '1.1'
+  RevisionDateText = '2026/7/21'
+  RevisionSummaryText = 'リモデル起点廃棄のNo.27委譲、クローズ判定、API表現の整理'
+  RevisionAuthorText = 'Codex'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
-    @{ Type = 'Paragraph'; Text = '本書は、リモデル管理画面および関連する共通後続画面で利用するAPIの設計内容を整理し、クライアント、開発者、運用担当者が共通認識を持つことを目的とする。' },
-    @{ Type = 'Paragraph'; Text = 'リモデル管理は、編集リストから作成されたリモデルRFQ、廃棄ワークフロー、移動ワークフローを進行し、見積依頼、見積登録、発注登録、納品検収日登録、検収登録、原本登録、リモデルクローズまでを扱う。' },
+    @{ Type = 'Paragraph'; Text = '本書は、リモデル管理画面および関連する共通後続画面で利用するAPIの設計内容を整理し、関係者が共通認識を持つことを目的とする。' },
+    @{ Type = 'Paragraph'; Text = 'リモデル管理は、編集リストから作成された通常リモデルRFQと、リモデル起点廃棄申請グループの関連表示、通常RFQの後続進行、リモデルクローズを扱う。廃棄申請の見積依頼、見積登録、発注登録、作業日、完了登録はNo.27の廃棄申請管理へ委譲する。' },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = '対象システムは医療機器管理システムである。本機能はリモデル編集リストで方針決定された購入、更新、増設、廃棄、移動対象を、RFQ、見積、発注、検収、原本反映まで進行管理する業務機能として位置づける。' },
     @{ Type = 'Heading2'; Text = '対象画面' },
@@ -1035,31 +1040,32 @@ $endpointBlocks = @(
     @{ Type = 'Bullets'; Items = @(
       '編集リスト本体操作、Data Link、見積DB Link、フリーカラム、行順変更、行削除、編集リスト画面で行選択して実行するRFQ作成は「編集リスト」API設計書を正本とする',
       '購入管理タブの申請受付一覧から行う購入申請取り込み、および通常購入RFQの一覧・後続進行は「購入管理」API設計書を正本とする',
-      '本書では `rfqs.management_type=''REMODEL''` のRFQ/廃棄/移動ワークフローを対象とし、通常購入RFQとは混在させない',
+      '本書では通常リモデルRFQ（`REMODEL/RFQ`）と、`rfq_applications` からリモデル編集リストへ辿れる廃棄グループ（`DISPOSAL/RFQ`）を対象とする。廃棄グループを `REMODEL/DISPOSAL` として新規作成・更新しない',
       'Phase1では個別依頼送信API、`send-bulk`、RFQプロセスの業者向け `SHIPへ一括依頼` は定義しない。業者への見積依頼はシステム外で実施し、Phase2でOutlook連携を扱う場合もメール送信完了は管理しない',
       'SHIP代理作業依頼は、見積書アップロード後のOCR〜見積DB登録代理依頼としてPhase2で再整理する。業者への見積依頼送信や `rfq_vendors.request_status=''SENT''` 更新とは別責務とする',
       'OCR実行サービス、Excel取込API、AI推論サービス自体は対象外とし、画面で確認・採用された結果の保存を扱う',
-      '廃棄/移動は画面の承認、却下、完了操作に対応する単純な状態遷移として扱う'
+      '廃棄申請の後続操作はNo.27へ委譲し、No.24では関連表示とリモデルクローズ時の終端判定だけを扱う。移動の既存承認・完了操作は本書の移動ワークフロー契約に従う'
     ) },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('リモデル編集リスト', '`edit_lists.list_type=''REMODEL''` の編集リスト。リモデル対象資産、購入/更新/増設/廃棄/移動方針、新設置場所を保持する'),
       @('リモデルRFQ', '`rfqs.management_type=''REMODEL''` かつ `workflow_type=''RFQ''` の見積依頼グループ'),
-      @('廃棄ワークフロー', '`rfqs.management_type=''REMODEL''` かつ `workflow_type=''DISPOSAL''` の廃棄承認・完了管理'),
+      @('リモデル起点廃棄グループ', '`rfqs.management_type=''DISPOSAL''` かつ `workflow_type=''RFQ''`。`rfq_applications.edit_list_id` / `edit_list_item_id` からリモデル編集リストへ辿り、後続処理はNo.27が管理する'),
       @('移動ワークフロー', '`rfqs.management_type=''REMODEL''` かつ `workflow_type=''TRANSFER''` の移動承認・完了管理'),
       @('リモデルクローズ', '編集リスト単位で全ワークフロー終端、原本登録、新設置場所入力を確認し、新居情報と原本資産へ反映する確定処理')
     ) },
 
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'APIの位置づけ' },
-    @{ Type = 'Paragraph'; Text = '本API群は、編集リストAPIで作成された `rfqs.management_type=''REMODEL''` のRFQ、廃棄ワークフロー、移動ワークフローを後続工程へ進めるための親API設計である。編集リスト本体の行編集やRFQ作成はNo.23、通常購入RFQの一覧・後続進行はNo.25を正本とし、本書はリモデル管理タブから呼び出される一覧、ダッシュボード、共通後続画面連携、リモデルクローズを扱う。' },
+    @{ Type = 'Paragraph'; Text = '本API群は、編集リストAPIで作成された通常リモデルRFQの後続進行と、リモデル起点の `DISPOSAL/RFQ` 廃棄グループの関連表示・クローズ判定を扱う親API設計である。編集リスト本体の行編集、RFQ作成、廃棄申請正本の作成はNo.23、通常購入RFQの一覧・後続進行はNo.25、廃棄タスクの見積・発注・作業日・完了はNo.27を正本とする。' },
     @{ Type = 'Heading2'; Text = '画面とAPIの関係' },
     @{ Type = 'Table'; Headers = @('画面操作', 'API', '補足'); Rows = @(
       @('リモデル管理初期表示', '`GET /quotation-data-box/remodel-management/context`', '編集リスト候補、選択肢、権限、戻り先を取得'),
       @('リモデル管理一覧表示・絞り込み', '`GET /quotation-data-box/remodel-management/tasks`', 'RFQ/廃棄/移動ワークフローを同一一覧で取得'),
       @('期限・実績日の編集', '`PATCH /quotation-data-box/remodel-management/rfq-groups/{rfqGroupId}/deadlines`', 'ステータス別の日付項目を更新'),
       @('リモデルダッシュボード表示', '`GET /quotation-data-box/remodel-dashboard`', '編集リスト単位の進捗、クローズ可否、不可理由を取得'),
-      @('廃棄/移動の承認・却下・完了', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action`', '画面にある単純な承認、却下、完了操作だけを扱う'),
+      @('廃棄タスクを開く', '`GET /quotation-data-box/rfq-groups/{rfqGroupId}` → No.27', '`DISPOSAL/RFQ` の関連情報と戻り先を解決し、後続操作をNo.27へ委譲する'),
+      @('移動の承認・却下・完了', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action`', '移動ワークフローだけを扱い、新モデル廃棄には使用しない'),
       @('RFQプロセスの見積登録先業者保存', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests` ほか', '見積業者行の保存と未確定削除を扱う。個別送信・一括送信はPhase1対象外'),
       @('見積登録共通画面', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/quotation-drafts` ほか', 'ドラフト作成から見積確定までを扱う'),
       @('発注登録', '`POST /quotation-data-box/order-registration/orders`', '発注ヘッダー、発注明細、支払条件、支払方法を保存'),
@@ -1069,8 +1075,8 @@ $endpointBlocks = @(
     @{ Type = 'Heading2'; Text = '業務フロー概要' },
     @{ Type = 'Table'; Headers = @('工程', '起点', '結果', '主な正本テーブル'); Rows = @(
       @('編集リストからRFQ作成', '編集リストAPI', '`management_type=''REMODEL''` / `workflow_type=''RFQ''` のRFQを作成', '`edit_lists` / `edit_list_items` / `rfqs` / `rfq_applications`'),
-      @('編集リストから廃棄/移動申請作成', '編集リストAPI', '`workflow_type=''DISPOSAL''` / `TRANSFER` のワークフローを作成', '`rfqs` / `rfq_applications`'),
-      @('リモデル管理一覧', 'リモデル管理API', 'RFQ/廃棄/移動を同一一覧で進行管理', '`rfqs` / `rfq_vendors`'),
+      @('編集リストから廃棄/移動申請作成', '編集リストAPI', '`applications` / `application_assets` の申請正本を作成。廃棄依頼グループは作成しない', '`applications` / `application_assets` / `application_status_histories`'),
+      @('リモデル管理一覧', 'リモデル管理API', '`REMODEL/RFQ` と関連 `DISPOSAL/RFQ` を表示し、廃棄後続はNo.27へ委譲', '`rfqs` / `rfq_applications` / `rfq_vendors`'),
       @('見積登録', 'RFQプロセス', '見積ドラフト保存、見積確定、ステータス更新', '`quotations` / `quotation_items`'),
       @('発注・検収・原本登録', '共通後続画面', '発注、納期確定、検収済、完了へ進行', '`orders` / `order_items` / `individuals` / `asset_ledgers`'),
       @('リモデルクローズ', 'リモデルダッシュボード', '編集リストCLOSED、新居→現状反映、履歴保存', '`edit_lists` / `edit_list_items` / `facility_location_remodels` / `facility_locations` / `asset_ledger_histories`')
@@ -1090,7 +1096,7 @@ $endpointBlocks = @(
       @('`rfq_status_transitions`', 'READ', 'ステータス遷移許可判定'),
       @('`rfq_applications`', 'READ', 'RFQ/廃棄/移動に採用された編集リスト明細・申請明細のリンク'),
       @('`applications`', 'READ', '廃棄/移動ワークフローに紐づく申請情報'),
-      @('`application_status_histories`', 'CREATE', '廃棄/移動ワークフローの承認、却下、完了操作履歴。No.24では申請状態ではなくRFQ進行状態の操作履歴として使用'),
+      @('`application_status_histories`', 'READ', 'リモデル起点廃棄申請の状態・起票履歴を参照。申請作成は編集リストAPI、廃棄後続の状態更新はNo.27が担当し、No.24は更新しない'),
       @('`rfq_vendors`', 'READ / CREATE / UPDATE / DELETE', '見積業者行、取得済み見積の業者、提出期限、補足メモ。Phase1では送信完了の正本として `SENT` を更新しない'),
       @('`quotations`', 'READ / CREATE / UPDATE', '見積ヘッダー、見積フェーズ、確定状態、添付参照'),
       @('`quotation_items`', 'READ / CREATE / UPDATE', '見積明細、明細区分、分類、AI採用結果、按分結果'),
@@ -1118,7 +1124,7 @@ $endpointBlocks = @(
       '認証済みAPIは Bearer トークンを `Authorization` ヘッダーに付与する',
       '一覧APIは cursor 方式のページングを基本とし、`limit` の既定値は50、最大値は200とする',
       '変更系APIは `Idempotency-Key` または `expectedUpdatedAt` を受け付け、二重送信または競合更新を検出する',
-      '共通後続画面は `rfqGroupId` だけで遷移しても、APIが `rfqs.management_type` から `managementType` と既定 `returnTo` を解決して返す'
+      '共通後続画面は `rfqGroupId` だけで遷移しても、APIが `rfqs.management_type` と `rfq_applications` の起票元リンクから `managementType`、`isRemodelOrigin`、`editListId`、`remodelCloseImpact`、既定 `returnTo` を解決して返す'
     ) },
     @{ Type = 'Heading2'; Text = '認証・認可' },
     @{ Type = 'Paragraph'; Text = '本API群は、ロール固定ではなく対象施設に対する実効 `feature_code` で認可する。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず、リモデル見積、リモデル発注、リモデル検収・原本反映、廃棄・移動操作の対象 `feature_code` を有効として扱う。' },
@@ -1126,7 +1132,7 @@ $endpointBlocks = @(
       @('`remodel_purchase`', 'リモデル管理一覧、見積登録先業者保存、未確定業者行削除、見積登録ドラフト、見積確定', 'リモデル見積工程'),
       @('`remodel_order`', '発注登録', 'リモデル発注工程'),
       @('`remodel_acceptance`', '納品検収日登録、検収登録、原本登録、リモデルクローズ', 'リモデル検収・原本反映工程'),
-      @('`transfer_disposal`', '廃棄/移動の承認、却下、廃棄完了、移動完了', '廃棄・移動操作')
+      @('`transfer_disposal`', 'リモデル起点廃棄のNo.27遷移、既存移動の承認・却下・完了', '廃棄・移動操作')
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
@@ -1156,9 +1162,8 @@ $endpointBlocks = @(
       @('RFQ', '納品検収日登録', '`発注済`', '`納期確定`', '`POST /quotation-data-box/inspection-registration/records`'),
       @('RFQ', '検収登録完了', '`納期確定`', '`検収済`', '`POST /quotation-data-box/asset-provisional-registration/complete`'),
       @('RFQ', '原本資産登録', '`検収済`', '`完了`', '`POST /quotation-data-box/asset-registration/register-bulk`'),
-      @('DISPOSAL', '廃棄承認', '`廃棄承認待ち`', '`廃棄承認済み`', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action`'),
-      @('DISPOSAL', '廃棄却下', '`廃棄承認待ち`', '`申請を見送る`', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action`'),
-      @('DISPOSAL', '廃棄完了', '`廃棄承認済み`', '`廃棄完了`', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action`'),
+      @('DISPOSAL/RFQ', '廃棄後続処理', '`見積依頼` / `見積依頼済` / `見積DB登録済` / `発注用見積登録済` / `発注済` / `納期確定`', '`完了` または `申請を見送る`', 'No.27 廃棄申請管理API'),
+      @('DISPOSAL/RFQ', 'リモデル起点資産状態', '廃棄タスク完了前', '`asset_ledgers.status=''廃棄済''`', 'No.27 完了登録API'),
       @('TRANSFER', '移動承認', '`移動承認待ち`', '`移動承認済み`', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action`'),
       @('TRANSFER', '移動却下', '`移動承認待ち`', '`申請を見送る`', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action`'),
       @('TRANSFER', '移動完了', '`移動承認済み`', '`移動完了`', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action`')
@@ -1197,9 +1202,10 @@ $endpointBlocks = @(
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '編集リストとの連携ルール' },
     @{ Type = 'Bullets'; Items = @(
-      '編集リスト上で行を追加・編集しただけではリモデル管理一覧には表示しない。リモデル管理に表示するトリガーは、編集リストAPIでRFQ作成または廃棄/移動申請作成が完了した時点とする',
+      '編集リスト上で行を追加・編集しただけではリモデル管理一覧には表示しない。通常RFQ作成または廃棄申請正本作成後にNo.27で廃棄依頼グループが作成された時点で、リモデル起点廃棄を関連表示する',
       'RFQ作成は編集リストAPIで `editListItemIds[]` を受け取り、`edit_lists.list_type=''REMODEL''` から `rfqs.management_type=''REMODEL''` を確定する',
-      '廃棄/移動申請作成は編集リストAPIで行い、`rfqs.workflow_type=''DISPOSAL''` または `TRANSFER` として作成する',
+      '廃棄申請作成は編集リストAPIで `applications` / `application_assets` の申請正本を作成し、No.27のグループ作成APIが `DISPOSAL/RFQ` と `rfq_applications` を作成する。No.24で `REMODEL/DISPOSAL` のワークフロー行を作成しない',
+      'リモデル起点廃棄の表示・詳細・クローズ影響は `rfq_applications.edit_list_id` / `edit_list_item_id` から解決する',
       'リモデル管理は作成済みワークフローの進行管理を担当し、編集リスト明細の通常編集、Data Link、見積DB Link、行削除、行順変更は担当しない',
       '編集リスト作業ロックは編集リスト画面への入場と編集リスト更新APIを制御する。RFQ進行は作業ロック中でも実行できるが、リモデルクローズは有効な作業ロックが残っていないことを検証してから実行する'
     ) },
@@ -1216,7 +1222,8 @@ $endpointBlocks = @(
       'クローズはRFQ単位ではなく `editListId` 単位で実行する',
       '全対象明細でリモデル方針が決定済みであることを必須とする',
       '廃棄方針以外の明細では新設置場所が入力済みであることを必須とする',
-      'RFQは `完了` または `申請を見送る`、廃棄は `廃棄完了` または `申請を見送る`、移動は `移動完了` または `申請を見送る` を終端状態とする',
+      '通常RFQは `完了` または `申請を見送る`、リモデル起点廃棄は `rfqs.status=''完了''` かつ対象 `applications.status=''完了''`、または両方の見送り状態、移動は `移動完了` または `申請を見送る` を終端状態とする',
+      'リモデル起点廃棄の資産台帳を `廃棄済` にする処理はNo.27完了登録が実行し、No.24クローズでは重複更新しない',
       '原本登録未完了の対象が残る場合はクローズ不可とする',
       '有効な編集リスト作業ロックが残る場合はクローズ不可とする',
       'クローズ時は対象 `edit_lists` 行をロックし、原本資産、個別部署マスタ、履歴、編集リスト状態を同一トランザクションで更新する'
@@ -1245,8 +1252,8 @@ $endpointBlocks = @(
     @{ Type = 'Heading1'; Text = '第8章 運用・保守方針' },
     @{ Type = 'Heading2'; Text = 'データ保守方針' },
     @{ Type = 'Bullets'; Items = @(
-      'リモデル管理対象は `rfqs.management_type=''REMODEL''` で判定し、通常購入、修理、保守契約とは一覧・進行を分離する',
-      '廃棄/移動は `management_type=''REMODEL''` のまま `workflow_type` で区分し、リモデルダッシュボードとクローズ判定から分離しない',
+      '通常リモデル管理対象は `rfqs.management_type=''REMODEL''`、`workflow_type=''RFQ''` で判定し、通常購入、修理、保守契約とは一覧・進行を分離する。リモデル起点廃棄は `DISPOSAL/RFQ` を `rfq_applications` の行リンクで関連表示する',
+      '新モデルの廃棄申請は `management_type=''DISPOSAL''`、`workflow_type=''RFQ''` としてNo.27が管理する。No.24では旧 `REMODEL/DISPOSAL` の承認状態を新規状態として使用せず、クローズ判定ではNo.27が返す終端・資産状態・原本登録状況を参照する',
       '見積依頼先、見積、発注、検収、原本登録の各工程はRFQステータス定義・遷移定義に従って更新する',
       '検収登録済み個体の中間正本は `individuals` とし、原本登録時に `asset_ledgers` へ反映する',
       'リモデルクローズ時の原本反映履歴は `asset_ledger_histories` に `change_source_type=''EDIT_LIST_CLOSE''`、`change_source_id=editListId` として保持し、編集リスト明細単位の反映結果は `edit_list_items.reflection_status` に保持する'

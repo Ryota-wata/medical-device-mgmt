@@ -1,0 +1,1527 @@
+openapi: 3.0.4
+info:
+  title: SHIPユーザー管理 API API
+  version: '1.1'
+  description: SHIPユーザー管理で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: SHIPユーザー管理
+    description: SHIPユーザー管理 APIのAPI
+paths:
+  /ship-user-management/context:
+    get:
+      tags:
+        - SHIPユーザー管理
+      operationId: getShipUserManagementContext
+      summary: 画面コンテキスト取得
+      description: SHIPユーザー管理画面の初期表示に必要な操作可否、施設候補の初期集合、機能・カラム候補の基本情報を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: user_list_view
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipUserManagementContextResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 user_list_view なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：ShipUserManagementContextResponse）
+      x-word-response-subtable-titles:
+        - permissions要素（ShipUserManagementPermissions）
+        - featureCatalogs要素（FeatureCatalogItem）
+        - columnCatalogs要素（ColumnCatalogItem）
+        - facilityCandidates要素（FacilityPermissionCandidate）
+      x-word-response-subtables:
+        - Title: permissions要素（ShipUserManagementPermissions）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - canView
+              - boolean
+              - ✓
+              - 一覧参照可否
+            - - canCreate
+              - boolean
+              - ✓
+              - 新規作成可否
+            - - canEditProfile
+              - boolean
+              - ✓
+              - 基本情報編集可否
+            - - canEditFacilityAssignments
+              - boolean
+              - ✓
+              - 担当施設・権限編集可否
+            - - canDelete
+              - boolean
+              - ✓
+              - 削除可否
+        - Title: featureCatalogs要素（FeatureCatalogItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - featureCode
+              - string
+              - ✓
+              - 機能コード
+            - - featureName
+              - string
+              - ✓
+              - 機能名
+            - - categoryCode
+              - string
+              - ✓
+              - 大分類コード
+            - - menuGroupCode
+              - string
+              - '-'
+              - メニューグループコード
+            - - featureKind
+              - string
+              - ✓
+              - 機能種別
+            - - usageContext
+              - string
+              - ✓
+              - 利用文脈
+            - - sortOrder
+              - int32
+              - ✓
+              - 表示順
+        - Title: columnCatalogs要素（ColumnCatalogItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - columnCode
+              - string
+              - ✓
+              - カラムコード
+            - - columnName
+              - string
+              - ✓
+              - カラム名
+            - - relatedFeatureCode
+              - string
+              - ✓
+              - 関連機能コード
+            - - columnGroupCode
+              - string
+              - ✓
+              - カラム分類コード
+            - - usageContext
+              - string
+              - ✓
+              - 利用文脈
+            - - sortOrder
+              - int32
+              - ✓
+              - 表示順
+        - Title: facilityCandidates要素（FacilityPermissionCandidate）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityCode
+              - string
+              - ✓
+              - 施設コード
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - establishmentId
+              - int64
+              - ✓
+              - 設立母体ID
+            - - availableFeatureCodes
+              - string[]
+              - ✓
+              - 当該施設で提供されているユーザー別設定対象の機能コード一覧
+            - - availableColumnCodes
+              - string[]
+              - ✓
+              - 当該施設で提供されているカラムコード一覧
+  /ship-user-management/users:
+    get:
+      tags:
+        - SHIPユーザー管理
+      operationId: getShipUserManagementUsers
+      summary: SHIPユーザー一覧取得
+      description: account_type='SHIP' の通常ユーザー一覧を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: user_list_view
+      parameters:
+        - name: name
+          in: query
+          required: false
+          description: ユーザー名の部分一致条件
+          schema:
+            type: string
+        - name: sectionName
+          in: query
+          required: false
+          description: 部署の部分一致条件。users.section_name を対象とする
+          schema:
+            type: string
+        - name: facilityId
+          in: query
+          required: false
+          description: 担当施設ID。対象SHIPユーザーの担当施設に含まれる場合に一致
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          required: false
+          description: ページ番号。既定値 1
+          schema:
+            type: integer
+            format: int32
+        - name: pageSize
+          in: query
+          required: false
+          description: ページサイズ。既定値 50、上限 200
+          schema:
+            type: integer
+            format: int32
+        - name: sortBy
+          in: query
+          required: false
+          description: 並び替え項目。updatedAt / name / sectionName / positionName / emailAddress
+          schema:
+            type: string
+        - name: sortOrder
+          in: query
+          required: false
+          description: 並び順。asc / desc
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipUserListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 user_list_view なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：ShipUserListResponse）
+      x-word-response-subtable-titles:
+        - items要素（ShipUserSummary）
+        - assignedFacilities要素（ShipUserAssignedFacilitySummary）
+      x-word-response-subtables:
+        - Title: items要素（ShipUserSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - userId
+              - int64
+              - ✓
+              - ユーザーID
+            - - sectionName
+              - string
+              - '-'
+              - 所属部署
+            - - positionName
+              - string
+              - '-'
+              - 役職
+            - - name
+              - string
+              - ✓
+              - ユーザー名
+            - - phoneNumber
+              - string
+              - '-'
+              - 連絡先
+            - - emailAddress
+              - string
+              - ✓
+              - メールアドレス
+            - - assignedFacilities
+              - ShipUserAssignedFacilitySummary[]
+              - ✓
+              - 一覧表示用の担当施設サマリ
+            - - updatedAt
+              - string(datetime)
+              - ✓
+              - 更新日時
+        - Title: assignedFacilities要素（ShipUserAssignedFacilitySummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 担当施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 担当施設名
+            - - isDefault
+              - boolean
+              - ✓
+              - 既定施設の場合 true
+    post:
+      tags:
+        - SHIPユーザー管理
+      operationId: postShipUserManagementUsers
+      summary: SHIPユーザー新規作成
+      description: SHIPユーザーの基本情報、既定施設、担当施設、施設別機能設定、施設別表示カラム設定を登録する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code-all
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-codes:
+        - user_edit
+        - user_facility_assignment_edit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostShipUserManagementUsersRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - facilityAssignments要素（ShipUserFacilityAssignmentInput）
+      x-word-request-subtables:
+        - Title: facilityAssignments要素（ShipUserFacilityAssignmentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 担当施設ID。未削除施設のみ指定可能
+            - - enabledFeatureCodes
+              - string[]
+              - ✓
+              - 対象施設で提供中の config_scope=FACILITY_USER 機能のうち、対象ユーザーへ有効化するコード
+            - - enabledColumnCodes
+              - string[]
+              - ✓
+              - 対象施設で提供中のカラムのうち、対象ユーザーへ有効化するコード
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipUserCreateResponse'
+        '400':
+          description: 入力不正、担当施設未指定、既定施設が担当施設に含まれない、担当施設重複
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 user_edit または user_facility_assignment_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 指定施設が存在しない、または論理削除済み。機能コード、カラムコードが存在しない場合も含む
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: メールアドレス重複、または施設提供設定と矛盾する機能・カラム指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：ShipUserCreateResponse）
+  /ship-user-management/users/{userId}:
+    get:
+      tags:
+        - SHIPユーザー管理
+      operationId: getShipUserManagementUsersByUserId
+      summary: SHIPユーザー基本情報取得
+      description: 指定したSHIPユーザーの基本情報を取得する。担当施設・施設別機能設定は含めない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: user_edit
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 対象ユーザーID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetShipUserManagementUsersByUserIdResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 user_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象SHIPユーザーが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': ShipUserProfileResponse
+      x-word-response-title: レスポンス（200：ShipUserProfileResponse）
+    delete:
+      tags:
+        - SHIPユーザー管理
+      operationId: deleteShipUserManagementUsersByUserId
+      summary: SHIPユーザー削除
+      description: 指定したSHIPユーザーを論理削除し、担当施設設定とユーザー施設別設定を削除する。自身の削除は認めない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: user_edit
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 削除対象ユーザーID
+          schema:
+            type: integer
+            format: int64
+        - name: lastKnownUpdatedAt
+          in: query
+          required: true
+          description: 取得時点の updatedAt。競合検知に用いる
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 user_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象SHIPユーザーが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 更新競合、または自身削除禁止
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：No Content）
+      x-word-response-lines:
+        - Body は返却しない。
+  /ship-user-management/users/{userId}/facility-assignments:
+    get:
+      tags:
+        - SHIPユーザー管理
+      operationId: getShipUserManagementUsersByUserIdFacilityAssignments
+      summary: SHIPユーザー担当施設・権限取得
+      description: 指定したSHIPユーザーの既定施設、担当施設、施設別機能設定、施設別表示カラム設定を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: user_facility_assignment_edit
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 対象ユーザーID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetShipUserManagementUsersByUserIdFacilityAssignmentsResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 user_facility_assignment_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象SHIPユーザーが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': ShipUserFacilityAssignmentsResponse
+      x-word-response-title: レスポンス（200：ShipUserFacilityAssignmentsResponse）
+      x-word-response-subtable-titles:
+        - items要素（ShipUserFacilityAssignmentDetail）
+      x-word-response-subtables:
+        - Title: items要素（ShipUserFacilityAssignmentDetail）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - userFacilityAssignmentId
+              - int64
+              - ✓
+              - ユーザー施設割当ID
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityCode
+              - string
+              - ✓
+              - 施設コード
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - isDefault
+              - boolean
+              - ✓
+              - 既定施設フラグ
+            - - availableFeatureCodes
+              - string[]
+              - ✓
+              - 当該施設で提供されているユーザー別設定対象の機能コード一覧
+            - - availableColumnCodes
+              - string[]
+              - ✓
+              - 当該施設で提供されているカラムコード一覧
+            - - enabledFeatureCodes
+              - string[]
+              - ✓
+              - 当該ユーザーへ有効化済みの機能コード一覧
+            - - enabledColumnCodes
+              - string[]
+              - ✓
+              - 当該ユーザーへ有効化済みのカラムコード一覧
+    put:
+      tags:
+        - SHIPユーザー管理
+      operationId: putShipUserManagementUsersByUserIdFacilityAssignments
+      summary: SHIPユーザー担当施設・権限更新
+      description: SHIPユーザーの既定施設、担当施設、施設別機能設定、施設別表示カラム設定を更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: user_facility_assignment_edit
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 対象ユーザーID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutShipUserManagementUsersByUserIdFacilityAssignmentsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - facilityAssignments要素（ShipUserFacilityAssignmentInput）
+      x-word-request-subtables:
+        - Title: facilityAssignments要素（ShipUserFacilityAssignmentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 担当施設ID。未削除施設のみ指定可能
+            - - enabledFeatureCodes
+              - string[]
+              - ✓
+              - 対象施設で提供中の config_scope=FACILITY_USER 機能のうち、対象ユーザーへ有効化するコード
+            - - enabledColumnCodes
+              - string[]
+              - ✓
+              - 対象施設で提供中のカラムのうち、対象ユーザーへ有効化するコード
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutShipUserManagementUsersByUserIdFacilityAssignmentsResponse'
+        '400':
+          description: 入力不正、担当施設未指定、既定施設が担当施設に含まれない、担当施設重複
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 user_facility_assignment_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象SHIPユーザーまたは指定施設が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 施設提供設定と矛盾する機能・カラム指定、または更新競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': ShipUserFacilityAssignmentsResponse
+      x-word-response-title: レスポンス（200：ShipUserFacilityAssignmentsResponse）
+  /ship-user-management/facilities:
+    get:
+      tags:
+        - SHIPユーザー管理
+      operationId: getShipUserManagementFacilities
+      summary: 担当施設候補取得
+      description: SHIPユーザーへ割り当て可能な担当施設候補を取得する。候補は未削除の全施設とする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      x-feature-code: user_facility_assignment_edit
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          description: 施設名または施設コードの部分一致条件
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          description: ページ番号。既定値 1
+          schema:
+            type: integer
+            format: int32
+        - name: pageSize
+          in: query
+          required: false
+          description: ページサイズ。既定値 20、上限 100
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacilityPermissionCandidateListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 user_facility_assignment_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：FacilityPermissionCandidateListResponse）
+  /ship-user-management/users/{userId}/profile:
+    put:
+      tags:
+        - SHIPユーザー管理
+      operationId: putShipUserManagementUsersByUserIdProfile
+      summary: SHIPユーザー基本情報更新
+      description: SHIPユーザーの基本情報のみを更新する。担当施設・施設別機能設定は更新しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: user_edit
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 対象ユーザーID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutShipUserManagementUsersByUserIdProfileRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutShipUserManagementUsersByUserIdProfileResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 user_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象SHIPユーザーが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: メールアドレス重複、または更新競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': ShipUserProfileResponse
+      x-word-response-title: レスポンス（200：ShipUserProfileResponse）
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    ShipUserManagementContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - permissions
+        - facilityCandidates
+        - featureCatalogs
+        - columnCatalogs
+        - pageSizeOptions
+      properties:
+        permissions:
+          $ref: '#/components/schemas/ShipUserManagementPermissions'
+          description: 画面操作可否
+          x-word-subtable-title: permissions要素（ShipUserManagementPermissions）
+        facilityCandidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacilityPermissionCandidate'
+          description: 初期表示用の施設候補
+          x-word-subtable-title: facilityCandidates要素（FacilityPermissionCandidate）
+        featureCatalogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeatureCatalogItem'
+          description: 担当施設・権限設定で利用する機能カタログ
+          x-word-subtable-title: featureCatalogs要素（FeatureCatalogItem）
+        columnCatalogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ColumnCatalogItem'
+          description: 担当施設・権限設定で利用するカラムカタログ
+          x-word-subtable-title: columnCatalogs要素（ColumnCatalogItem）
+        pageSizeOptions:
+          type: array
+          items:
+            type: integer
+            format: int32
+          description: ページサイズ候補
+    ShipUserManagementPermissions:
+      type: object
+      additionalProperties: false
+      required:
+        - canView
+        - canCreate
+        - canEditProfile
+        - canEditFacilityAssignments
+        - canDelete
+      properties:
+        canView:
+          type: boolean
+          description: 一覧参照可否
+        canCreate:
+          type: boolean
+          description: 新規作成可否
+        canEditProfile:
+          type: boolean
+          description: 基本情報編集可否
+        canEditFacilityAssignments:
+          type: boolean
+          description: 担当施設・権限編集可否
+        canDelete:
+          type: boolean
+          description: 削除可否
+    FeatureCatalogItem:
+      type: object
+      additionalProperties: false
+      required:
+        - featureCode
+        - featureName
+        - categoryCode
+        - featureKind
+        - usageContext
+        - sortOrder
+      properties:
+        featureCode:
+          type: string
+          description: 機能コード
+        featureName:
+          type: string
+          description: 機能名
+        categoryCode:
+          type: string
+          description: 大分類コード
+        menuGroupCode:
+          type: string
+          description: メニューグループコード
+        featureKind:
+          type: string
+          description: 機能種別
+        usageContext:
+          type: string
+          description: 利用文脈
+        sortOrder:
+          type: integer
+          format: int32
+          description: 表示順
+    ColumnCatalogItem:
+      type: object
+      additionalProperties: false
+      required:
+        - columnCode
+        - columnName
+        - relatedFeatureCode
+        - columnGroupCode
+        - usageContext
+        - sortOrder
+      properties:
+        columnCode:
+          type: string
+          description: カラムコード
+        columnName:
+          type: string
+          description: カラム名
+        relatedFeatureCode:
+          type: string
+          description: 関連機能コード
+        columnGroupCode:
+          type: string
+          description: カラム分類コード
+        usageContext:
+          type: string
+          description: 利用文脈
+        sortOrder:
+          type: integer
+          format: int32
+          description: 表示順
+    FacilityPermissionCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityCode
+        - facilityName
+        - establishmentId
+        - availableFeatureCodes
+        - availableColumnCodes
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        facilityCode:
+          type: string
+          description: 施設コード
+        facilityName:
+          type: string
+          description: 施設名
+        establishmentId:
+          type: integer
+          format: int64
+          description: 設立母体ID
+        availableFeatureCodes:
+          type: array
+          items:
+            type: string
+          description: 当該施設で提供されているユーザー別設定対象の機能コード一覧
+        availableColumnCodes:
+          type: array
+          items:
+            type: string
+          description: 当該施設で提供されているカラムコード一覧
+    ShipUserListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - page
+        - pageSize
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 検索条件に一致する総件数
+        page:
+          type: integer
+          format: int32
+          description: 現在ページ番号
+        pageSize:
+          type: integer
+          format: int32
+          description: ページサイズ
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipUserSummary'
+          description: SHIPユーザー一覧
+          x-word-subtable-title: items要素（ShipUserSummary）
+    ShipUserSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - name
+        - emailAddress
+        - assignedFacilities
+        - updatedAt
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID
+        sectionName:
+          type: string
+          description: 所属部署
+        positionName:
+          type: string
+          description: 役職
+        name:
+          type: string
+          description: ユーザー名
+        phoneNumber:
+          type: string
+          description: 連絡先
+        emailAddress:
+          type: string
+          description: メールアドレス
+        assignedFacilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipUserAssignedFacilitySummary'
+          description: 一覧表示用の担当施設サマリ
+          x-word-subtable-title: assignedFacilities要素（ShipUserAssignedFacilitySummary）
+        updatedAt:
+          type: string
+          description: 更新日時
+    ShipUserAssignedFacilitySummary:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+        - isDefault
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 担当施設ID
+        facilityName:
+          type: string
+          description: 担当施設名
+        isDefault:
+          type: boolean
+          description: 既定施設の場合 true
+    GetShipUserManagementUsersByUserIdResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - name
+        - emailAddress
+        - isActive
+        - updatedAt
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID
+        name:
+          type: string
+          description: ユーザー名
+        emailAddress:
+          type: string
+          description: メールアドレス
+        departmentName:
+          type: string
+          description: 所属部門
+        sectionName:
+          type: string
+          description: 所属部署
+        positionName:
+          type: string
+          description: 役職
+        phoneNumber:
+          type: string
+          description: 連絡先
+        isActive:
+          type: boolean
+          description: アカウント有効フラグ
+        updatedAt:
+          type: string
+          description: 集約更新トークン
+    GetShipUserManagementUsersByUserIdFacilityAssignmentsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - defaultFacilityId
+        - updatedAt
+        - items
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID
+        defaultFacilityId:
+          type: integer
+          format: int64
+          description: 既定施設ID
+        updatedAt:
+          type: string
+          description: 集約更新トークン
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipUserFacilityAssignmentDetail'
+          description: 担当施設・権限一覧
+          x-word-subtable-title: items要素（ShipUserFacilityAssignmentDetail）
+    ShipUserFacilityAssignmentDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - userFacilityAssignmentId
+        - facilityId
+        - facilityCode
+        - facilityName
+        - isDefault
+        - availableFeatureCodes
+        - availableColumnCodes
+        - enabledFeatureCodes
+        - enabledColumnCodes
+      properties:
+        userFacilityAssignmentId:
+          type: integer
+          format: int64
+          description: ユーザー施設割当ID
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        facilityCode:
+          type: string
+          description: 施設コード
+        facilityName:
+          type: string
+          description: 施設名
+        isDefault:
+          type: boolean
+          description: 既定施設フラグ
+        availableFeatureCodes:
+          type: array
+          items:
+            type: string
+          description: 当該施設で提供されているユーザー別設定対象の機能コード一覧
+        availableColumnCodes:
+          type: array
+          items:
+            type: string
+          description: 当該施設で提供されているカラムコード一覧
+        enabledFeatureCodes:
+          type: array
+          items:
+            type: string
+          description: 当該ユーザーへ有効化済みの機能コード一覧
+        enabledColumnCodes:
+          type: array
+          items:
+            type: string
+          description: 当該ユーザーへ有効化済みのカラムコード一覧
+    FacilityPermissionCandidateListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - page
+        - pageSize
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 検索条件に一致する総件数
+        page:
+          type: integer
+          format: int32
+          description: 現在ページ番号
+        pageSize:
+          type: integer
+          format: int32
+          description: ページサイズ
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacilityPermissionCandidate'
+          description: 担当施設候補
+          x-word-omit-subtable: true
+    PostShipUserManagementUsersRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - emailAddress
+        - defaultFacilityId
+        - facilityAssignments
+      properties:
+        name:
+          type: string
+          description: ユーザー名
+        emailAddress:
+          type: string
+          description: メールアドレス。未削除ユーザー間で一意
+        departmentName:
+          type: string
+          description: 所属部門
+        sectionName:
+          type: string
+          description: 所属部署
+        positionName:
+          type: string
+          description: 役職
+        phoneNumber:
+          type: string
+          description: 連絡先
+        defaultFacilityId:
+          type: integer
+          format: int64
+          description: 既定施設ID。facilityAssignments に含める
+        facilityAssignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipUserFacilityAssignmentInput'
+          description: 担当施設と施設別機能・カラム設定。1件以上
+          x-word-subtable-title: facilityAssignments要素（ShipUserFacilityAssignmentInput）
+    ShipUserCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - defaultFacilityId
+        - updatedAt
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: 作成したユーザーID
+        defaultFacilityId:
+          type: integer
+          format: int64
+          description: 既定施設ID
+        updatedAt:
+          type: string
+          description: 集約更新トークン
+    ShipUserFacilityAssignmentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - enabledFeatureCodes
+        - enabledColumnCodes
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 担当施設ID。未削除施設のみ指定可能
+        enabledFeatureCodes:
+          type: array
+          items:
+            type: string
+          description: 対象施設で提供中の config_scope=FACILITY_USER 機能のうち、対象ユーザーへ有効化するコード
+        enabledColumnCodes:
+          type: array
+          items:
+            type: string
+          description: 対象施設で提供中のカラムのうち、対象ユーザーへ有効化するコード
+    PutShipUserManagementUsersByUserIdProfileRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - emailAddress
+        - isActive
+        - lastKnownUpdatedAt
+      properties:
+        name:
+          type: string
+          description: ユーザー名
+        emailAddress:
+          type: string
+          description: メールアドレス。未削除ユーザー間で一意
+        departmentName:
+          type: string
+          description: 所属部門
+        sectionName:
+          type: string
+          description: 所属部署
+        positionName:
+          type: string
+          description: 役職
+        phoneNumber:
+          type: string
+          description: 連絡先
+        isActive:
+          type: boolean
+          description: アカウント有効フラグ
+        lastKnownUpdatedAt:
+          type: string
+          description: 取得時点の updatedAt。競合検知に用いる
+    PutShipUserManagementUsersByUserIdProfileResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - name
+        - emailAddress
+        - isActive
+        - updatedAt
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID
+        name:
+          type: string
+          description: ユーザー名
+        emailAddress:
+          type: string
+          description: メールアドレス
+        departmentName:
+          type: string
+          description: 所属部門
+        sectionName:
+          type: string
+          description: 所属部署
+        positionName:
+          type: string
+          description: 役職
+        phoneNumber:
+          type: string
+          description: 連絡先
+        isActive:
+          type: boolean
+          description: アカウント有効フラグ
+        updatedAt:
+          type: string
+          description: 更新後の集約更新トークン
+    PutShipUserManagementUsersByUserIdFacilityAssignmentsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - defaultFacilityId
+        - facilityAssignments
+        - lastKnownUpdatedAt
+      properties:
+        defaultFacilityId:
+          type: integer
+          format: int64
+          description: 既定施設ID。facilityAssignments に含める
+        facilityAssignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipUserFacilityAssignmentInput'
+          description: 担当施設と施設別機能・カラム設定。1件以上
+          x-word-subtable-title: facilityAssignments要素（ShipUserFacilityAssignmentInput）
+        lastKnownUpdatedAt:
+          type: string
+          description: 取得時点の updatedAt。競合検知に用いる
+    PutShipUserManagementUsersByUserIdFacilityAssignmentsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - defaultFacilityId
+        - updatedAt
+        - items
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID
+        defaultFacilityId:
+          type: integer
+          format: int64
+          description: 既定施設ID
+        updatedAt:
+          type: string
+          description: 更新後の集約更新トークン
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipUserFacilityAssignmentDetail'
+          description: 更新後の担当施設・権限一覧
+          x-word-omit-subtable: true
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

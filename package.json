@@ -10,7 +10,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "api:foundation:verify": "node taniguchi/scripts/validate-api-design-foundation.mjs",
+    "api:source:audit": "npm run api:foundation:verify && node taniguchi/scripts/audit-api-openapi-migration.mjs --source-only",
+    "api:migration:audit": "npm run api:foundation:verify && node taniguchi/scripts/audit-api-openapi-migration.mjs",
+    "api:word:model": "node taniguchi/scripts/build-api-word-model.mjs",
+    "api:migration:parity": "node taniguchi/scripts/compare-api-migration-parity.mjs",
+    "api:migration:openapi-draft": "node taniguchi/scripts/convert-legacy-api-spec-to-openapi.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.8.0",
@@ -23,15 +29,18 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "adm-zip": "^0.5.16",
+    "ajv": "^8.20.0",
     "docx": "^9.5.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.6",
     "exceljs": "^4.4.0",
+    "js-yaml": "^5.2.3",
     "playwright": "^1.58.2",
     "puppeteer": "^24.35.0",
     "tailwindcss": "^4",

@@ -1,0 +1,55 @@
+$schema: ../../feature.schema.json
+id: API-005
+slug: inventory
+title: 棚卸し
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /inventory
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/inventory.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_棚卸し.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-012
+  - API-013
+  - API-027
+
+dbTables:
+  - inventory_sessions
+  - inventory_items
+  - inventory_item_status_histories
+  - asset_ledgers
+  - facility_locations
+  - asset_photos
+  - application_documents
+  - applications
+  - application_assets
+  - transfer_application_details
+  - disposal_application_details
+  - application_status_definitions
+  - application_status_histories
+  - users
+  - facilities
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+
+permissionCodes:
+  - inventory
+  - inventory_complete

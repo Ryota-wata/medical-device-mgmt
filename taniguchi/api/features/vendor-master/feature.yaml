@@ -1,0 +1,52 @@
+$schema: ../../feature.schema.json
+id: API-021
+slug: vendor-master
+title: 業者マスタ
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /vendor-master
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/vendor-master.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_業者マスタ.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-015
+  - API-016
+
+dbTables:
+  - vendors
+  - facilities
+  - users
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+  - rfq_vendors
+  - quotations
+  - orders
+  - borrowing_application_details
+  - disposal_application_details
+  - repair_request_details
+  - maintenance_contracts
+  - inspection_tasks
+  - edit_list_items
+
+permissionCodes:
+  - vendor_master_list
+  - vendor_master_edit

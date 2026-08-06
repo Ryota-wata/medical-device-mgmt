@@ -1,0 +1,81 @@
+$schema: ../../feature.schema.json
+id: API-024
+slug: remodel-management
+title: リモデル管理
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /quotation-data-box/remodel-management
+  - /quotation-data-box/remodel-dashboard
+  - /quotation-data-box/rfq-process
+  - /quotation-data-box/ocr-confirm
+  - /quotation-data-box/category-registration
+  - /quotation-data-box/item-ai-matching
+  - /quotation-data-box/price-allocation
+  - /quotation-data-box/registration-confirm
+  - /quotation-data-box/order-registration
+  - /quotation-data-box/inspection-registration
+  - /quotation-data-box/asset-provisional-registration
+  - /quotation-data-box/asset-registration
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/remodel-management.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_リモデル管理.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-014
+  - API-018
+  - API-023
+  - API-025
+  - API-027
+
+dbTables:
+  - users
+  - facilities
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+  - edit_lists
+  - edit_list_work_locks
+  - edit_list_items
+  - rfqs
+  - rfq_status_definitions
+  - rfq_status_transitions
+  - rfq_applications
+  - applications
+  - application_status_histories
+  - rfq_vendors
+  - quotations
+  - quotation_items
+  - quotation_item_application_links
+  - orders
+  - order_items
+  - individuals
+  - asset_ledgers
+  - facility_location_remodels
+  - facility_locations
+  - asset_ledger_histories
+  - application_documents
+  - application_document_order_item_links
+  - vendors
+
+permissionCodes:
+  - remodel_purchase
+  - remodel_order
+  - remodel_acceptance
+  - transfer_disposal

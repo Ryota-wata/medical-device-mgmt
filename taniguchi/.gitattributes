@@ -1,0 +1,10 @@
+*.md text diff eol=lf
+*.yaml text diff eol=lf
+*.yml text diff eol=lf
+*.json text diff eol=lf
+*.puml text diff eol=lf
+*.svg text diff eol=lf
+*.mjs text diff eol=lf
+*.ps1 text diff eol=crlf
+*.docx binary
+*.xlsx binary

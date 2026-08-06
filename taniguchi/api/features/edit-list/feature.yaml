@@ -1,0 +1,72 @@
+$schema: ../../feature.schema.json
+id: API-023
+slug: edit-list
+title: 編集リスト
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /edit-list
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/edit-list.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_編集リスト.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-014
+  - API-016
+  - API-021
+  - API-024
+  - API-025
+  - API-027
+
+dbTables:
+  - users
+  - facilities
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+  - edit_lists
+  - edit_list_work_locks
+  - edit_list_facilities
+  - edit_list_items
+  - edit_list_free_columns
+  - edit_list_free_column_values
+  - asset_ledgers
+  - qr_codes
+  - ship_asset_masters
+  - ship_asset_master_details
+  - vendors
+  - applications
+  - purchase_application_details
+  - application_assets
+  - application_status_histories
+  - rfqs
+  - rfq_applications
+  - quotations
+  - quotation_items
+  - quotation_item_application_links
+  - user_column_settings
+  - user_column_setting_presets
+  - user_column_setting_preset_items
+
+permissionCodes:
+  - normal_edit_list
+  - remodel_edit_list
+  - normal_purchase
+  - remodel_purchase
+  - transfer_disposal

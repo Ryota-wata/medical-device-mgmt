@@ -1,0 +1,2281 @@
+openapi: 3.0.4
+info:
+  title: 資産台帳取込・マスタ突き合わせ API
+  version: '1.1'
+  description: 資産台帳取込で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 資産台帳取込・マスタ突き合わせ
+    description: 資産台帳取込・マスタ突き合わせのAPI
+paths:
+  /asset-import/context:
+    get:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: getAssetImportContext
+      summary: 取込画面コンテキスト取得
+      description: 資産台帳取込画面の初期表示に必要な情報を取得する。選択施設が確定している場合は前回取込ジョブを確認し、再開対象ジョブやアップロード済み一覧を返却する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_ledger_import
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: facilityId
+          in: query
+          required: false
+          description: 選択施設ID。トークンから施設を導出できる場合は省略可能
+          schema:
+            type: integer
+            format: int64
+          x-word-required-label: 条件付き
+        - name: ignoreFailedJobId
+          in: query
+          required: false
+          description: FAILED 画面からアップロード画面へ戻る際に、今回の自動再開判定から除外するジョブID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetImportContextResponse'
+        '400':
+          description: facilityId 不正など入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_ledger_import なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetImportContextResponse）
+      x-word-response-subtable-titles:
+        - selectedFacility（FacilitySummary）
+        - activeJob（AssetImportJobSummary）
+        - uploadedFiles要素（AssetImportUploadedFile）
+      x-word-response-subtables:
+        - Title: selectedFacility（FacilitySummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+        - Title: activeJob（AssetImportJobSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetImportJobId
+              - int64
+              - ✓
+              - 資産インポートジョブID
+            - - importType
+              - string
+              - ✓
+              - 取込種別。FIXED_ASSET / OTHER_LEDGER
+            - - fileName
+              - string
+              - ✓
+              - ファイル名
+            - - status
+              - string
+              - ✓
+              - ジョブ状態。PROCESSING / READY_FOR_MATCHING / MATCHING_COMPLETED / FAILED
+            - - totalRows
+              - int32
+              - ✓
+              - 取込行総数
+            - - confirmedRows
+              - int32
+              - ✓
+              - 確定済み件数
+            - - remainingRows
+              - int32
+              - ✓
+              - 未確定件数
+            - - uploadedAt
+              - datetime
+              - ✓
+              - アップロード日時
+            - - failureReason
+              - string
+              - '-'
+              - 失敗理由。FAILED 時のみ返却し、第7章の非同期エラーコード形式で asset_import_jobs.error_message を返す
+        - Title: uploadedFiles要素（AssetImportUploadedFile）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetImportJobId
+              - int64
+              - ✓
+              - 資産インポートジョブID
+            - - importType
+              - string
+              - ✓
+              - 取込種別
+            - - fileName
+              - string
+              - ✓
+              - ファイル名
+            - - rowCount
+              - int32
+              - ✓
+              - 取込件数
+            - - status
+              - string
+              - ✓
+              - ジョブ状態
+            - - uploadedAt
+              - datetime
+              - ✓
+              - アップロード日時
+  /asset-import/jobs:
+    post:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: postAssetImportJobs
+      summary: 取込ジョブ作成・ファイルアップロード
+      description: >-
+        台帳ファイルを受け取り、資産インポートジョブを作成する。ジョブ作成後に各行を asset_import_rows へ展開し、PoC2 保存済み LUKE Model A で ABC / D / OTHER
+        を分類する。固定資産台帳取込では値引き文字列判定を行わず、ABC 判定行のみ AI 推薦候補を初期計算し、D / OTHER 判定行は推薦対象外として扱う。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_ledger_import
+      x-word-status-order:
+        - '202'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                facilityId:
+                  type: integer
+                  format: int64
+                  description: 対象施設ID。トークンから施設を導出できる場合は省略可能
+                importType:
+                  type: string
+                  description: 取込種別。FIXED_ASSET / OTHER_LEDGER
+                file:
+                  type: string
+                  format: binary
+                  description: アップロードファイル（.xlsx / .xls / .csv、10MB 以下）
+              required:
+                - importType
+                - file
+      x-word-hide-request-body: true
+      x-word-parameters-title: リクエストパラメータ
+      x-word-parameters:
+        - - facilityId
+          - formData
+          - int64
+          - 条件付き
+          - 対象施設ID。トークンから施設を導出できる場合は省略可能
+        - - importType
+          - formData
+          - string
+          - ✓
+          - 取込種別。FIXED_ASSET / OTHER_LEDGER
+        - - file
+          - formData
+          - binary
+          - ✓
+          - アップロードファイル（.xlsx / .xls / .csv、10MB 以下）
+      responses:
+        '202':
+          description: 受付成功（処理中）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetImportJobAcceptedResponse'
+        '400':
+          description: 形式不正、サイズ超過、施設未選択など受付入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_ledger_import なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 同一施設に未完了ジョブが存在する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 への元ファイル保存、または受付失敗時の保存済み S3 オブジェクト破棄に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（202：AssetImportJobAcceptedResponse）
+  /asset-import/jobs/{assetImportJobId}:
+    get:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: getAssetImportJobsByAssetImportJobId
+      summary: 取込ジョブ状態取得
+      description: 指定した資産インポートジョブの処理状態と件数を取得する。アップロード直後のポーリング、および取込済みファイル詳細の表示に利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_ledger_import
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: assetImportJobId
+          in: path
+          required: true
+          description: 資産インポートジョブID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetImportJobStatusResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_ledger_import なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ジョブが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetImportJobStatusResponse）
+    delete:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: deleteAssetImportJobsByAssetImportJobId
+      summary: 取込ジョブ削除
+      description: >-
+        READY_FOR_MATCHING または FAILED の取込ジョブを削除する。関連する asset_import_rows と asset_import_jobs.file_path で管理する Amazon S3
+        上の保存元ファイルもあわせて削除対象とする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_ledger_import
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '500'
+      parameters:
+        - name: assetImportJobId
+          in: path
+          required: true
+          description: 削除対象ジョブID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_ledger_import なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ジョブが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 削除不可状態である
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 の元ファイル削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：No Content）
+      x-word-response-lines:
+        - Body は返却しない。
+  /asset-import/jobs/{assetImportJobId}/retry:
+    post:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: postAssetImportJobsByAssetImportJobIdRetry
+      summary: 取込ジョブ再取込
+      description: FAILED となった取込ジョブを参照し、asset_import_jobs.file_path に保持した元ファイルを使って新しい資産インポートジョブを作成する。元の FAILED ジョブは履歴として保持する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_ledger_import
+      x-word-status-order:
+        - '202'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '500'
+      parameters:
+        - name: assetImportJobId
+          in: path
+          required: true
+          description: 再取込元の FAILED ジョブID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '202':
+          description: 受付成功（処理中）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetImportJobRetryAcceptedResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_ledger_import なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ジョブが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: FAILED 以外の状態、または再取込不可状態
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 から再取込元ファイルを取得できない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（202：AssetImportJobRetryAcceptedResponse）
+  /asset-matching/context:
+    get:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: getAssetMatchingContext
+      summary: 突き合わせ画面コンテキスト取得
+      description: 突き合わせ画面の初期表示に必要なジョブサマリ、件数、行由来のフィルタ候補を取得する。ジョブ状態に応じて待機表示、失敗表示、通常の突き合わせ表示を切り替えるために利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: assetImportJobId
+          in: query
+          required: false
+          description: 対象ジョブID。指定時は当該ジョブを取得する
+          schema:
+            type: integer
+            format: int64
+        - name: facilityId
+          in: query
+          required: false
+          description: 前回ジョブを施設単位で解決する場合の施設ID
+          schema:
+            type: integer
+            format: int64
+          x-word-required-label: 条件付き
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetMatchingContextResponse'
+        '400':
+          description: ジョブ指定不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ジョブが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetMatchingContextResponse）
+      x-word-response-subtable-titles:
+        - counts（AssetMatchingCountSummary）
+        - filterOptions（AssetMatchingFilterOptions）
+      x-word-response-subtables:
+        - Title: counts（AssetMatchingCountSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - totalRows
+              - int32
+              - ✓
+              - 総件数
+            - - remainingRows
+              - int32
+              - ✓
+              - 未確定件数
+            - - completedRows
+              - int32
+              - ✓
+              - 確定済み件数
+        - Title: filterOptions（AssetMatchingFilterOptions）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityLocationOptions
+              - FacilityLocationSummary[]
+              - ✓
+              - 対象施設の個別部署マスタに登録された施設ロケーション候補
+  /asset-matching/rows:
+    get:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: getAssetMatchingRows
+      summary: 突き合わせ一覧取得
+      description: >-
+        取込結果一覧、AI推薦、保存済み選択値、施設ロケーションの解決状態を取得する。施設ロケーションID/Category/大分類/中分類/品目で絞り込み可能とし、既定では未確定行のみ返却する。AI分類結果はサーバー内部の推薦制御値であり、画面表示用レスポンスには含めない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: assetImportJobId
+          in: query
+          required: true
+          description: 対象ジョブID
+          schema:
+            type: integer
+            format: int64
+        - name: facilityLocationId
+          in: query
+          required: false
+          description: 解決済み施設ロケーションIDの一致条件
+          schema:
+            type: integer
+            format: int64
+        - name: selectedCategoryId
+          in: query
+          required: false
+          description: 選択済みCategoryIDの条件
+          schema:
+            type: integer
+            format: int64
+        - name: selectedLargeClassId
+          in: query
+          required: false
+          description: 選択済み大分類IDの条件
+          schema:
+            type: integer
+            format: int64
+        - name: selectedMediumClassId
+          in: query
+          required: false
+          description: 選択済み中分類IDの条件
+          schema:
+            type: integer
+            format: int64
+        - name: selectedAssetItemId
+          in: query
+          required: false
+          description: 選択済み品目IDの条件
+          schema:
+            type: integer
+            format: int64
+        - name: includeConfirmed
+          in: query
+          required: false
+          description: true の場合は確定済み行も返却する。省略時は false
+          schema:
+            type: boolean
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetMatchingRowListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ジョブが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ジョブ状態上、一覧取得不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetMatchingRowListResponse）
+      x-word-response-subtable-titles:
+        - items要素（AssetMatchingRowSummary）
+        - AssetMatchSelection
+        - FacilityLocationSummary
+      x-word-response-subtables:
+        - Title: items要素（AssetMatchingRowSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetImportRowId
+              - int64
+              - ✓
+              - 資産インポート行ID
+            - - rowNo
+              - int32
+              - ✓
+              - 行番号
+            - - parsedFacilityLocationId
+              - string
+              - '-'
+              - 施設ロケーションID（Excel入力原文）。asset_import_rows.parsed_facility_location_id を返す
+            - - facilityLocationId
+              - int64|null
+              - '-'
+              - 解決済み施設ロケーションID。解決できない場合は null
+            - - facilityLocation
+              - FacilityLocationSummary|null
+              - ✓
+              - 解決済み施設ロケーションの表示値。未解決の場合は null
+            - - parsedOriginalAssetName
+              - string
+              - '-'
+              - 品目名（原）。asset_import_rows.parsed_original_asset_name を返す
+            - - parsedOriginalManufacturerName
+              - string
+              - '-'
+              - メーカー名（原）。asset_import_rows.parsed_original_manufacturer_name を返す
+            - - parsedOriginalModelName
+              - string
+              - '-'
+              - 型式（原）。asset_import_rows.parsed_original_model_name を返す
+            - - parsedQuantity
+              - int32
+              - '-'
+              - 数量（取込）
+            - - parsedUnit
+              - string
+              - '-'
+              - 単位（取込）
+            - - suggestedMatch
+              - AssetMatchSelection|null
+              - ✓
+              - AI推薦候補。D / OTHER 行は null
+            - - selectedMatch
+              - AssetMatchSelection|null
+              - ✓
+              - ユーザー選択結果
+            - - isConfirmed
+              - boolean
+              - ✓
+              - 確定済みフラグ
+        - Title: AssetMatchSelection
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - shipAssetMasterId
+              - int64
+              - '-'
+              - 紐付け先SHIP資産マスタID。AI推薦候補では候補ID、ユーザー選択結果では確定対象の選択ID
+            - - categoryId
+              - int64
+              - '-'
+              - CategoryID。自由記述時は null
+            - - categoryName
+              - string
+              - '-'
+              - Category表示名。表示値スナップショット
+            - - largeClassId
+              - int64
+              - '-'
+              - 大分類ID。自由記述時は null
+            - - largeClassName
+              - string
+              - '-'
+              - 大分類表示名。表示値スナップショット
+            - - mediumClassId
+              - int64
+              - '-'
+              - 中分類ID。自由記述時は null
+            - - mediumClassName
+              - string
+              - '-'
+              - 中分類表示名。表示値スナップショット
+            - - assetItemId
+              - int64
+              - '-'
+              - 品目ID。ユーザー選択結果では選択SHIP資産マスタ由来IDを保持する
+            - - assetItemName
+              - string
+              - '-'
+              - 品目表示名。ユーザー選択結果では選択SHIP資産マスタ由来の値
+            - - manufacturerId
+              - int64
+              - '-'
+              - メーカーID。ユーザー選択結果では選択SHIP資産マスタ由来IDを保持する
+            - - manufacturerName
+              - string
+              - '-'
+              - メーカー表示名。ユーザー選択結果では取込行固有の確定表示値で、空の場合は選択マスタ名称へフォールバックする
+            - - modelId
+              - int64
+              - '-'
+              - 型式ID。自由記述時は null
+            - - modelName
+              - string
+              - '-'
+              - 型式表示名。ユーザー選択結果では取込行固有の確定表示値で、空の場合は選択マスタ名称へフォールバックする
+            - - score
+              - decimal(5,3)
+              - '-'
+              - AI推薦時のみ返却する類似度スコア
+            - - scoreSource
+              - string
+              - '-'
+              - AI推薦時のみ返却する類似度採用元。JMDN_MASTER / ASSET_LEDGER
+            - - sourceAssetLedgerId
+              - int64
+              - '-'
+              - scoreSource=ASSET_LEDGER の場合に、比較元となった原本資産台帳IDを返す
+        - Title: FacilityLocationSummary
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityLocationId
+              - int64
+              - ✓
+              - facility_locations.facility_location_id
+            - - building
+              - string
+              - '-'
+              - 棟。個別部署マスタの表示値
+            - - floor
+              - string
+              - '-'
+              - 階。個別部署マスタの表示値
+            - - departmentName
+              - string
+              - '-'
+              - 部門名。個別部署マスタの表示値
+            - - sectionName
+              - string
+              - '-'
+              - 部署名。個別部署マスタの表示値
+            - - roomName
+              - string
+              - '-'
+              - 室名。個別部署マスタの表示値
+  /asset-matching/master-options:
+    get:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: getAssetMatchingMasterOptions
+      summary: 突き合わせ候補取得
+      description: Category / 大分類 / 中分類 / 品目 / メーカー / 型式 / 施設ロケーションの検索候補を取得する。資産階層は親階層に応じて絞り込み、施設ロケーションは対象ジョブの施設に属する個別部署マスタから取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      parameters:
+        - name: assetImportJobId
+          in: query
+          required: true
+          description: 対象ジョブID。FACILITY_LOCATION の場合はジョブの facility_id で候補を絞り込む
+          schema:
+            type: integer
+            format: int64
+        - name: field
+          in: query
+          required: true
+          description: 取得対象。CATEGORY / LARGE_CLASS / MEDIUM_CLASS / ITEM / MANUFACTURER / MODEL / FACILITY_LOCATION
+          schema:
+            type: string
+        - name: keyword
+          in: query
+          required: false
+          description: 候補名称の部分一致検索
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          required: false
+          description: 親CategoryID
+          schema:
+            type: integer
+            format: int64
+        - name: largeClassId
+          in: query
+          required: false
+          description: 親大分類ID
+          schema:
+            type: integer
+            format: int64
+        - name: mediumClassId
+          in: query
+          required: false
+          description: 親中分類ID
+          schema:
+            type: integer
+            format: int64
+        - name: assetItemId
+          in: query
+          required: false
+          description: 親品目ID
+          schema:
+            type: integer
+            format: int64
+        - name: manufacturerId
+          in: query
+          required: false
+          description: 親メーカーID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetMatchingMasterOptionResponse'
+        '400':
+          description: field 不正など入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetMatchingMasterOptionResponse）
+      x-word-response-subtable-titles:
+        - items要素（MasterOption）
+      x-word-response-subtables:
+        - Title: items要素（MasterOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - id
+              - int64
+              - ✓
+              - 候補ID
+            - - name
+              - string
+              - ✓
+              - 候補表示名。施設ロケーションでは5項目を連結した表示名
+            - - building
+              - string
+              - '-'
+              - FACILITY_LOCATION の棟
+            - - floor
+              - string
+              - '-'
+              - FACILITY_LOCATION の階
+            - - departmentName
+              - string
+              - '-'
+              - FACILITY_LOCATION の部門名
+            - - sectionName
+              - string
+              - '-'
+              - FACILITY_LOCATION の部署名
+            - - roomName
+              - string
+              - '-'
+              - FACILITY_LOCATION の室名
+  /asset-matching/rows/{assetImportRowId}:
+    put:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: putAssetMatchingRowsByAssetImportRowId
+      summary: 突き合わせ行更新
+      description: >-
+        行単位で確定値を保存する。未確定行の編集保存と単票確定の両方に利用する。資産マスタ選択後もメーカー名・型式を取込行固有の表示値として変更でき、
+        この表示値編集だけでは選択SHIP資産マスタIDおよびマスタ由来IDを解除しない。品目名は選択SHIP資産マスタ由来の値とする。確定には有効な選択SHIP資産マスタIDと解決済み施設ロケーションが必要となる。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: assetImportRowId
+          in: path
+          required: true
+          description: 更新対象の資産インポート行ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutAssetMatchingRowsByAssetImportRowIdRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetMatchingRowResponse'
+        '400':
+          description: 入力不正、分類不整合、有効な選択SHIP資産マスタID不足、または施設ロケーション不正・未解決状態での確定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象行または指定したSHIP資産マスタが存在しない、もしくは資産マスタが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象行が確定済み、またはジョブ状態上更新不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetMatchingRowResponse）
+      x-word-response-subtable-titles:
+        - item要素（AssetMatchingRowSummary）
+      x-word-response-subtables:
+        - Title: item要素（AssetMatchingRowSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetImportRowId
+              - int64
+              - ✓
+              - 資産インポート行ID
+            - - parsedFacilityLocationId
+              - string
+              - '-'
+              - 施設ロケーションID（Excel入力原文）
+            - - facilityLocationId
+              - int64|null
+              - '-'
+              - 解決済み施設ロケーションID。未解決は null
+            - - facilityLocation
+              - FacilityLocationSummary|null
+              - ✓
+              - 解決済み施設ロケーションの表示値。未解決は null
+            - - selectedMatch
+              - AssetMatchSelection|null
+              - ✓
+              - 更新後の選択結果
+            - - isConfirmed
+              - boolean
+              - ✓
+              - 確定済みフラグ
+  /asset-matching/rows/confirm-bulk:
+    post:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: postAssetMatchingRowsConfirmBulk
+      summary: 突き合わせ一括確定
+      description: 選択した複数行について、有効な選択SHIP資産マスタIDと解決済み施設ロケーションを検証してまとめて確定する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostAssetMatchingRowsConfirmBulkRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 確定成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetMatchingBulkConfirmResponse'
+        '400':
+          description: 入力不正、有効な選択SHIP資産マスタID不足、または未解決・施設外ロケーションを含む確定不可行
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ジョブ、対象行、または保存済み選択SHIP資産マスタが存在しない、もしくは資産マスタが無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象行の一部または全部が確定済み、またはジョブ状態上更新不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetMatchingBulkConfirmResponse）
+  /asset-matching/export:
+    get:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: getAssetMatchingExport
+      summary: 突き合わせ結果Excel出力
+      description: >-
+        現在の絞り込み条件に一致する突き合わせ結果と、有効な SHIP 資産マスタの参照用一覧を Excel
+        ファイルで出力する。本APIの出力ファイルは固定資産台帳取込Excelではなく、マスタ紐づけ作業用のシステム出力ブックである。ユーザーは出力ファイルをローカルで編集し、selectedShipAssetMasterId
+        に紐づけたい SHIP 資産マスタIDを指定してから /asset-matching/import で再取込する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: assetImportJobId
+          in: query
+          required: true
+          description: 対象ジョブID
+          schema:
+            type: integer
+            format: int64
+        - name: facilityLocationId
+          in: query
+          required: false
+          description: 解決済み施設ロケーションID条件
+          schema:
+            type: integer
+            format: int64
+        - name: selectedCategoryId
+          in: query
+          required: false
+          description: Category 条件
+          schema:
+            type: integer
+            format: int64
+        - name: selectedLargeClassId
+          in: query
+          required: false
+          description: 大分類条件
+          schema:
+            type: integer
+            format: int64
+        - name: selectedMediumClassId
+          in: query
+          required: false
+          description: 中分類条件
+          schema:
+            type: integer
+            format: int64
+        - name: selectedAssetItemId
+          in: query
+          required: false
+          description: 品目条件
+          schema:
+            type: integer
+            format: int64
+        - name: includeConfirmed
+          in: query
+          required: false
+          description: 確定済み行を含めるか。Excel取込に利用する場合は false を前提とし、true は参照出力用途とする
+          schema:
+            type: boolean
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 出力成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ジョブが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ジョブ状態上、出力不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：Excel File）
+      x-word-response-subtable-titles:
+        - Headers
+      x-word-response-subtables:
+        - Title: Headers
+          Headers:
+            - ヘッダー名
+            - 必須
+            - 形式
+            - 説明
+          Rows:
+            - - Content-Type
+              - ✓
+              - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+              - Excel 形式で返却する
+            - - Content-Disposition
+              - ✓
+              - attachment; filename="資産台帳突き合わせ結果_YYYYMMDD.xlsx"
+              - ダウンロードファイル名
+      x-word-response-lines:
+        - 'Body: 先頭シート 突き合わせ結果、参照用シート SHIP資産マスタ、管理用シート 取込管理情報 を含む Excel ブックを返却する。'
+  /asset-matching/import:
+    post:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: postAssetMatchingImport
+      summary: 突き合わせ結果Excel取込
+      description: >-
+        /asset-matching/export で出力した突き合わせ結果 Excel を受け取り、ローカルExcelで編集された SHIP 資産マスタ紐づけを asset_import_rows
+        の選択結果へ反映する。固定資産台帳取込Excelの再取込ではないため、原本の取込値、正式29カラム、施設ロケーション、AI分類、AI推薦、確定状態は更新しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                assetImportJobId:
+                  type: integer
+                  format: int64
+                  description: 対象ジョブID。Excel 内の 取込管理情報.assetImportJobId と一致すること
+                file:
+                  type: string
+                  format: binary
+                  description: /asset-matching/export で出力した Excel ファイル（.xlsx）
+              required:
+                - assetImportJobId
+                - file
+      x-word-hide-request-body: true
+      x-word-parameters-title: リクエストパラメータ
+      x-word-parameters:
+        - - assetImportJobId
+          - formData
+          - int64
+          - ✓
+          - 対象ジョブID。Excel 内の 取込管理情報.assetImportJobId と一致すること
+        - - file
+          - formData
+          - binary
+          - ✓
+          - /asset-matching/export で出力した Excel ファイル（.xlsx）
+      responses:
+        '200':
+          description: 取込反映成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetMatchingExcelImportResponse'
+        '400':
+          description: Excel形式不正、テンプレート不一致、行単位検証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ジョブ、対象行、または指定された SHIP 資産マスタが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ジョブ状態上取込不可、または確定済み行を含む
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetMatchingExcelImportResponse）
+      x-word-response-subtable-titles:
+        - items要素（AssetMatchingExcelImportItem）
+      x-word-response-subtables:
+        - Title: items要素（AssetMatchingExcelImportItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetImportRowId
+              - int64
+              - ✓
+              - 資産インポート行ID
+            - - selectedMatch
+              - AssetMatchSelection|null
+              - ✓
+              - Excel取込反映後の選択結果。空欄反映行は null
+  /asset-matching/complete:
+    post:
+      tags:
+        - 資産台帳取込・マスタ突き合わせ
+      operationId: postAssetMatchingComplete
+      summary: 突き合わせ完了
+      description: 対象ジョブを突き合わせ完了として確定し、メイン画面へ戻るための最終処理を行う。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostAssetMatchingCompleteRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 完了成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetMatchingCompleteResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ジョブが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ジョブ状態上完了不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetMatchingCompleteResponse）
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    AssetImportContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - selectedFacility
+        - facilitySelectionRequired
+        - activeJob
+        - uploadedFiles
+        - redirectToMatching
+      properties:
+        selectedFacility:
+          type: string
+          description: 対象施設。未確定時は null
+        facilitySelectionRequired:
+          type: boolean
+          description: 選択施設が未確定で施設選択が必要な場合は true
+        activeJob:
+          type: string
+          description: 再開/失敗表示対象ジョブ。存在しない場合は null
+        uploadedFiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetImportUploadedFile'
+          description: アップロード済みファイル一覧
+          x-word-subtable-title: uploadedFiles要素（AssetImportUploadedFile）
+        redirectToMatching:
+          type: boolean
+          description: 前回ジョブがあり /asset-matching へ直接遷移すべき場合は true
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+          x-word-omit-row: true
+          x-required-when: selectedFacility（FacilitySummary）
+          x-word-required-label: ✓
+        facilityName:
+          type: string
+          description: 施設名
+          x-word-omit-row: true
+          x-required-when: selectedFacility（FacilitySummary）
+          x-word-required-label: ✓
+        assetImportJobId:
+          type: integer
+          format: int64
+          description: 資産インポートジョブID
+          x-word-omit-row: true
+          x-required-when: activeJob（AssetImportJobSummary）
+          x-word-required-label: ✓
+        importType:
+          type: string
+          description: 取込種別。FIXED_ASSET / OTHER_LEDGER
+          x-word-omit-row: true
+          x-required-when: activeJob（AssetImportJobSummary）
+          x-word-required-label: ✓
+        fileName:
+          type: string
+          description: ファイル名
+          x-word-omit-row: true
+          x-required-when: activeJob（AssetImportJobSummary）
+          x-word-required-label: ✓
+        status:
+          type: string
+          description: ジョブ状態。PROCESSING / READY_FOR_MATCHING / MATCHING_COMPLETED / FAILED
+          x-word-omit-row: true
+          x-required-when: activeJob（AssetImportJobSummary）
+          x-word-required-label: ✓
+        totalRows:
+          type: integer
+          format: int32
+          description: 取込行総数
+          x-word-omit-row: true
+          x-required-when: activeJob（AssetImportJobSummary）
+          x-word-required-label: ✓
+        confirmedRows:
+          type: integer
+          format: int32
+          description: 確定済み件数
+          x-word-omit-row: true
+          x-required-when: activeJob（AssetImportJobSummary）
+          x-word-required-label: ✓
+        remainingRows:
+          type: integer
+          format: int32
+          description: 未確定件数
+          x-word-omit-row: true
+          x-required-when: activeJob（AssetImportJobSummary）
+          x-word-required-label: ✓
+        uploadedAt:
+          type: string
+          format: date-time
+          description: アップロード日時
+          x-word-omit-row: true
+          x-required-when: activeJob（AssetImportJobSummary）
+          x-word-required-label: ✓
+        failureReason:
+          type: string
+          description: 失敗理由。FAILED 時のみ返却し、第7章の非同期エラーコード形式で asset_import_jobs.error_message を返す
+          x-word-omit-row: true
+          x-required-when: activeJob（AssetImportJobSummary）
+    FacilitySummary:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        facilityName:
+          type: string
+          description: 施設名
+    AssetImportJobSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportJobId
+        - importType
+        - fileName
+        - status
+        - totalRows
+        - confirmedRows
+        - remainingRows
+        - uploadedAt
+      properties:
+        assetImportJobId:
+          type: integer
+          format: int64
+          description: 資産インポートジョブID
+        importType:
+          type: string
+          description: 取込種別。FIXED_ASSET / OTHER_LEDGER
+        fileName:
+          type: string
+          description: ファイル名
+        status:
+          type: string
+          description: ジョブ状態。PROCESSING / READY_FOR_MATCHING / MATCHING_COMPLETED / FAILED
+        totalRows:
+          type: integer
+          format: int32
+          description: 取込行総数
+        confirmedRows:
+          type: integer
+          format: int32
+          description: 確定済み件数
+        remainingRows:
+          type: integer
+          format: int32
+          description: 未確定件数
+        uploadedAt:
+          type: string
+          format: date-time
+          description: アップロード日時
+        failureReason:
+          type: string
+          description: 失敗理由。FAILED 時のみ返却し、第7章の非同期エラーコード形式で asset_import_jobs.error_message を返す
+    AssetImportUploadedFile:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportJobId
+        - importType
+        - fileName
+        - rowCount
+        - status
+        - uploadedAt
+      properties:
+        assetImportJobId:
+          type: integer
+          format: int64
+          description: 資産インポートジョブID
+        importType:
+          type: string
+          description: 取込種別
+        fileName:
+          type: string
+          description: ファイル名
+        rowCount:
+          type: integer
+          format: int32
+          description: 取込件数
+        status:
+          type: string
+          description: ジョブ状態
+        uploadedAt:
+          type: string
+          format: date-time
+          description: アップロード日時
+    AssetImportJobAcceptedResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportJobId
+        - status
+        - nextPollUrl
+        - message
+      properties:
+        assetImportJobId:
+          type: integer
+          format: int64
+          description: 作成した資産インポートジョブID
+        status:
+          type: string
+          description: 受付直後状態。通常は PROCESSING
+        nextPollUrl:
+          type: string
+          description: 状態照会APIのURL
+        message:
+          type: string
+          description: 利用者向けメッセージ
+    AssetImportJobStatusResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportJobId
+        - facilityId
+        - facilityName
+        - importType
+        - fileName
+        - status
+        - totalRows
+        - confirmedRows
+        - remainingRows
+      properties:
+        assetImportJobId:
+          type: integer
+          format: int64
+          description: 資産インポートジョブID
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        facilityName:
+          type: string
+          description: 施設名
+        importType:
+          type: string
+          description: 取込種別
+        fileName:
+          type: string
+          description: ファイル名
+        status:
+          type: string
+          description: ジョブ状態
+        totalRows:
+          type: integer
+          format: int32
+          description: 総行数
+        confirmedRows:
+          type: integer
+          format: int32
+          description: 確定済み件数
+        remainingRows:
+          type: integer
+          format: int32
+          description: 未確定件数
+        startedAt:
+          type: string
+          format: date-time
+          description: 開始日時
+        finishedAt:
+          type: string
+          format: date-time
+          description: 終了日時
+        failureReason:
+          type: string
+          description: 失敗理由。FAILED 時のみ返却し、第7章の非同期エラーコード形式で asset_import_jobs.error_message を返す
+    AssetImportJobRetryAcceptedResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportJobId
+        - retriedFromAssetImportJobId
+        - status
+        - nextPollUrl
+        - message
+      properties:
+        assetImportJobId:
+          type: integer
+          format: int64
+          description: 新しく作成した資産インポートジョブID
+        retriedFromAssetImportJobId:
+          type: integer
+          format: int64
+          description: 再取込元の FAILED ジョブID
+        status:
+          type: string
+          description: 受付直後状態。通常は PROCESSING
+        nextPollUrl:
+          type: string
+          description: 新規ジョブの状態照会APIのURL
+        message:
+          type: string
+          description: 利用者向けメッセージ
+    AssetMatchingContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - job
+        - counts
+        - filterOptions
+      properties:
+        job:
+          $ref: '#/components/schemas/AssetImportJobStatusResponse'
+          description: 対象ジョブ概要
+          x-word-omit-subtable: true
+        counts:
+          $ref: '#/components/schemas/AssetMatchingCountSummary'
+          description: 件数サマリ
+          x-word-subtable-title: counts（AssetMatchingCountSummary）
+        filterOptions:
+          $ref: '#/components/schemas/AssetMatchingFilterOptions'
+          description: フィルタ候補
+          x-word-subtable-title: filterOptions（AssetMatchingFilterOptions）
+    AssetMatchingCountSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - totalRows
+        - remainingRows
+        - completedRows
+      properties:
+        totalRows:
+          type: integer
+          format: int32
+          description: 総件数
+        remainingRows:
+          type: integer
+          format: int32
+          description: 未確定件数
+        completedRows:
+          type: integer
+          format: int32
+          description: 確定済み件数
+    AssetMatchingFilterOptions:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityLocationOptions
+      properties:
+        facilityLocationOptions:
+          type: array
+          items:
+            type: string
+          description: 対象施設の個別部署マスタに登録された施設ロケーション候補
+    AssetMatchingRowListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 返却件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetMatchingRowSummary'
+          description: 突き合わせ行一覧
+          x-word-subtable-title: items要素（AssetMatchingRowSummary）
+        shipAssetMasterId:
+          type: integer
+          format: int64
+          description: 紐付け先SHIP資産マスタID。AI推薦候補では候補ID、ユーザー選択結果では確定対象の選択ID
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        categoryId:
+          type: integer
+          format: int64
+          description: CategoryID。自由記述時は null
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        categoryName:
+          type: string
+          description: Category表示名。表示値スナップショット
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        largeClassId:
+          type: integer
+          format: int64
+          description: 大分類ID。自由記述時は null
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        largeClassName:
+          type: string
+          description: 大分類表示名。表示値スナップショット
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        mediumClassId:
+          type: integer
+          format: int64
+          description: 中分類ID。自由記述時は null
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        mediumClassName:
+          type: string
+          description: 中分類表示名。表示値スナップショット
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        assetItemId:
+          type: integer
+          format: int64
+          description: 品目ID。ユーザー選択結果では選択SHIP資産マスタ由来IDを保持する
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        assetItemName:
+          type: string
+          description: 品目表示名。ユーザー選択結果では選択SHIP資産マスタ由来の値
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        manufacturerId:
+          type: integer
+          format: int64
+          description: メーカーID。ユーザー選択結果では選択SHIP資産マスタ由来IDを保持する
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        manufacturerName:
+          type: string
+          description: メーカー表示名。ユーザー選択結果では取込行固有の確定表示値で、空の場合は選択マスタ名称へフォールバックする
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        modelId:
+          type: integer
+          format: int64
+          description: 型式ID。自由記述時は null
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        modelName:
+          type: string
+          description: 型式表示名。ユーザー選択結果では取込行固有の確定表示値で、空の場合は選択マスタ名称へフォールバックする
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        score:
+          type: string
+          description: AI推薦時のみ返却する類似度スコア
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        scoreSource:
+          type: string
+          description: AI推薦時のみ返却する類似度採用元。JMDN_MASTER / ASSET_LEDGER
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        sourceAssetLedgerId:
+          type: integer
+          format: int64
+          description: scoreSource=ASSET_LEDGER の場合に、比較元となった原本資産台帳IDを返す
+          x-word-omit-row: true
+          x-required-when: AssetMatchSelection
+        facilityLocationId:
+          type: integer
+          format: int64
+          description: facility_locations.facility_location_id
+          x-word-omit-row: true
+          x-required-when: FacilityLocationSummary
+          x-word-required-label: ✓
+        building:
+          type: string
+          description: 棟。個別部署マスタの表示値
+          x-word-omit-row: true
+          x-required-when: FacilityLocationSummary
+        floor:
+          type: string
+          description: 階。個別部署マスタの表示値
+          x-word-omit-row: true
+          x-required-when: FacilityLocationSummary
+        departmentName:
+          type: string
+          description: 部門名。個別部署マスタの表示値
+          x-word-omit-row: true
+          x-required-when: FacilityLocationSummary
+        sectionName:
+          type: string
+          description: 部署名。個別部署マスタの表示値
+          x-word-omit-row: true
+          x-required-when: FacilityLocationSummary
+        roomName:
+          type: string
+          description: 室名。個別部署マスタの表示値
+          x-word-omit-row: true
+          x-required-when: FacilityLocationSummary
+    AssetMatchingRowSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportRowId
+        - facilityLocation
+        - selectedMatch
+        - isConfirmed
+      properties:
+        assetImportRowId:
+          type: integer
+          format: int64
+          description: 資産インポート行ID
+        parsedFacilityLocationId:
+          type: string
+          description: 施設ロケーションID（Excel入力原文）
+        facilityLocationId:
+          type: string
+          description: 解決済み施設ロケーションID。未解決は null
+        facilityLocation:
+          type: string
+          description: 解決済み施設ロケーションの表示値。未解決は null
+        selectedMatch:
+          type: string
+          description: 更新後の選択結果
+        isConfirmed:
+          type: boolean
+          description: 確定済みフラグ
+    AssetMatchingMasterOptionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - field
+        - items
+      properties:
+        field:
+          type: string
+          description: 取得対象フィールド
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterOption'
+          description: 候補一覧
+          x-word-subtable-title: items要素（MasterOption）
+    MasterOption:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 候補ID
+        name:
+          type: string
+          description: 候補表示名。施設ロケーションでは5項目を連結した表示名
+        building:
+          type: string
+          description: FACILITY_LOCATION の棟
+        floor:
+          type: string
+          description: FACILITY_LOCATION の階
+        departmentName:
+          type: string
+          description: FACILITY_LOCATION の部門名
+        sectionName:
+          type: string
+          description: FACILITY_LOCATION の部署名
+        roomName:
+          type: string
+          description: FACILITY_LOCATION の室名
+    PutAssetMatchingRowsByAssetImportRowIdRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        selectedCategoryName:
+          type: string
+          description: 選択Category表示名。自由記述時は入力値を保存する
+        selectedCategoryId:
+          type: integer
+          format: int64
+          description: 選択CategoryID。自由記述時は null
+        selectedLargeClassName:
+          type: string
+          description: 選択大分類表示名。自由記述時は入力値を保存する
+        selectedLargeClassId:
+          type: integer
+          format: int64
+          description: 選択大分類ID。自由記述時は null
+        selectedMediumClassName:
+          type: string
+          description: 選択中分類表示名。自由記述時は入力値を保存する
+        selectedMediumClassId:
+          type: integer
+          format: int64
+          description: 選択中分類ID。自由記述時は null
+        selectedAssetItemName:
+          type: string
+          description: 選択SHIP資産マスタ由来の品目表示値。資産マスタ紐付け中は同じ値のみ指定でき、取込行固有の上書きは不可
+        selectedAssetItemId:
+          type: integer
+          format: int64
+          description: 選択品目ID。自由記述時は null
+        selectedManufacturerName:
+          type: string
+          nullable: true
+          description: 取込行固有のメーカー表示値。資産マスタ選択後も上書きでき、selectedShipAssetMasterIdとselectedManufacturerIdは保持する。nullまたは空白のみは個別値のクリアを表す
+        selectedManufacturerId:
+          type: integer
+          format: int64
+          description: 選択メーカーID。自由記述時は null
+        selectedModelName:
+          type: string
+          nullable: true
+          description: 取込行固有の型式表示値。資産マスタ選択後も上書きでき、selectedShipAssetMasterIdとselectedModelIdは保持する。nullまたは空白のみは個別値のクリアを表す
+        selectedModelId:
+          type: integer
+          format: int64
+          description: 選択型式ID。自由記述時は null
+        selectedShipAssetMasterId:
+          type: integer
+          format: int64
+          nullable: true
+          description: >-
+            紐付け先SHIP資産マスタID。非null指定時はselected系IDと初期表示値をサーバーで解決する。未送信時は現在の紐付けを維持し、
+            メーカー名・型式だけの編集では解除しない。明示nullは未確定行をマスタ未選択の下書きへ戻す。isConfirmed=trueでは有効なIDが必須
+        facilityLocationId:
+          type: string
+          description: 施設ロケーション選択値。対象施設の facility_locations.facility_location_id を指定する。未解決状態で保存する場合は null
+        isConfirmed:
+          type: boolean
+          description: true の場合は、有効なselectedShipAssetMasterIdと解決済み施設ロケーションを検証して当該行を確定済みに更新する
+    AssetMatchingRowResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/AssetMatchingRowSummary'
+          description: 更新後の行データ
+          x-word-subtable-title: item要素（AssetMatchingRowSummary）
+    PostAssetMatchingRowsConfirmBulkRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportJobId
+        - assetImportRowIds
+      properties:
+        assetImportJobId:
+          type: integer
+          format: int64
+          description: 対象ジョブID
+        assetImportRowIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 確定対象の行ID一覧
+    AssetMatchingBulkConfirmResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - confirmedCount
+        - remainingRows
+      properties:
+        confirmedCount:
+          type: integer
+          format: int32
+          description: 確定件数
+        remainingRows:
+          type: integer
+          format: int32
+          description: 確定後の未確定件数
+    AssetMatchingExcelImportResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportJobId
+        - importedRowCount
+        - updatedRowCount
+        - clearedRowCount
+        - remainingRows
+        - items
+      properties:
+        assetImportJobId:
+          type: integer
+          format: int64
+          description: 対象ジョブID
+        importedRowCount:
+          type: integer
+          format: int32
+          description: 取込対象として検証した行数
+        updatedRowCount:
+          type: integer
+          format: int32
+          description: SHIP資産マスタIDを反映した行数
+        clearedRowCount:
+          type: integer
+          format: int32
+          description: 選択解除として反映した行数
+        remainingRows:
+          type: integer
+          format: int32
+          description: 取込後の未確定件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetMatchingExcelImportItem'
+          description: 反映後の対象行概要
+          x-word-subtable-title: items要素（AssetMatchingExcelImportItem）
+    AssetMatchingExcelImportItem:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportRowId
+        - selectedMatch
+      properties:
+        assetImportRowId:
+          type: integer
+          format: int64
+          description: 資産インポート行ID
+        selectedMatch:
+          type: string
+          description: Excel取込反映後の選択結果。空欄反映行は null
+    PostAssetMatchingCompleteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportJobId
+      properties:
+        assetImportJobId:
+          type: integer
+          format: int64
+          description: 対象ジョブID
+    AssetMatchingCompleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportJobId
+        - status
+        - remainingRows
+      properties:
+        assetImportJobId:
+          type: integer
+          format: int64
+          description: 対象ジョブID
+        status:
+          type: string
+          description: 更新後状態。MATCHING_COMPLETED
+        remainingRows:
+          type: integer
+          format: int32
+          description: 完了時点の未確定件数
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

@@ -264,8 +264,8 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 - `user_facility_column_settings` は、`facility_column_settings.is_enabled=true` かつ `related_feature_code` に対応する `user_facility_feature_settings.is_enabled=true` のカラムだけ ON にできる
 - `facility_feature_settings` には、`config_scope in ('FACILITY', 'FACILITY_USER')` の機能だけ登録できる
 - `facility_column_settings` は、`related_feature_code` に対応する `facility_feature_settings.is_enabled=true` のときだけ ON にできる
-- `facility_external_view_settings` には、原則として `usage_context='EXTERNAL'` の機能だけ登録できる。ただし資産一覧・資産詳細の他施設公開設定は `機能要件.md` の正本に従い、既存の `original_list_view` を登録対象とする
-- `facility_external_column_settings` には、原則として `usage_context='EXTERNAL'` かつ `related_feature_code` に対応する `facility_external_view_settings.is_enabled=true` のカラムだけ登録できる。ただし価格カラム共有は `機能要件.md` の正本に従い、既存の `original_price_column` を登録対象とする
+- `facility_external_view_settings` には、原則として `usage_context='EXTERNAL'` の機能だけ登録できる。ただし資産一覧・資産詳細の他施設公開設定は認証・認可API設計に従い、既存の `original_list_view` を登録対象とする
+- `facility_external_column_settings` には、原則として `usage_context='EXTERNAL'` かつ `related_feature_code` に対応する `facility_external_view_settings.is_enabled=true` のカラムだけ登録できる。ただし価格カラム共有は認証・認可API設計に従い、既存の `original_price_column` を登録対象とする
 - 施設論理削除 API は関連認可テーブルを cascade しない。削除済み施設は実行時判定で除外し、復活時は `deleted_at` を解除して再利用する。
 
 ## 9. 監査・履歴

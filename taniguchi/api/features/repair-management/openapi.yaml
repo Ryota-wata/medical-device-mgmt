@@ -1,0 +1,5099 @@
+openapi: 3.0.4
+info:
+  title: 修理管理 API
+  version: '1.2'
+  description: 修理管理で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 修理管理
+    description: 修理管理で利用するAPI
+paths:
+  /quotation-data-box/repair-requests/tasks:
+    get:
+      tags:
+        - 修理管理
+      operationId: getQuotationDataBoxRepairRequestsTasks
+      summary: 修理管理タブ一覧取得
+      description: 修理管理タブの申請受付一覧または修理タスク管理リストを step に応じて取得する。画面初期表示では本APIを step=RECEPTION と step=ALL で並列実行する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+        '500':
+          - INTERNAL_SERVER_ERROR
+      parameters:
+        - name: step
+          in: query
+          required: false
+          description: >-
+            ALL / RECEPTION / QUOTE_REQUEST / QUOTATION_ORDER / WORK_DATE / COMPLETE。未指定時は ALL。RECEPTION
+            は修理区分未設定の申請受付一覧、その他は修理区分設定済みの進行中修理タスク管理リストだけを対象とする
+          schema:
+            type: string
+            enum:
+              - ALL
+              - RECEPTION
+              - QUOTE_REQUEST
+              - QUOTATION_ORDER
+              - WORK_DATE
+              - COMPLETE
+            default: ALL
+        - name: repairCategory
+          in: query
+          required: false
+          description: IN_HOUSE / OUTSOURCED。受付済み修理タスクだけに適用し、step=RECEPTION との同時指定は不可
+          schema:
+            type: string
+            enum:
+              - IN_HOUSE
+              - OUTSOURCED
+        - name: alternativeUnreturnedOnly
+          in: query
+          required: false
+          description: 代替品未返却のみ表示する場合 true。受付済み修理タスクだけに適用し、step=RECEPTION との同時指定は不可
+          schema:
+            type: boolean
+            default: false
+        - name: departmentName
+          in: query
+          required: false
+          description: 申請部署の部分一致
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          description: ページ番号。未指定時 1
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          description: 1ページ件数。未指定時 50
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 50
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepairTaskListResponse'
+        '400':
+          description: 検索条件不正、または step=RECEPTION と修理タスク専用フィルターの同時指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RepairTaskListResponse）
+      x-word-response-subtable-titles:
+        - items要素（RepairTaskListItem）
+      x-word-response-subtables:
+        - Title: items要素（RepairTaskListItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - repairRequestId
+              - int64
+              - ✓
+              - 修理申請ID
+            - - applicationNo
+              - string
+              - ✓
+              - 修理依頼No.
+            - - status
+              - string
+              - ✓
+              - 修理申請の保存ステータス
+            - - statusLabel
+              - string
+              - ✓
+              - 画面表示用ステータス
+            - - requestedOn
+              - date
+              - ✓
+              - 申請日
+            - - requestedAtTime
+              - time
+              - '-'
+              - 申請時刻
+            - - requestedByName
+              - string
+              - ✓
+              - 申請者名
+            - - requestedByDepartmentName
+              - string
+              - '-'
+              - 申請者所属
+            - - requestedByContact
+              - string
+              - '-'
+              - 申請者連絡先
+            - - isRegisteredAsset
+              - boolean
+              - ✓
+              - 登録済み資産かどうか
+            - - assetLedgerId
+              - int64
+              - '-'
+              - 登録済み資産の場合のみ設定
+            - - qrCodeValue
+              - string
+              - '-'
+              - QRラベル
+            - - itemName
+              - string
+              - '-'
+              - 品目名。未登録資産は手入力値
+            - - makerName
+              - string
+              - '-'
+              - メーカー名。未登録資産は手入力値
+            - - modelName
+              - string
+              - '-'
+              - 型式。未登録資産は手入力値
+            - - serialNo
+              - string
+              - '-'
+              - シリアルNo.
+            - - repairCategory
+              - string
+              - '-'
+              - IN_HOUSE / OUTSOURCED
+            - - requestAlternativeDeviceStatus
+              - string
+              - '-'
+              - 修理依頼起票時の申請者選択。NOT_NEEDED / NEEDED / REQUESTED。修理管理では上書きしない
+            - - alternativeUnreturnedFlag
+              - boolean
+              - ✓
+              - 代替機納品済みかつ未返却の場合 true
+            - - availableActions
+              - string[]
+              - ✓
+              - >-
+                画面から実行可能な操作。例: PREVIEW_VENDOR_REQUEST / SEND_VENDOR_REQUEST / DELETE_VENDOR_REQUEST /
+                COMPLETE_VENDOR_REQUEST / REGISTER_QUOTATION / REGISTER_ADDITIONAL_QUOTATION / PREVIEW_QUOTATION /
+                PREVIEW_ORDER / REGISTER_ORDER / REJECT_TASK / DELETE_TASK / REGISTER_WORK_DATE / REGISTER_DOCUMENT /
+                PREVIEW_DOCUMENT / DELETE_DOCUMENT / COMPLETE_TASK /
+                CREATE_DISPOSAL_APPLICATION。STEP2の「メール送信」に対応するAPIは定義しないため含めない
+            - - sourceDepartmentName
+              - string
+              - '-'
+              - 申請受付一覧の部門名
+            - - sourceSectionName
+              - string
+              - '-'
+              - 申請受付一覧の部署名
+            - - sourceRoomName
+              - string
+              - '-'
+              - 申請受付一覧の室名
+            - - vendorName
+              - string
+              - ✓
+              - 修理タスク管理リストの業者名。院内対応または未設定時は null
+            - - vendorPerson
+              - string
+              - ✓
+              - 修理タスク管理リストの業者担当者。院内対応または未設定時は null
+            - - vendorContact
+              - string
+              - ✓
+              - 修理タスク管理リストの業者電話番号。院内対応または未設定時は null
+            - - deadlineLabel
+              - string
+              - ✓
+              - 期限列ラベル。見積提出期限 / 引取日 / 納入予定日。期限を表示しない状態は null
+            - - deadlineOn
+              - date
+              - ✓
+              - 期限列の日付。対象日付が未設定または期限を表示しない状態は null
+  /repair-task/reception-assignees:
+    get:
+      tags:
+        - 修理管理
+      operationId: getRepairTaskReceptionAssignees
+      summary: 修理申請受付担当者候補取得
+      description: 作業対象施設で修理申請管理を担当できる病院ユーザー・SHIPユーザーを氏名検索し、受付担当者選択候補として返す。共有システム管理者アカウントは候補に含めない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+        '500':
+          - INTERNAL_SERVER_ERROR
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          description: ユーザー氏名または所属部署の部分一致。未指定時は先頭候補を返す
+          schema:
+            type: string
+            maxLength: 100
+        - name: limit
+          in: query
+          required: false
+          description: 取得件数。未指定時50、最大100
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 50
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepairReceptionAssigneeCandidateListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RepairReceptionAssigneeCandidateListResponse）
+      x-word-response-subtable-titles: []
+      x-word-response-subtables: []
+  /repair-task/tasks/{repairTaskId}:
+    get:
+      tags:
+        - 修理管理
+      operationId: getRepairTaskTasksByRepairTaskId
+      summary: 修理タスク詳細取得
+      description: 修理申請管理タスク画面に表示する申請情報、修理詳細、工程、見積、発注、添付情報を取得する。修理申請書PDFは専用の application-preview APIから取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_RFQ_CONFLICT
+        '500':
+          - INTERNAL_SERVER_ERROR
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepairTaskDetailResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 有効な修理RFQが複数存在する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RepairTaskDetailResponse）
+      x-word-response-subtable-titles:
+        - task要素（RepairTaskDetail）
+        - steps要素（RepairTaskStep）
+        - vendorRequests要素（RepairVendorRequest）
+        - quotations要素（RepairQuotation）
+        - quotations 配下 items 要素（RepairQuotationItem）
+        - order要素（RepairOrder）
+        - assetRegistrationInfo要素（RepairAssetRegistrationInfo）
+        - documents要素（DocumentSummary）
+      x-word-response-subtables:
+        - Title: task要素（RepairTaskDetail）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - repairRequestId
+              - int64
+              - ✓
+              - 修理申請ID
+            - - applicationNo
+              - string
+              - ✓
+              - 修理依頼No.
+            - - status
+              - string
+              - ✓
+              - 修理申請の保存ステータス
+            - - statusLabel
+              - string
+              - ✓
+              - 画面表示用ステータス
+            - - requestedOn
+              - date
+              - ✓
+              - 申請日
+            - - requestedAtTime
+              - time
+              - '-'
+              - 申請時刻
+            - - requestedByName
+              - string
+              - ✓
+              - 申請者名
+            - - requestedByDepartmentName
+              - string
+              - '-'
+              - 申請者所属
+            - - requestedByContact
+              - string
+              - '-'
+              - 申請者連絡先
+            - - isRegisteredAsset
+              - boolean
+              - ✓
+              - 登録済み資産かどうか
+            - - assetLedgerId
+              - int64
+              - '-'
+              - 登録済み資産の場合のみ設定
+            - - qrCodeValue
+              - string
+              - '-'
+              - QRラベル
+            - - itemName
+              - string
+              - '-'
+              - 品目名。未登録資産は手入力値
+            - - makerName
+              - string
+              - '-'
+              - メーカー名。未登録資産は手入力値
+            - - modelName
+              - string
+              - '-'
+              - 型式。未登録資産は手入力値
+            - - serialNo
+              - string
+              - '-'
+              - シリアルNo.
+            - - repairCategory
+              - string
+              - '-'
+              - IN_HOUSE / OUTSOURCED
+            - - requestAlternativeDeviceStatus
+              - string
+              - '-'
+              - 修理依頼起票時の申請者選択。NOT_NEEDED / NEEDED / REQUESTED。修理管理では上書きしない
+            - - alternativeUnreturnedFlag
+              - boolean
+              - ✓
+              - 代替機納品済みかつ未返却の場合 true
+            - - availableActions
+              - string[]
+              - ✓
+              - >-
+                画面から実行可能な操作。例: PREVIEW_VENDOR_REQUEST / SEND_VENDOR_REQUEST / DELETE_VENDOR_REQUEST /
+                COMPLETE_VENDOR_REQUEST / REGISTER_QUOTATION / REGISTER_ADDITIONAL_QUOTATION / PREVIEW_QUOTATION /
+                PREVIEW_ORDER / REGISTER_ORDER / REJECT_TASK / DELETE_TASK / REGISTER_WORK_DATE / REGISTER_DOCUMENT /
+                PREVIEW_DOCUMENT / DELETE_DOCUMENT / COMPLETE_TASK /
+                CREATE_DISPOSAL_APPLICATION。STEP2の「メール送信」に対応するAPIは定義しないため含めない
+            - - symptomText
+              - string
+              - ✓
+              - 症状
+            - - freeComment
+              - string
+              - '-'
+              - フリーコメント
+            - - receptionDepartment
+              - string
+              - '-'
+              - 現在の受付担当ユーザーの所属部署。未設定時は NULL
+            - - receptionPerson
+              - string
+              - '-'
+              - 現在の受付担当者氏名
+            - - receptionUserId
+              - int64
+              - '-'
+              - 現在の受付担当ユーザーID
+            - - receptionContact
+              - string
+              - '-'
+              - 現在の受付担当ユーザーの電話番号。未設定時は NULL
+            - - receptionConfirmedAt
+              - datetime
+              - '-'
+              - 初回受付確定日時
+            - - requestComment
+              - string
+              - '-'
+              - 修理RFQ単位のご依頼事項
+            - - alternativeHandlingRequiredFlag
+              - boolean
+              - ✓
+              - 修理管理担当者の保存済み代替機対応判断。未保存は null
+            - - effectiveAlternativeHandlingRequiredFlag
+              - boolean
+              - ✓
+              - STEP1の画面表示用実効値。保存済み管理判断を優先し、未保存の場合だけ申請時の NEEDED / REQUESTED をtrue、NOT_NEEDED / nullをfalseとして算出する
+            - - alternativeDeviceInfo
+              - string
+              - '-'
+              - 既存データに代替機情報がある場合の参照表示値。STEP1更新リクエストでは受け取らない
+            - - alternativeDeliveryOn
+              - date
+              - '-'
+              - 代替機納品日
+            - - alternativeReturnOn
+              - date
+              - '-'
+              - 代替機返却予定日
+            - - alternativeReturnedFlag
+              - boolean
+              - ✓
+              - 代替機返却済みフラグ
+            - - installerName
+              - string
+              - '-'
+              - 初回受付時に保存した参照表示用の導入業者名
+            - - installerPerson
+              - string
+              - '-'
+              - 初回受付時に保存した参照表示用の導入業者担当者名
+            - - installerContact
+              - string
+              - '-'
+              - 初回受付時に保存した参照表示用の導入業者連絡先
+            - - maintenanceContractFlag
+              - boolean
+              - ✓
+              - 初回受付時に保存した保守契約対象フラグ
+            - - warrantyEndOn
+              - date
+              - '-'
+              - 初回受付時に保存した保守契約期限
+            - - pickupRequiredFlag
+              - boolean
+              - ✓
+              - 商品引取対応要否
+            - - pickupOn
+              - date
+              - '-'
+              - 商品引取日
+            - - quotationDueOn
+              - date
+              - '-'
+              - 有効な修理RFQ依頼先の due_on 最小値を同期した一覧表示用スナップショット
+            - - orderedOn
+              - date
+              - '-'
+              - 発注日
+            - - vendorRequests
+              - RepairVendorRequest[]
+              - ✓
+              - 見積依頼先
+            - - quotations
+              - RepairQuotation[]
+              - ✓
+              - 登録済み見積
+            - - order
+              - RepairOrder
+              - '-'
+              - 発注情報
+        - Title: steps要素（RepairTaskStep）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - stepCode
+              - string
+              - ✓
+              - QUOTE_REQUEST / QUOTATION_ORDER / WORK_DATE / COMPLETE
+            - - stepName
+              - string
+              - ✓
+              - 画面表示工程名
+            - - stepStatus
+              - string
+              - ✓
+              - 工程ステータス。NOT_STARTED / IN_PROGRESS / COMPLETED / SKIPPED / CANCELED / REOPENED
+            - - isCurrent
+              - boolean
+              - ✓
+              - 現在工程の場合 true
+            - - startedAt
+              - datetime
+              - '-'
+              - 工程開始日時
+            - - completedAt
+              - datetime
+              - '-'
+              - 工程完了日時
+            - - completionReason
+              - string
+              - '-'
+              - REJECTED / UNREPAIRABLE / SKIPPED_IN_HOUSE_REPAIR など
+        - Title: vendorRequests要素（RepairVendorRequest）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - rfqVendorId
+              - int64
+              - ✓
+              - 見積依頼先ID
+            - - vendorId
+              - int64
+              - '-'
+              - 業者マスタID
+            - - vendorName
+              - string
+              - ✓
+              - 依頼先業者名
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - email
+              - string
+              - ✓
+              - メールアドレス
+            - - phone
+              - string
+              - '-'
+              - 電話番号
+            - - dueOn
+              - date
+              - '-'
+              - 回答期限
+            - - requestNote
+              - string
+              - '-'
+              - 業者単位の補足
+            - - isPrimaryVendor
+              - boolean
+              - ✓
+              - 主依頼先の場合true
+            - - requestStatus
+              - string
+              - ✓
+              - DRAFT / SENT / REPLIED / CANCELED
+            - - requestedAt
+              - datetime
+              - '-'
+              - 依頼送信操作を保存した日時。メール配信成功日時ではない
+            - - requestedByUserId
+              - int64
+              - '-'
+              - 依頼送信操作を実行したユーザーID
+        - Title: quotations要素（RepairQuotation）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - quotationId
+              - int64
+              - ✓
+              - 見積ID
+            - - quotationNo
+              - string
+              - ✓
+              - 受領見積番号
+            - - vendorQuotationNo
+              - string
+              - ✓
+              - 業者側見積No.
+            - - rfqVendorId
+              - int64
+              - ✓
+              - 見積依頼先ID
+            - - vendorId
+              - int64
+              - '-'
+              - 業者マスタID
+            - - vendorName
+              - string
+              - ✓
+              - 見積業者名
+            - - quotationOn
+              - date
+              - ✓
+              - 見積日
+            - - quotationPhase
+              - string
+              - ✓
+              - ESTIMATE / ORDER_REGISTRATION / ADDITIONAL
+            - - totalAmountExclTax
+              - decimal
+              - ✓
+              - 税抜合計金額
+            - - accountDivisionCode
+              - string
+              - ✓
+              - 勘定科目コード
+            - - storageFormat
+              - string
+              - ✓
+              - 見積書原本の保存形式
+            - - status
+              - string
+              - ✓
+              - 見積ステータス
+            - - items
+              - RepairQuotationItem[]
+              - ✓
+              - 見積明細
+            - - document
+              - DocumentSummary
+              - ✓
+              - 見積書原本
+        - Title: quotations 配下 items 要素（RepairQuotationItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - quotationItemId
+              - int64
+              - ✓
+              - 見積明細ID
+            - - itemName
+              - string
+              - ✓
+              - 品目名
+            - - makerName
+              - string
+              - '-'
+              - メーカー名
+            - - modelName
+              - string
+              - '-'
+              - 型式
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - unitPrice
+              - decimal
+              - '-'
+              - 単価
+            - - amount
+              - decimal
+              - '-'
+              - 金額
+            - - accountTitle
+              - string
+              - '-'
+              - 勘定科目
+        - Title: order要素（RepairOrder）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - orderId
+              - int64
+              - ✓
+              - 発注ID
+            - - orderNo
+              - string
+              - ✓
+              - 発注番号
+            - - quotationId
+              - int64
+              - ✓
+              - 唯一の有効な発注登録用見積ID
+            - - vendorName
+              - string
+              - ✓
+              - 発注先業者名
+            - - orderType
+              - string
+              - ✓
+              - 発注種別。修理発注では「修理」
+            - - settlementNo
+              - string
+              - '-'
+              - 院内決済No.
+            - - settlementOn
+              - date
+              - '-'
+              - 決済日
+            - - orderDocumentDeliveryMethod
+              - string
+              - ✓
+              - 発注書を外部送付しないため null
+            - - orderDocumentDeliveryStatus
+              - string
+              - ✓
+              - 発注書を外部送付しないため null
+            - - orderDocumentSentAt
+              - datetime
+              - ✓
+              - 発注書を外部送付しないため null
+            - - orderOn
+              - date
+              - ✓
+              - 発注登録確定日。サーバー側で設定する
+            - - paymentTerms
+              - string
+              - ✓
+              - 支払条件。修理発注では「未指定」
+            - - totalAmount
+              - decimal
+              - '-'
+              - 発注合計金額
+            - - status
+              - string
+              - ✓
+              - 発注ステータス
+            - - document
+              - DocumentSummary
+              - ✓
+              - 生成・保存した発注書
+            - - applicationStatus
+              - string
+              - ✓
+              - 発注済
+            - - currentStep
+              - string
+              - ✓
+              - WORK_DATE
+            - - updatedAt
+              - datetime
+              - ✓
+              - 更新日時
+        - Title: assetRegistrationInfo要素（RepairAssetRegistrationInfo）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - itemName
+              - string
+              - '-'
+              - 品名
+            - - makerName
+              - string
+              - '-'
+              - メーカー
+            - - modelName
+              - string
+              - '-'
+              - 型式
+            - - serialNo
+              - string
+              - '-'
+              - シリアルNo.
+            - - fixedAssetNo
+              - string
+              - ✓
+              - 登録済み資産の既存資産番号。未登録資産は null
+            - - finalAccountTitle
+              - string
+              - ✓
+              - 登録済み資産の既存勘定科目。未登録資産は null
+        - Title: documents要素（DocumentSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentId
+              - int64
+              - ✓
+              - ドキュメントID
+            - - stepCode
+              - string
+              - ✓
+              - QUOTATION / ORDER / COMPLETE など
+            - - documentCategory
+              - string
+              - ✓
+              - QUOTATION / ORDER / COMPLETE など
+            - - documentType
+              - string
+              - ✓
+              - ドキュメント種別。見積書 / 発注書 / 院内決済書類 / 修理報告書 / 検収書 / その他 / 見積書（変更が発生した場合） / 納品書 / 請求書
+            - - documentDate
+              - date
+              - '-'
+              - 文書日付
+            - - documentNo
+              - string
+              - '-'
+              - ドキュメントNo.
+            - - otherDocumentName
+              - string
+              - '-'
+              - documentType=その他 の場合の書類名
+            - - actualAmountExclTax
+              - decimal
+              - '-'
+              - documentType=見積書（変更が発生した場合） の場合の実績金額（税別）
+            - - accountDivisionCode
+              - string
+              - '-'
+              - documentType=見積書（変更が発生した場合） の場合の勘定科目コード
+            - - storageFormat
+              - string
+              - '-'
+              - ELECTRONIC_TRANSACTION / SCANNED / UNSPECIFIED
+            - - fileName
+              - string
+              - ✓
+              - アップロード時の元ファイル名。右ペインの一覧表示に使用する
+            - - contentType
+              - string
+              - '-'
+              - MIMEタイプ
+            - - fileSize
+              - int64
+              - '-'
+              - ファイルサイズ
+            - - downloadUrl
+              - string
+              - '-'
+              - 表示・ダウンロード用の認可済みURL。S3オブジェクトキー、S3バケット名、S3の直接URLは返さない
+            - - uploadedAt
+              - datetime
+              - ✓
+              - アップロード日時
+            - - uploadedByName
+              - string
+              - '-'
+              - アップロード者名
+            - - canDelete
+              - boolean
+              - ✓
+              - タスク完了前の完了書類で削除可能な場合 true
+    delete:
+      tags:
+        - 修理管理
+      operationId: deleteRepairTaskTasksByRepairTaskId
+      summary: 修理タスク削除
+      description: 修理管理タブの削除操作で、見積登録済かつ発注前の修理タスクを論理削除する。発注済み以降の業務証跡がある修理タスクは削除不可とする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_TASK_DELETE_NOT_ALLOWED
+        '500':
+          - INTERNAL_SERVER_ERROR
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 削除対象の修理申請ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功、または既削除への再送成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 未削除の対象が発注済み以降、または現在ステータス不整合で削除不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：No Content）
+      x-word-response-lines:
+        - Body は返却しない。
+  /repair-task/tasks/{repairTaskId}/application-preview:
+    get:
+      tags:
+        - 修理管理
+      operationId: getRepairTaskTasksByRepairTaskIdApplicationPreview
+      summary: 修理申請書PDF取得
+      description: 保存済みの修理申請情報から修理申請書PDFを生成し、バイナリで返す。プレビュー用PDFはDBおよびAmazon S3へ保存しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '500':
+          - INTERNAL_SERVER_ERROR
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 修理申請書PDF生成成功
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': application/pdf
+      x-word-response-title: レスポンス（200：application/pdf）
+      x-word-response-subtable-titles: []
+      x-word-response-rows:
+        - - body
+          - binary
+          - ✓
+          - 修理申請書PDFバイナリ。Content-Type は application/pdf
+  /repair-task/tasks/{repairTaskId}/approve:
+    post:
+      tags:
+        - 修理管理
+      operationId: postRepairTaskTasksByRepairTaskIdApprove
+      summary: 受付判定登録
+      description: 申請内容モーダルで未受付の修理申請を受け付け、院内修理または院外修理の振り分けと、選択した受付担当ユーザーの氏名・所属部署・電話番号スナップショットを登録する。通常却下は reject API、修理不能として廃棄申請へ接続する処理は disposal-application API で扱う。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '503'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+          - RECEPTION_ASSIGNEE_INVALID
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_STATUS_CONFLICT
+          - REPAIR_RECEPTION_DECISION_CONFLICT
+          - REPAIR_RFQ_CONFLICT
+        '500':
+          - INTERNAL_SERVER_ERROR
+        '503':
+          - REPAIR_DB_503_COMMIT_OUTCOME_UNKNOWN
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdApproveRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 受付判定登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdApproveResponse'
+        '400':
+          description: 判定値不正、必須不足、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 初回受付条件不整合、受付済み修理区分と判定値の競合、後続工程への進行済み、または修理RFQ不整合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。S3処理はなく、同じリクエストを再送できる
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': RepairTaskActionResponse
+      x-word-response-title: レスポンス（200：RepairTaskActionResponse）
+      x-word-response-subtable-titles: []
+  /repair-task/tasks/{repairTaskId}/reject:
+    post:
+      tags:
+        - 修理管理
+      operationId: postRepairTaskTasksByRepairTaskIdReject
+      summary: 申請却下
+      description: STEP2の「申請を却下し終了」で選択した受付担当ユーザー情報を保存し、修理申請を通常却下として終端する。修理不能として廃棄申請へ接続する場合は、本APIではなく廃棄申請接続APIを使用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '503'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+          - RECEPTION_ASSIGNEE_INVALID
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_STATUS_CONFLICT
+          - REPAIR_ORDER_QUOTATION_CONFLICT
+          - REPAIR_ORDER_ALREADY_REGISTERED
+        '500':
+          - INTERNAL_SERVER_ERROR
+        '503':
+          - REPAIR_DB_503_COMMIT_OUTCOME_UNKNOWN
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdRejectRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 却下終端成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdRejectResponse'
+        '400':
+          description: 受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 別の終端状態、現在工程・ステータス不整合、発注済み、または有効な発注登録用見積が一意に決まらない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。同じリクエストを再送できる
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': RepairTaskActionResponse
+      x-word-response-title: レスポンス（200：RepairTaskActionResponse）
+      x-word-response-subtable-titles: []
+  /repair-task/tasks/{repairTaskId}/vendor-requests/preview:
+    post:
+      tags:
+        - 修理管理
+      operationId: postRepairTaskTasksByRepairTaskIdVendorRequestsPreview
+      summary: 修理見積依頼書プレビュー
+      description: STEP1で入力中の依頼先・代替機・商品引取情報と、保存済みの導入業者・保守契約参照情報から修理見積依頼書を一時生成し、右側の見積依頼書セクションへ表示する。プレビューではDBとAmazon S3へ保存しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_STATUS_CONFLICT
+        '500':
+          - INTERNAL_SERVER_ERROR
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdVendorRequestsPreviewRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - step1要素（RepairStep1Input）
+        - vendor要素（RepairVendorRequestInput）
+      x-word-request-subtables:
+        - Title: step1要素（RepairStep1Input）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - alternativeHandlingRequiredFlag
+              - boolean
+              - ✓
+              - 修理管理担当者の代替機対応判断。必要=true、不要=false
+            - - alternativeDeliveryOn
+              - date
+              - '-'
+              - 代替機納品日
+            - - alternativeReturnOn
+              - date
+              - '-'
+              - 代替機返却予定日
+            - - alternativeReturnedFlag
+              - boolean
+              - ✓
+              - 代替機を返却済みにする場合true
+            - - pickupRequiredFlag
+              - boolean
+              - ✓
+              - 商品引取対応が必要な場合true
+            - - pickupOn
+              - date
+              - 条件付き
+              - pickupRequiredFlag=true の場合に必須
+        - Title: vendor要素（RepairVendorRequestInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - vendorId
+              - int64
+              - '-'
+              - 業者マスタID
+            - - vendorName
+              - string
+              - ✓
+              - 業者名
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - email
+              - string
+              - ✓
+              - メールアドレス。外部メール送信には使用しない
+            - - phone
+              - string
+              - '-'
+              - 電話番号
+            - - dueOn
+              - date
+              - '-'
+              - 業者別回答期限
+            - - requestNote
+              - string
+              - '-'
+              - 業者単位の補足
+      responses:
+        '200':
+          description: プレビュー生成成功
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 業者名・メールの必須不足、メール形式不正、または依頼先情報不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 院外修理、新規申請、またはSTEP1ではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': application/pdf
+      x-word-response-title: レスポンス（200：application/pdf）
+      x-word-response-subtable-titles: []
+      x-word-response-rows:
+        - - body
+          - binary
+          - ✓
+          - 修理見積依頼書PDFバイナリ。Content-Type は application/pdf
+  /repair-task/tasks/{repairTaskId}/vendor-requests:
+    post:
+      tags:
+        - 修理管理
+      operationId: postRepairTaskTasksByRepairTaskIdVendorRequests
+      summary: 見積依頼先登録・依頼送信
+      description: STEP1の「依頼送信」操作で、手入力した依頼先、依頼内容、代替機・商品引取入力、操作日時、操作ユーザーを保存する。導入業者・保守契約参照情報は上書きしない。外部メールは送信せず、画面入力だけでは保存しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '503'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+          - IDEMPOTENCY_KEY_REQUIRED
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_STATUS_CONFLICT
+          - REPAIR_RFQ_CONFLICT
+          - IDEMPOTENCY_KEY_REUSED
+          - IDEMPOTENCY_REQUEST_IN_PROGRESS
+        '500':
+          - INTERNAL_SERVER_ERROR
+        '503':
+          - REPAIR_DB_503_COMMIT_OUTCOME_UNKNOWN
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 見積依頼先登録・依頼送信操作の冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdVendorRequestsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - step1要素（RepairStep1Input）
+        - vendor要素（RepairVendorRequestInput）
+      x-word-request-subtables:
+        - Title: step1要素（RepairStep1Input）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - alternativeHandlingRequiredFlag
+              - boolean
+              - ✓
+              - 修理管理担当者の代替機対応判断。必要=true、不要=false
+            - - alternativeDeliveryOn
+              - date
+              - '-'
+              - 代替機納品日
+            - - alternativeReturnOn
+              - date
+              - '-'
+              - 代替機返却予定日
+            - - alternativeReturnedFlag
+              - boolean
+              - ✓
+              - 代替機を返却済みにする場合true
+            - - pickupRequiredFlag
+              - boolean
+              - ✓
+              - 商品引取対応が必要な場合true
+            - - pickupOn
+              - date
+              - 条件付き
+              - pickupRequiredFlag=true の場合に必須
+        - Title: vendor要素（RepairVendorRequestInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - vendorId
+              - int64
+              - '-'
+              - 業者マスタID
+            - - vendorName
+              - string
+              - ✓
+              - 依頼送信操作時点の業者名
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - email
+              - string
+              - ✓
+              - メールアドレス。外部メール送信には使用しない
+            - - phone
+              - string
+              - '-'
+              - 連絡先
+            - - dueOn
+              - date
+              - '-'
+              - 業者別回答期限
+            - - requestNote
+              - string
+              - '-'
+              - 業者単位の補足
+      responses:
+        '200':
+          description: 見積依頼先・依頼送信操作の保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepairVendorRequestRegistrationResponse'
+        '400':
+          description: 業者名・メールの必須不足、メール形式不正、または依頼先情報不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 現在工程不整合、または有効RFQ重複
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。同じ冪等キーで再送する
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RepairVendorRequestRegistrationResponse）
+      x-word-response-subtable-titles: []
+  /repair-task/tasks/{repairTaskId}/vendor-requests/{rfqVendorId}:
+    delete:
+      tags:
+        - 修理管理
+      operationId: deleteRepairTaskTasksByRepairTaskIdVendorRequestsByRfqVendorId
+      summary: 見積依頼先削除
+      description: STEP1の依頼送信操作で保存した依頼先を、STEP1完了前に論理削除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+          - REPAIR_RFQ_NOT_FOUND
+        '409':
+          - REPAIR_STATUS_CONFLICT
+        '500':
+          - INTERNAL_SERVER_ERROR
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+        - name: rfqVendorId
+          in: path
+          required: true
+          description: 削除対象の依頼先ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 見積依頼先削除成功、または既削除への再送成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請または依頼先が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: STEP1完了後、または削除対象外の依頼状態
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：No Content）
+      x-word-response-lines:
+        - Body は返却しない。
+  /repair-task/tasks/{repairTaskId}/vendor-requests/complete:
+    post:
+      tags:
+        - 修理管理
+      operationId: postRepairTaskTasksByRepairTaskIdVendorRequestsComplete
+      summary: 見積依頼完了
+      description: STEP1の見積依頼完了操作で、依頼送信操作が保存済みの有効な依頼先が1件以上あることを確認し、選択した受付担当ユーザー情報を更新してSTEP2へ進める。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '503'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+          - RECEPTION_ASSIGNEE_INVALID
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_STATUS_CONFLICT
+          - REPAIR_RFQ_NOT_FOUND
+          - REPAIR_RFQ_CONFLICT
+          - REPAIR_VENDOR_REQUEST_NOT_SENT
+        '500':
+          - INTERNAL_SERVER_ERROR
+        '503':
+          - REPAIR_DB_503_COMMIT_OUTCOME_UNKNOWN
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdVendorRequestsCompleteRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - step1要素（RepairStep1Input）
+      x-word-request-subtables:
+        - Title: step1要素（RepairStep1Input）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - alternativeHandlingRequiredFlag
+              - boolean
+              - ✓
+              - 修理管理担当者の代替機対応判断。必要=true、不要=false
+            - - alternativeDeliveryOn
+              - date
+              - '-'
+              - 代替機納品日
+            - - alternativeReturnOn
+              - date
+              - '-'
+              - 代替機返却予定日
+            - - alternativeReturnedFlag
+              - boolean
+              - ✓
+              - 代替機を返却済みにする場合true
+            - - pickupRequiredFlag
+              - boolean
+              - ✓
+              - 商品引取対応が必要な場合true
+            - - pickupOn
+              - date
+              - 条件付き
+              - pickupRequiredFlag=true の場合に必須
+      responses:
+        '200':
+          description: 見積依頼完了成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdVendorRequestsCompleteResponse'
+        '400':
+          description: STEP1入力不正、受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: RFQ未作成、RFQ重複、SENT の有効依頼先なし、確定済みSTEP1入力との不一致、または後続工程への進行済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。同じリクエストを再送できる
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': RepairTaskActionResponse
+      x-word-response-title: レスポンス（200：RepairTaskActionResponse）
+      x-word-response-subtable-titles: []
+  /repair-task/tasks/{repairTaskId}/quotations:
+    post:
+      tags:
+        - 修理管理
+      operationId: postRepairTaskTasksByRepairTaskIdQuotations
+      summary: 修理見積登録
+      description: 参考見積、発注登録用見積、または発注後の追加見積を、見積書原本とともに登録する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '503'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+          - IDEMPOTENCY_KEY_REQUIRED
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+          - REPAIR_RFQ_NOT_FOUND
+        '409':
+          - REPAIR_ASSET_NOT_FOUND
+          - REPAIR_STATUS_CONFLICT
+          - REPAIR_RFQ_CONFLICT
+          - REPAIR_VENDOR_REQUEST_NOT_SENT
+          - REPAIR_ORDER_QUOTATION_CONFLICT
+          - IDEMPOTENCY_KEY_REUSED
+          - IDEMPOTENCY_REQUEST_IN_PROGRESS
+        '500':
+          - INTERNAL_SERVER_ERROR
+        '502':
+          - REPAIR_FILE_502_S3_OPERATION_FAILED
+        '503':
+          - REPAIR_DB_503_COMMIT_OUTCOME_UNKNOWN
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 見積登録操作の冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdQuotationsRequest'
+            encoding:
+              payload:
+                contentType: application/json
+              file:
+                contentType: application/pdf, image/jpeg, image/png
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - payload.document要素（RepairQuotationDocumentInput）
+      x-word-request-subtables:
+        - Title: payload.document要素（RepairQuotationDocumentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - fileName
+              - string
+              - ✓
+              - アップロード時の元ファイル名。.pdf / .jpg / .jpeg / .png のいずれかとし、右ペインの見積書一覧に表示する
+            - - contentType
+              - string
+              - '-'
+              - application/pdf / image/jpeg / image/png。指定時は実際のfileパートと一致必須
+            - - fileSize
+              - int64
+              - '-'
+              - ファイルサイズ
+            - - storageFormat
+              - string
+              - ✓
+              - ELECTRONIC_TRANSACTION / SCANNED / UNSPECIFIED
+      responses:
+        '201':
+          description: 見積登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepairQuotationResponse'
+        '400':
+          description: 必須見積項目不足、金額不正、勘定科目不正、または見積書原本不整合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請、RFQ、または依頼先が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 現在工程不整合、有効RFQ重複、依頼先状態不整合、修理対象を一意に特定できない、または発注登録用見積が登録済み
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3への見積書保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。S3を保持し、同じ冪等キーで再送する
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：RepairQuotationResponse）
+      x-word-response-subtable-titles: []
+  /repair-task/tasks/{repairTaskId}/quotations/{quotationId}:
+    delete:
+      tags:
+        - 修理管理
+      operationId: deleteRepairTaskTasksByRepairTaskIdQuotationsByQuotationId
+      summary: 修理見積削除
+      description: 削除可能な登録済み見積とその明細・原本を論理削除し、見積書原本のS3オブジェクトを同期削除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+          - REPAIR_QUOTATION_NOT_LINKED
+        '409':
+          - REPAIR_QUOTATION_DELETE_NOT_ALLOWED
+        '500':
+          - INTERNAL_SERVER_ERROR
+        '502':
+          - REPAIR_FILE_502_S3_OPERATION_FAILED
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+        - name: quotationId
+          in: path
+          required: true
+          description: 削除対象の見積ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功、または既削除への再送成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請または対象見積が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 採用済み、完了済み、または見積区分に応じた削除可能期間外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: 論理削除後のAmazon S3同期削除に失敗した。同じDELETEを再送する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：No Content）
+      x-word-response-lines:
+        - Body は返却しない。
+  /repair-task/tasks/{repairTaskId}/quotations/{quotationId}/preview-url:
+    get:
+      tags:
+        - 修理管理
+      operationId: getRepairTaskTasksByRepairTaskIdQuotationsByQuotationIdPreviewUrl
+      summary: 修理見積プレビュー
+      description: 登録済み見積一覧の「表示」押下時に、対象見積書原本の認可済みプレビューURLを返す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+          - REPAIR_QUOTATION_NOT_LINKED
+        '500':
+          - INTERNAL_SERVER_ERROR
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+        - name: quotationId
+          in: path
+          required: true
+          description: 表示対象の見積ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: プレビューURL取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRepairTaskTasksByRepairTaskIdQuotationsByQuotationIdPreviewUrlResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請、見積、または見積書原本が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': PreviewResponse
+      x-word-response-title: レスポンス（200：PreviewResponse）
+      x-word-response-subtable-titles: []
+  /repair-task/tasks/{repairTaskId}/order/preview:
+    post:
+      tags:
+        - 修理管理
+      operationId: postRepairTaskTasksByRepairTaskIdOrderPreview
+      summary: 修理発注書プレビュー
+      description: 唯一の有効な発注登録用見積から発注書を一時生成し、DBへ保存せず右側セクションへ表示する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_STATUS_CONFLICT
+          - REPAIR_ORDER_QUOTATION_CONFLICT
+        '500':
+          - INTERNAL_SERVER_ERROR
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdOrderPreviewRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 発注書プレビュー生成成功
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 現在工程不整合、または有効な発注登録用見積が一意に決まらない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': application/pdf
+      x-word-response-title: レスポンス（200：application/pdf）
+      x-word-response-subtable-titles: []
+      x-word-response-rows:
+        - - body
+          - binary
+          - ✓
+          - 修理発注書PDFバイナリ。Content-Type は application/pdf
+  /repair-task/tasks/{repairTaskId}/order:
+    post:
+      tags:
+        - 修理管理
+      operationId: postRepairTaskTasksByRepairTaskIdOrder
+      summary: 修理発注登録
+      description: 唯一の有効な発注登録用見積を自動採用し、発注情報・発注書・選択した受付担当ユーザー情報を登録してSTEP3へ進める。発注書は外部送付しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '503'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+          - IDEMPOTENCY_KEY_REQUIRED
+          - RECEPTION_ASSIGNEE_INVALID
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_STATUS_CONFLICT
+          - REPAIR_ORDER_QUOTATION_CONFLICT
+          - REPAIR_ORDER_ALREADY_REGISTERED
+          - IDEMPOTENCY_KEY_REUSED
+          - IDEMPOTENCY_REQUEST_IN_PROGRESS
+        '500':
+          - INTERNAL_SERVER_ERROR
+        '502':
+          - REPAIR_FILE_502_S3_OPERATION_FAILED
+        '503':
+          - REPAIR_DB_503_COMMIT_OUTCOME_UNKNOWN
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 発注登録操作の冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdOrderRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 発注登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepairOrderResponse'
+        '400':
+          description: 入力不正、受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 現在工程不整合、発注済み、有効な発注登録用見積が一意に決まらない、または採用見積明細不整合
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3への発注書保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。S3を保持し、同じ冪等キーで再送する
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RepairOrderResponse）
+      x-word-response-subtable-titles: []
+  /repair-task/tasks/{repairTaskId}/work-date:
+    post:
+      tags:
+        - 修理管理
+      operationId: postRepairTaskTasksByRepairTaskIdWorkDate
+      summary: 作業日登録
+      description: STEP3で作業完了予定日と選択した受付担当ユーザー情報を保存し、STEP4へ進める。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '503'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+          - RECEPTION_ASSIGNEE_INVALID
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_STATUS_CONFLICT
+        '500':
+          - INTERNAL_SERVER_ERROR
+        '503':
+          - REPAIR_DB_503_COMMIT_OUTCOME_UNKNOWN
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdWorkDateRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 作業日登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdWorkDateResponse'
+        '400':
+          description: 入力不正、受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 保存済み作業完了予定日との不一致、後続工程への進行済み、または修理区分とステータスが不整合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。同じリクエストを再送できる
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': RepairTaskActionResponse
+      x-word-response-title: レスポンス（200：RepairTaskActionResponse）
+      x-word-response-subtable-titles: []
+  /repair-task/tasks/{repairTaskId}/documents:
+    post:
+      tags:
+        - 修理管理
+      operationId: postRepairTaskTasksByRepairTaskIdDocuments
+      summary: 完了書類登録
+      description: STEP4の「ドキュメント登録」押下時に、選択済みの全ファイルを1回のリクエストで修理申請単位へ一括登録する。画面で入力した書類属性は全ファイルへ共通適用し、ファイル選択だけでは保存しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '503'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+          - REPAIR_DOCUMENT_VALIDATION_ERROR
+          - IDEMPOTENCY_KEY_REQUIRED
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_STATUS_CONFLICT
+          - IDEMPOTENCY_KEY_REUSED
+          - IDEMPOTENCY_REQUEST_IN_PROGRESS
+        '500':
+          - INTERNAL_SERVER_ERROR
+        '502':
+          - REPAIR_FILE_502_S3_OPERATION_FAILED
+        '503':
+          - REPAIR_DB_503_COMMIT_OUTCOME_UNKNOWN
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 完了書類登録操作の冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdDocumentsRequest'
+            encoding:
+              payload:
+                contentType: application/json
+              files:
+                contentType: application/pdf, image/jpeg, image/png
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - payload.documents要素（DocumentInput）
+      x-word-request-subtables:
+        - Title: payload.documents要素（DocumentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentType
+              - string
+              - ✓
+              - 院内決済書類 / 修理報告書 / 検収書 / その他 / 見積書（変更が発生した場合） / 納品書 / 請求書
+            - - fileName
+              - string
+              - ✓
+              - アップロード時の元ファイル名。.pdf / .jpg / .jpeg / .png のいずれかとし、右ペインの各種完了書類一覧に表示する
+            - - contentType
+              - string
+              - '-'
+              - application/pdf / image/jpeg / image/png。指定時は同じ配列位置のfiles要素と一致必須
+            - - fileSize
+              - int64
+              - '-'
+              - ファイルサイズ
+            - - documentDate
+              - date
+              - '-'
+              - 文書日付
+            - - documentNo
+              - string
+              - '-'
+              - ドキュメントNo.
+            - - otherDocumentName
+              - string
+              - 条件付き
+              - documentType=その他 の場合は必須
+            - - actualAmountExclTax
+              - decimal
+              - 条件付き
+              - documentType=見積書（変更が発生した場合） の場合は必須
+            - - accountDivisionCode
+              - string
+              - 条件付き
+              - documentType=見積書（変更が発生した場合） の場合は必須
+            - - storageFormat
+              - string
+              - ✓
+              - ELECTRONIC_TRANSACTION / SCANNED / UNSPECIFIED
+      responses:
+        '201':
+          description: 選択済み完了書類の全件登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentSummaryList'
+        '400':
+          description: 入力不正、条件付き項目不足、配列件数・ファイル対応・共通書類属性の不整合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 保存済み完了値との不一致、別の終端状態、または現在工程がSTEP4ではない
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3への一括保存が途中で失敗した、または補償・ロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。S3を保持し、同じ冪等キーで再送する
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：DocumentSummaryList）
+      x-word-response-subtable-titles: []
+  /repair-task/tasks/{repairTaskId}/documents/{documentId}:
+    delete:
+      tags:
+        - 修理管理
+      operationId: deleteRepairTaskTasksByRepairTaskIdDocumentsByDocumentId
+      summary: 完了書類削除
+      description: タスク完了前に、STEP4で登録した完了書類を論理削除し、S3オブジェクトを同期削除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_DOCUMENT_LOCKED
+        '500':
+          - INTERNAL_SERVER_ERROR
+        '502':
+          - REPAIR_FILE_502_S3_OPERATION_FAILED
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+        - name: documentId
+          in: path
+          required: true
+          description: 削除対象の完了書類ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功、または既削除への再送成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請または対象完了書類が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: タスク完了後のため削除不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: 論理削除後のAmazon S3同期削除に失敗した。同じDELETEを再送する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：No Content）
+      x-word-response-lines:
+        - Body は返却しない。
+  /repair-task/tasks/{repairTaskId}/documents/{documentId}/preview-url:
+    get:
+      tags:
+        - 修理管理
+      operationId: getRepairTaskTasksByRepairTaskIdDocumentsByDocumentIdPreviewUrl
+      summary: 完了書類プレビュー
+      description: STEP4の登録済み完了書類を確認するため、認可済みプレビューURLを返す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '500':
+          - INTERNAL_SERVER_ERROR
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+        - name: documentId
+          in: path
+          required: true
+          description: 表示対象の完了書類ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: プレビューURL取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRepairTaskTasksByRepairTaskIdDocumentsByDocumentIdPreviewUrlResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請または対象完了書類が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': PreviewResponse
+      x-word-response-title: レスポンス（200：PreviewResponse）
+      x-word-response-subtable-titles: []
+  /repair-task/tasks/{repairTaskId}/complete:
+    post:
+      tags:
+        - 修理管理
+      operationId: postRepairTaskTasksByRepairTaskIdComplete
+      summary: 完了登録
+      description: STEP4の登録完了操作で選択した受付担当ユーザー情報を保存し、修理申請を完了する。完了書類が0件でも、画面で確認したうえで完了できる。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '503'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+          - RECEPTION_ASSIGNEE_INVALID
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_STATUS_CONFLICT
+        '500':
+          - INTERNAL_SERVER_ERROR
+        '503':
+          - REPAIR_DB_503_COMMIT_OUTCOME_UNKNOWN
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdCompleteRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 完了登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdCompleteResponse'
+        '400':
+          description: confirmCompletion 不正、日付不正、受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 保存済み完了値との不一致、別の終端状態、または初回処理時に現在工程がSTEP4ではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。同じリクエストを再送できる
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': RepairTaskActionResponse
+      x-word-response-title: レスポンス（200：RepairTaskActionResponse）
+      x-word-response-subtable-titles: []
+  /repair-task/tasks/{repairTaskId}/disposal-application:
+    post:
+      tags:
+        - 修理管理
+      operationId: postRepairTaskTasksByRepairTaskIdDisposalApplication
+      summary: 廃棄申請接続
+      description: 修理不能となった登録済み資産または未登録資産について、選択した受付担当ユーザー情報を保存して元修理申請を却下終端し、廃棄申請を作成する。未登録資産の場合も資産台帳へ登録せず、修理申請内の手入力情報と申請明細スナップショットを廃棄対象物品情報として引き継ぐ。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '503'
+        - '500'
+      x-feature-code: repair_management
+      x-error-codes:
+        '400':
+          - VALIDATION_ERROR
+          - IDEMPOTENCY_KEY_REQUIRED
+          - RECEPTION_ASSIGNEE_INVALID
+        '401':
+          - UNAUTHORIZED
+        '403':
+          - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        '404':
+          - FACILITY_NOT_FOUND
+          - REPAIR_REQUEST_NOT_FOUND
+        '409':
+          - REPAIR_ASSET_NOT_FOUND
+          - REPAIR_STATUS_CONFLICT
+          - REPAIR_DISPOSAL_APPLICATION_NOT_ALLOWED
+          - REPAIR_ORDER_QUOTATION_CONFLICT
+          - REPAIR_ORDER_ALREADY_REGISTERED
+          - IDEMPOTENCY_KEY_REUSED
+          - IDEMPOTENCY_REQUEST_IN_PROGRESS
+        '500':
+          - INTERNAL_SERVER_ERROR
+        '503':
+          - REPAIR_DB_503_COMMIT_OUTCOME_UNKNOWN
+      parameters:
+        - name: repairTaskId
+          in: path
+          required: true
+          description: 修理申請ID
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 廃棄申請接続操作の冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRepairTaskTasksByRepairTaskIdDisposalApplicationRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 廃棄申請接続成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepairDisposalApplicationResponse'
+        '400':
+          description: 入力不正、受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 repair_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象修理申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象物品情報不足、院内修理、現在工程・ステータス不整合、発注済み、または有効な発注登録用見積が一意に決まらない
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。同じ冪等キーで再送する
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：RepairDisposalApplicationResponse）
+      x-word-response-subtable-titles: []
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  headers:
+    RetryAfter:
+      description: >-
+        エラーコードが IDEMPOTENCY_REQUEST_IN_PROGRESS または
+        REPAIR_DB_503_COMMIT_OUTCOME_UNKNOWN の場合に返す再試行待機秒数
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+        example: 5
+  schemas:
+    RepairReceptionAssigneeCandidateListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepairReceptionAssigneeCandidate'
+          description: 受付担当者候補。keyword未指定時は候補に含まれるAPI実行ユーザーを先頭とし、以降は氏名、所属部署、ユーザーIDの順で安定ソートする
+          x-word-subtable-title: items要素（RepairReceptionAssigneeCandidate）
+    RepairReceptionAssigneeCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - name
+        - department
+        - contact
+        - accountType
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: users.user_id。画面では氏名を表示し、本値を選択値として保持する
+        name:
+          type: string
+          description: users.name
+        department:
+          type: string
+          nullable: true
+          description: users.section_name。未設定時は null とし、所属部門等で補完しない
+        contact:
+          type: string
+          nullable: true
+          description: users.phone_number。未設定時は null とし、メールアドレス等で補完しない
+        accountType:
+          type: string
+          enum: [HOSPITAL, SHIP]
+          description: 病院ユーザーまたはSHIPユーザー
+    RepairTaskListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - pendingCount
+        - items
+        - totalCount
+        - page
+        - pageSize
+      properties:
+        pendingCount:
+          type: integer
+          format: int32
+          description: 指定stepにかかわらず、新規申請かつ修理区分未設定の申請受付未処理件数。受付済み外部依頼は含めない
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepairTaskListItem'
+          description: 指定stepの一覧行。step=RECEPTION は未受付申請だけ、その他は受付済み修理タスクだけを返し、両者を同一レスポンスへ混在させない
+          x-word-subtable-title: items要素（RepairTaskListItem）
+        totalCount:
+          type: integer
+          format: int32
+          description: 指定stepとフィルター条件に一致する総件数。未受付申請と受付済み修理タスクを合算しない
+        page:
+          type: integer
+          format: int32
+          description: ページ番号
+        pageSize:
+          type: integer
+          format: int32
+          description: 1ページ件数
+    RepairTaskListItem:
+      type: object
+      additionalProperties: false
+      required:
+        - repairRequestId
+        - applicationNo
+        - status
+        - statusLabel
+        - requestedOn
+        - requestedAtTime
+        - requestedByName
+        - requestedByDepartmentName
+        - requestedByContact
+        - isRegisteredAsset
+        - assetLedgerId
+        - qrCodeValue
+        - itemName
+        - makerName
+        - modelName
+        - serialNo
+        - repairCategory
+        - requestAlternativeDeviceStatus
+        - alternativeUnreturnedFlag
+        - availableActions
+        - sourceDepartmentName
+        - sourceSectionName
+        - sourceRoomName
+        - vendorName
+        - vendorPerson
+        - vendorContact
+        - deadlineLabel
+        - deadlineOn
+      properties:
+        repairRequestId:
+          type: integer
+          format: int64
+          description: 修理申請ID
+        applicationNo:
+          type: string
+          description: 修理依頼No.
+        status:
+          type: string
+          description: 修理申請の保存ステータス
+        statusLabel:
+          type: string
+          description: 画面表示用ステータス
+        requestedOn:
+          type: string
+          format: date
+          description: 申請日
+        requestedAtTime:
+          type: string
+          nullable: true
+          description: 申請時刻
+        requestedByName:
+          type: string
+          description: 申請者名
+        requestedByDepartmentName:
+          type: string
+          nullable: true
+          description: 申請者所属
+        requestedByContact:
+          type: string
+          nullable: true
+          description: 申請者連絡先
+        isRegisteredAsset:
+          type: boolean
+          description: 登録済み資産かどうか
+        assetLedgerId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 登録済み資産の場合のみ設定
+        qrCodeValue:
+          type: string
+          nullable: true
+          description: QRラベル
+        itemName:
+          type: string
+          nullable: true
+          description: 品目名。未登録資産は手入力値
+        makerName:
+          type: string
+          nullable: true
+          description: メーカー名。未登録資産は手入力値
+        modelName:
+          type: string
+          nullable: true
+          description: 型式。未登録資産は手入力値
+        serialNo:
+          type: string
+          nullable: true
+          description: シリアルNo.
+        repairCategory:
+          type: string
+          nullable: true
+          enum:
+            - IN_HOUSE
+            - OUTSOURCED
+          description: IN_HOUSE / OUTSOURCED
+        requestAlternativeDeviceStatus:
+          type: string
+          nullable: true
+          enum:
+            - NOT_NEEDED
+            - NEEDED
+            - REQUESTED
+          description: 修理依頼起票時の申請者選択。NOT_NEEDED / NEEDED / REQUESTED。修理管理では上書きしない
+        alternativeUnreturnedFlag:
+          type: boolean
+          description: 代替機納品済みかつ未返却の場合 true
+        availableActions:
+          type: array
+          items:
+            type: string
+          description: >-
+            画面から実行可能な操作。例: PREVIEW_VENDOR_REQUEST / SEND_VENDOR_REQUEST / DELETE_VENDOR_REQUEST /
+            COMPLETE_VENDOR_REQUEST / REGISTER_QUOTATION / REGISTER_ADDITIONAL_QUOTATION / PREVIEW_QUOTATION /
+            PREVIEW_ORDER / REGISTER_ORDER / REJECT_TASK / DELETE_TASK / REGISTER_WORK_DATE / REGISTER_DOCUMENT /
+            PREVIEW_DOCUMENT / DELETE_DOCUMENT / COMPLETE_TASK /
+            CREATE_DISPOSAL_APPLICATION。STEP2の「メール送信」に対応するAPIは定義しないため含めない
+        sourceDepartmentName:
+          type: string
+          nullable: true
+          description: 申請受付一覧の部門名
+        sourceSectionName:
+          type: string
+          nullable: true
+          description: 申請受付一覧の部署名
+        sourceRoomName:
+          type: string
+          nullable: true
+          description: 申請受付一覧の室名
+        vendorName:
+          type: string
+          nullable: true
+          description: 修理タスク管理リストの業者名。院内対応または未設定時は null
+        vendorPerson:
+          type: string
+          nullable: true
+          description: 修理タスク管理リストの業者担当者。院内対応または未設定時は null
+        vendorContact:
+          type: string
+          nullable: true
+          description: 修理タスク管理リストの業者電話番号。院内対応または未設定時は null
+        deadlineLabel:
+          type: string
+          nullable: true
+          description: 期限列ラベル。見積提出期限 / 引取日 / 納入予定日。期限を表示しない状態は null
+        deadlineOn:
+          type: string
+          format: date
+          nullable: true
+          description: 期限列の日付。対象日付が未設定または期限を表示しない状態は null
+    RepairTaskDetailResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - task
+        - steps
+        - workPlannedOn
+        - assetRegistrationInfo
+        - documents
+        - availableActions
+      properties:
+        task:
+          $ref: '#/components/schemas/RepairTaskDetail'
+          description: 修理タスク詳細
+          x-word-subtable-title: task要素（RepairTaskDetail）
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepairTaskStep'
+          description: 工程表示情報
+          x-word-subtable-title: steps要素（RepairTaskStep）
+        workPlannedOn:
+          type: string
+          format: date
+          nullable: true
+          description: STEP3で登録した作業完了予定日
+        assetRegistrationInfo:
+          $ref: '#/components/schemas/RepairAssetRegistrationInfo'
+          description: 右ペインへ参照表示する既存資産情報。完了登録の入力値ではない
+          x-word-subtable-title: assetRegistrationInfo要素（RepairAssetRegistrationInfo）
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentSummary'
+          description: >-
+            STEP4で登録した有効な完了書類一覧。見積書と発注書は含めない
+          x-word-omit-subtable: true
+        availableActions:
+          type: array
+          items:
+            type: string
+          description: >-
+            詳細画面で実行可能な操作。本レスポンス直下を詳細画面の正本とする。
+            PREVIEW_VENDOR_REQUEST / SEND_VENDOR_REQUEST / DELETE_VENDOR_REQUEST /
+            COMPLETE_VENDOR_REQUEST / REGISTER_QUOTATION / REGISTER_ADDITIONAL_QUOTATION /
+            PREVIEW_QUOTATION / PREVIEW_ORDER / REGISTER_ORDER / REJECT_TASK / DELETE_TASK /
+            REGISTER_WORK_DATE / REGISTER_DOCUMENT / PREVIEW_DOCUMENT / DELETE_DOCUMENT /
+            COMPLETE_TASK / CREATE_DISPOSAL_APPLICATION のうち、現在状態で実行可能な値を返す。
+            STEP2の「メール送信」に対応するAPIは定義しないため含めない
+    RepairTaskDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - repairRequestId
+        - applicationNo
+        - status
+        - statusLabel
+        - requestedOn
+        - requestedAtTime
+        - requestedByName
+        - requestedByDepartmentName
+        - requestedByContact
+        - isRegisteredAsset
+        - assetLedgerId
+        - qrCodeValue
+        - itemName
+        - makerName
+        - modelName
+        - serialNo
+        - repairCategory
+        - requestAlternativeDeviceStatus
+        - alternativeUnreturnedFlag
+        - symptomText
+        - freeComment
+        - receptionDepartment
+        - receptionPerson
+        - receptionUserId
+        - receptionContact
+        - receptionConfirmedAt
+        - requestComment
+        - alternativeHandlingRequiredFlag
+        - effectiveAlternativeHandlingRequiredFlag
+        - alternativeDeviceInfo
+        - alternativeDeliveryOn
+        - alternativeReturnOn
+        - alternativeReturnedFlag
+        - installerName
+        - installerPerson
+        - installerContact
+        - maintenanceContractFlag
+        - warrantyEndOn
+        - pickupRequiredFlag
+        - pickupOn
+        - quotationDueOn
+        - orderedOn
+        - vendorRequests
+        - quotations
+        - order
+      properties:
+        repairRequestId:
+          type: integer
+          format: int64
+          description: 修理申請ID
+        applicationNo:
+          type: string
+          description: 修理依頼No.
+        status:
+          type: string
+          description: 修理申請の保存ステータス
+        statusLabel:
+          type: string
+          description: 画面表示用ステータス
+        requestedOn:
+          type: string
+          format: date
+          description: 申請日
+        requestedAtTime:
+          type: string
+          nullable: true
+          description: 申請時刻
+        requestedByName:
+          type: string
+          description: 申請者名
+        requestedByDepartmentName:
+          type: string
+          nullable: true
+          description: 申請者所属
+        requestedByContact:
+          type: string
+          nullable: true
+          description: 申請者連絡先
+        isRegisteredAsset:
+          type: boolean
+          description: 登録済み資産かどうか
+        assetLedgerId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 登録済み資産の場合のみ設定
+        qrCodeValue:
+          type: string
+          nullable: true
+          description: QRラベル
+        itemName:
+          type: string
+          nullable: true
+          description: 品目名。未登録資産は手入力値
+        makerName:
+          type: string
+          nullable: true
+          description: メーカー名。未登録資産は手入力値
+        modelName:
+          type: string
+          nullable: true
+          description: 型式。未登録資産は手入力値
+        serialNo:
+          type: string
+          nullable: true
+          description: シリアルNo.
+        repairCategory:
+          type: string
+          nullable: true
+          enum:
+            - IN_HOUSE
+            - OUTSOURCED
+          description: IN_HOUSE / OUTSOURCED
+        requestAlternativeDeviceStatus:
+          type: string
+          nullable: true
+          enum:
+            - NOT_NEEDED
+            - NEEDED
+            - REQUESTED
+          description: 修理依頼起票時の申請者選択。NOT_NEEDED / NEEDED / REQUESTED。修理管理では上書きしない
+        alternativeUnreturnedFlag:
+          type: boolean
+          description: 代替機納品済みかつ未返却の場合 true
+        symptomText:
+          type: string
+          description: 症状
+        freeComment:
+          type: string
+          nullable: true
+          description: フリーコメント
+        receptionDepartment:
+          type: string
+          nullable: true
+          description: 現在の受付担当ユーザーの users.section_name スナップショット。未設定時は null
+        receptionPerson:
+          type: string
+          nullable: true
+          description: 現在の受付担当ユーザーの users.name スナップショット
+        receptionUserId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 現在の受付担当ユーザーを示す users.user_id
+        receptionContact:
+          type: string
+          nullable: true
+          description: 現在の受付担当ユーザーの users.phone_number スナップショット。未設定時は null
+        receptionConfirmedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 初回受付確定日時
+        requestComment:
+          type: string
+          nullable: true
+          description: 修理RFQ単位のご依頼事項
+        alternativeHandlingRequiredFlag:
+          type: boolean
+          nullable: true
+          description: 修理管理担当者の保存済み代替機対応判断。未保存は null
+        effectiveAlternativeHandlingRequiredFlag:
+          type: boolean
+          description: STEP1の画面表示用実効値。保存済み管理判断を優先し、未保存の場合だけ申請時の NEEDED / REQUESTED をtrue、NOT_NEEDED / nullをfalseとして算出する
+        alternativeDeviceInfo:
+          type: string
+          nullable: true
+          description: 既存データに代替機情報がある場合の参照表示値。STEP1更新リクエストでは受け取らない
+        alternativeDeliveryOn:
+          type: string
+          format: date
+          nullable: true
+          description: 代替機納品日
+        alternativeReturnOn:
+          type: string
+          format: date
+          nullable: true
+          description: 代替機返却予定日
+        alternativeReturnedFlag:
+          type: boolean
+          description: 代替機返却済みフラグ
+        installerName:
+          type: string
+          nullable: true
+          description: 初回受付時に保存した参照表示用の導入業者名
+        installerPerson:
+          type: string
+          nullable: true
+          description: 初回受付時に保存した参照表示用の導入業者担当者名
+        installerContact:
+          type: string
+          nullable: true
+          description: 初回受付時に保存した参照表示用の導入業者連絡先
+        maintenanceContractFlag:
+          type: boolean
+          description: 初回受付時に保存した保守契約対象フラグ
+        warrantyEndOn:
+          type: string
+          format: date
+          nullable: true
+          description: 初回受付時に保存した保守契約期限
+        pickupRequiredFlag:
+          type: boolean
+          description: 商品引取対応要否
+        pickupOn:
+          type: string
+          format: date
+          nullable: true
+          description: 商品引取日
+        quotationDueOn:
+          type: string
+          format: date
+          nullable: true
+          description: 有効な修理RFQ依頼先の due_on 最小値を同期した一覧表示用スナップショット
+        orderedOn:
+          type: string
+          format: date
+          nullable: true
+          description: 発注日
+        vendorRequests:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepairVendorRequest'
+          description: 見積依頼先
+          x-word-subtable-title: vendorRequests要素（RepairVendorRequest）
+        quotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepairQuotation'
+          description: 登録済み見積
+          x-word-subtable-title: quotations要素（RepairQuotation）
+        order:
+          allOf:
+            - $ref: '#/components/schemas/RepairOrder'
+          nullable: true
+          description: 発注情報
+          x-word-subtable-title: order要素（RepairOrder）
+    RepairTaskStep:
+      type: object
+      additionalProperties: false
+      required:
+        - stepCode
+        - stepName
+        - stepStatus
+        - isCurrent
+        - startedAt
+        - completedAt
+        - completionReason
+      properties:
+        stepCode:
+          type: string
+          enum:
+            - QUOTE_REQUEST
+            - QUOTATION_ORDER
+            - WORK_DATE
+            - COMPLETE
+          description: QUOTE_REQUEST / QUOTATION_ORDER / WORK_DATE / COMPLETE
+        stepName:
+          type: string
+          description: 画面表示工程名
+        stepStatus:
+          type: string
+          enum:
+            - NOT_STARTED
+            - IN_PROGRESS
+            - COMPLETED
+            - SKIPPED
+            - CANCELED
+            - REOPENED
+          description: 工程ステータス。NOT_STARTED / IN_PROGRESS / COMPLETED / SKIPPED / CANCELED / REOPENED
+        isCurrent:
+          type: boolean
+          description: 現在工程の場合 true
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 工程開始日時
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 工程完了日時
+        completionReason:
+          type: string
+          nullable: true
+          description: REJECTED / UNREPAIRABLE / SKIPPED_IN_HOUSE_REPAIR など
+    RepairVendorRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqVendorId
+        - vendorId
+        - vendorName
+        - contactPerson
+        - email
+        - phone
+        - dueOn
+        - requestNote
+        - isPrimaryVendor
+        - requestStatus
+        - requestedAt
+        - requestedByUserId
+      properties:
+        rfqVendorId:
+          type: integer
+          format: int64
+          description: 見積依頼先ID
+        vendorId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 業者マスタID
+        vendorName:
+          type: string
+          description: 依頼先業者名
+        contactPerson:
+          type: string
+          nullable: true
+          description: 担当者名
+        email:
+          type: string
+          description: メールアドレス
+        phone:
+          type: string
+          nullable: true
+          description: 電話番号
+        dueOn:
+          type: string
+          format: date
+          nullable: true
+          description: 回答期限
+        requestNote:
+          type: string
+          nullable: true
+          description: 業者単位の補足
+        isPrimaryVendor:
+          type: boolean
+          description: 主依頼先の場合true
+        requestStatus:
+          type: string
+          enum:
+            - DRAFT
+            - SENT
+            - REPLIED
+            - CANCELED
+          description: DRAFT / SENT / REPLIED / CANCELED
+        requestedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 依頼送信操作を保存した日時。メール配信成功日時ではない
+        requestedByUserId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 依頼送信操作を実行したユーザーID
+    RepairQuotation:
+      type: object
+      additionalProperties: false
+      required:
+        - quotationId
+        - quotationNo
+        - vendorQuotationNo
+        - rfqVendorId
+        - vendorId
+        - vendorName
+        - quotationOn
+        - quotationPhase
+        - totalAmountExclTax
+        - accountDivisionCode
+        - storageFormat
+        - status
+        - items
+        - document
+      properties:
+        quotationId:
+          type: integer
+          format: int64
+          description: 見積ID
+        quotationNo:
+          type: string
+          description: 受領見積番号
+        vendorQuotationNo:
+          type: string
+          description: 業者側見積No.
+        rfqVendorId:
+          type: integer
+          format: int64
+          description: 見積依頼先ID
+        vendorId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 業者マスタID
+        vendorName:
+          type: string
+          description: 見積業者名
+        quotationOn:
+          type: string
+          format: date
+          description: 見積日
+        quotationPhase:
+          type: string
+          enum:
+            - ESTIMATE
+            - ORDER_REGISTRATION
+            - ADDITIONAL
+          description: ESTIMATE / ORDER_REGISTRATION / ADDITIONAL
+        totalAmountExclTax:
+          type: number
+          description: 税抜合計金額
+        accountDivisionCode:
+          $ref: '#/components/schemas/RepairAccountDivisionCode'
+        storageFormat:
+          type: string
+          enum:
+            - ELECTRONIC_TRANSACTION
+            - SCANNED
+            - UNSPECIFIED
+          description: 見積書原本の保存形式
+        status:
+          type: string
+          description: 見積ステータス
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepairQuotationItem'
+          description: 見積明細
+          x-word-subtable-title: quotations 配下 items 要素（RepairQuotationItem）
+        document:
+          $ref: '#/components/schemas/DocumentSummary'
+          description: 見積書原本
+          x-word-subtable-title: documents要素（DocumentSummary）
+    RepairQuotationItem:
+      type: object
+      additionalProperties: false
+      required:
+        - quotationItemId
+        - itemName
+        - makerName
+        - modelName
+        - quantity
+        - unitPrice
+        - amount
+        - accountTitle
+      properties:
+        quotationItemId:
+          type: integer
+          format: int64
+          description: 見積明細ID
+        itemName:
+          type: string
+          description: 品目名
+        makerName:
+          type: string
+          nullable: true
+          description: メーカー名
+        modelName:
+          type: string
+          nullable: true
+          description: 型式
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+        unitPrice:
+          type: number
+          nullable: true
+          description: 単価
+        amount:
+          type: number
+          nullable: true
+          description: 金額
+        accountTitle:
+          type: string
+          nullable: true
+          description: 勘定科目
+    RepairOrder:
+      type: object
+      additionalProperties: false
+      required:
+        - orderId
+        - orderNo
+        - quotationId
+        - vendorName
+        - orderType
+        - settlementNo
+        - settlementOn
+        - orderOn
+        - paymentTerms
+        - totalAmount
+        - orderDocumentDeliveryMethod
+        - orderDocumentDeliveryStatus
+        - orderDocumentSentAt
+        - status
+        - document
+        - applicationStatus
+        - currentStep
+        - updatedAt
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          description: 発注ID
+        orderNo:
+          type: string
+          description: 発注番号
+        quotationId:
+          type: integer
+          format: int64
+          description: 唯一の有効な発注登録用見積ID
+        vendorName:
+          type: string
+          description: 発注先業者名
+        orderType:
+          type: string
+          description: 発注種別。修理発注では「修理」
+        settlementNo:
+          type: string
+          nullable: true
+          description: 院内決済No.
+        settlementOn:
+          type: string
+          format: date
+          nullable: true
+          description: 決済日
+        orderDocumentDeliveryMethod:
+          type: string
+          nullable: true
+          description: 発注書を外部送付しないため null
+        orderDocumentDeliveryStatus:
+          type: string
+          nullable: true
+          description: 発注書を外部送付しないため null
+        orderDocumentSentAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 発注書を外部送付しないため null
+        orderOn:
+          type: string
+          format: date
+          description: 発注登録確定日。サーバー側で設定する
+        paymentTerms:
+          type: string
+          description: 支払条件。修理発注では「未指定」
+        totalAmount:
+          type: number
+          nullable: true
+          description: 発注合計金額
+        status:
+          type: string
+          description: 発注ステータス
+        document:
+          $ref: '#/components/schemas/DocumentSummary'
+          description: 生成・保存した発注書
+          x-word-subtable-title: documents要素（DocumentSummary）
+        applicationStatus:
+          type: string
+          description: 発注済
+        currentStep:
+          type: string
+          description: WORK_DATE
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    RepairAssetRegistrationInfo:
+      type: object
+      additionalProperties: false
+      required:
+        - itemName
+        - makerName
+        - modelName
+        - serialNo
+        - fixedAssetNo
+        - finalAccountTitle
+      properties:
+        itemName:
+          type: string
+          nullable: true
+          description: 品名
+        makerName:
+          type: string
+          nullable: true
+          description: メーカー
+        modelName:
+          type: string
+          nullable: true
+          description: 型式
+        serialNo:
+          type: string
+          nullable: true
+          description: シリアルNo.
+        fixedAssetNo:
+          type: string
+          nullable: true
+          description: 登録済み資産の既存資産番号。未登録資産は null
+        finalAccountTitle:
+          type: string
+          nullable: true
+          description: 登録済み資産の既存勘定科目。未登録資産は null
+    DocumentSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - documentId
+        - stepCode
+        - documentCategory
+        - documentType
+        - documentDate
+        - documentNo
+        - otherDocumentName
+        - actualAmountExclTax
+        - accountDivisionCode
+        - storageFormat
+        - fileName
+        - contentType
+        - fileSize
+        - downloadUrl
+        - uploadedAt
+        - uploadedByName
+        - canDelete
+      properties:
+        documentId:
+          type: integer
+          format: int64
+          description: ドキュメントID
+        stepCode:
+          type: string
+          description: QUOTATION / ORDER / COMPLETE など
+        documentCategory:
+          type: string
+          description: QUOTATION / ORDER / COMPLETE など
+        documentType:
+          type: string
+          description: ドキュメント種別。見積書 / 発注書 / 院内決済書類 / 修理報告書 / 検収書 / その他 / 見積書（変更が発生した場合） / 納品書 / 請求書
+        documentDate:
+          type: string
+          format: date
+          nullable: true
+          description: 文書日付
+        documentNo:
+          type: string
+          nullable: true
+          description: ドキュメントNo.
+        otherDocumentName:
+          type: string
+          nullable: true
+          description: documentType=その他 の場合の書類名
+        actualAmountExclTax:
+          type: number
+          nullable: true
+          description: documentType=見積書（変更が発生した場合） の場合の実績金額（税別）
+        accountDivisionCode:
+          type: string
+          nullable: true
+          description: documentType=見積書（変更が発生した場合） の場合の勘定科目コード。設定時はRepairAccountDivisionCodeのいずれか
+        storageFormat:
+          type: string
+          nullable: true
+          enum:
+            - ELECTRONIC_TRANSACTION
+            - SCANNED
+            - UNSPECIFIED
+          description: ELECTRONIC_TRANSACTION / SCANNED / UNSPECIFIED
+        fileName:
+          type: string
+          description: アップロード時の元ファイル名。右ペインの一覧表示に使用する
+        contentType:
+          type: string
+          nullable: true
+          description: MIMEタイプ
+        fileSize:
+          type: integer
+          format: int64
+          nullable: true
+          description: ファイルサイズ
+        downloadUrl:
+          type: string
+          nullable: true
+          description: 表示・ダウンロード用の認可済みURL。S3オブジェクトキー、S3バケット名、S3の直接URLは返さない
+        uploadedAt:
+          type: string
+          format: date-time
+          description: アップロード日時
+        uploadedByName:
+          type: string
+          nullable: true
+          description: アップロード者名
+        canDelete:
+          type: boolean
+          description: タスク完了前の完了書類で削除可能な場合 true
+    PostRepairTaskTasksByRepairTaskIdApproveRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - decision
+        - receptionUserId
+      properties:
+        decision:
+          type: string
+          enum:
+            - IN_HOUSE
+            - OUTSOURCED
+          description: IN_HOUSE / OUTSOURCED
+        receptionUserId:
+          type: integer
+          format: int64
+          description: 受付判定時の受付担当者として選択した病院ユーザーまたはSHIPユーザーのID。通常アカウントではログインユーザーを初期選択値とし、共有システム管理者は候補から通常アカウントを選択する
+    PostRepairTaskTasksByRepairTaskIdApproveResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - repairTaskId
+        - status
+        - repairCategory
+        - currentStep
+        - updatedAt
+      properties:
+        repairTaskId:
+          type: integer
+          format: int64
+          description: 修理申請ID
+        status:
+          type: string
+          description: 更新後ステータス
+        repairCategory:
+          type: string
+          description: 修理区分
+        currentStep:
+          type: string
+          description: 更新後の表示STEP
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PostRepairTaskTasksByRepairTaskIdRejectResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - repairTaskId
+        - status
+        - completionReason
+        - updatedAt
+      properties:
+        repairTaskId:
+          type: integer
+          format: int64
+          description: 修理申請ID
+        status:
+          type: string
+          description: 却下
+        completionReason:
+          type: string
+          description: REJECTED
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PostRepairTaskTasksByRepairTaskIdVendorRequestsPreviewRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - step1
+        - vendor
+      properties:
+        requestComment:
+          type: string
+          description: 依頼グループ共通のご依頼事項
+        step1:
+          $ref: '#/components/schemas/RepairStep1Input'
+          description: STEP1の入力内容
+          x-word-subtable-title: step1要素（RepairStep1Input）
+        vendor:
+          $ref: '#/components/schemas/RepairVendorRequestInput'
+          description: プレビュー対象の依頼先
+          x-word-subtable-title: vendor要素（RepairVendorRequestInput）
+    RepairStep1Input:
+      type: object
+      additionalProperties: false
+      required:
+        - alternativeHandlingRequiredFlag
+        - alternativeReturnedFlag
+        - pickupRequiredFlag
+      oneOf:
+        - properties:
+            pickupRequiredFlag:
+              enum:
+                - true
+          required:
+            - pickupOn
+        - properties:
+            pickupRequiredFlag:
+              enum:
+                - false
+          not:
+            required:
+              - pickupOn
+      allOf:
+        - oneOf:
+            - properties:
+                alternativeHandlingRequiredFlag:
+                  enum:
+                    - true
+            - properties:
+                alternativeHandlingRequiredFlag:
+                  enum:
+                    - false
+                alternativeReturnedFlag:
+                  enum:
+                    - false
+              not:
+                anyOf:
+                  - required:
+                      - alternativeDeliveryOn
+                  - required:
+                      - alternativeReturnOn
+      properties:
+        alternativeHandlingRequiredFlag:
+          type: boolean
+          description: 修理管理担当者の代替機対応判断。必要=true、不要=false。falseの場合は代替機の日付を指定せず、alternativeReturnedFlag=falseとする
+        alternativeDeliveryOn:
+          type: string
+          format: date
+          description: alternativeHandlingRequiredFlag=trueの場合だけ指定できる代替機納品日
+        alternativeReturnOn:
+          type: string
+          format: date
+          description: alternativeHandlingRequiredFlag=trueの場合だけ指定できる代替機返却予定日
+        alternativeReturnedFlag:
+          type: boolean
+          description: 代替機を返却済みにする場合true。alternativeHandlingRequiredFlag=falseの場合はfalse
+        pickupRequiredFlag:
+          type: boolean
+          description: 商品引取対応が必要な場合true
+        pickupOn:
+          type: string
+          format: date
+          description: pickupRequiredFlag=true の場合に必須。false の場合は指定不可
+          x-word-required-label: 条件付き
+    RepairVendorRequestInput:
+      type: object
+      additionalProperties: false
+      required:
+        - vendorName
+        - email
+      properties:
+        vendorId:
+          type: integer
+          format: int64
+          description: 業者マスタID
+        vendorName:
+          type: string
+          description: 依頼送信操作時点の業者名
+        contactPerson:
+          type: string
+          description: 担当者名
+        email:
+          type: string
+          description: メールアドレス。外部メール送信には使用しない
+        phone:
+          type: string
+          description: 連絡先
+        dueOn:
+          type: string
+          format: date
+          description: 業者別回答期限
+        requestNote:
+          type: string
+          description: 業者単位の補足
+    PostRepairTaskTasksByRepairTaskIdVendorRequestsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - step1
+        - vendor
+      properties:
+        requestComment:
+          type: string
+          description: 依頼グループ共通のご依頼事項
+        step1:
+          $ref: '#/components/schemas/RepairStep1Input'
+          description: 保存するSTEP1入力内容
+          x-word-subtable-title: step1要素（RepairStep1Input）
+        vendor:
+          $ref: '#/components/schemas/RepairVendorRequestInput'
+          description: 依頼送信操作の対象となる依頼先
+          x-word-subtable-title: vendor要素（RepairVendorRequestInput）
+    RepairVendorRequestRegistrationResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - repairTaskId
+        - rfqId
+        - rfqVendorId
+        - isPrimaryVendor
+        - requestStatus
+        - requestedAt
+      properties:
+        repairTaskId:
+          type: integer
+          format: int64
+          description: 修理申請ID
+        rfqId:
+          type: integer
+          format: int64
+          description: 見積依頼グループID
+        rfqVendorId:
+          type: integer
+          format: int64
+          description: 保存した依頼先ID
+        isPrimaryVendor:
+          type: boolean
+          description: 主依頼先として保存した場合true
+        requestStatus:
+          type: string
+          description: SENT
+        requestedAt:
+          type: string
+          format: date-time
+          description: 依頼送信操作を保存した日時
+    PostRepairTaskTasksByRepairTaskIdVendorRequestsCompleteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - step1
+        - receptionUserId
+      properties:
+        requestComment:
+          type: string
+          description: 依頼グループ共通のご依頼事項
+        step1:
+          $ref: '#/components/schemas/RepairStep1Input'
+          description: 確定するSTEP1入力内容
+          x-word-subtable-title: step1要素（RepairStep1Input）
+        receptionUserId:
+          type: integer
+          format: int64
+          description: STEP1完了時の受付担当者ユーザーID
+    PostRepairTaskTasksByRepairTaskIdVendorRequestsCompleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - repairTaskId
+        - status
+        - currentStep
+        - updatedAt
+      properties:
+        repairTaskId:
+          type: integer
+          format: int64
+          description: 修理申請ID
+        status:
+          type: string
+          description: 見積依頼済
+        currentStep:
+          type: string
+          description: QUOTATION_ORDER
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PostRepairTaskTasksByRepairTaskIdQuotationsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload
+        - file
+      properties:
+        payload:
+          $ref: '#/components/schemas/RepairQuotationRegistrationPayload'
+          description: 見積登録の業務データとファイルメタデータを格納するJSONパート
+        file:
+          type: string
+          format: binary
+          description: 見積書原本1ファイル
+    RepairQuotationRegistrationPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqVendorId
+        - vendorQuotationNo
+        - quotationOn
+        - quotationPhase
+        - totalAmountExclTax
+        - accountDivisionCode
+        - document
+      properties:
+        rfqVendorId:
+          type: integer
+          format: int64
+          description: 見積回答元の依頼先ID
+        vendorQuotationNo:
+          type: string
+          description: 業者側見積No.
+        quotationOn:
+          type: string
+          format: date
+          description: 見積日
+        quotationPhase:
+          type: string
+          enum:
+            - ESTIMATE
+            - ORDER_REGISTRATION
+            - ADDITIONAL
+          description: ESTIMATE / ORDER_REGISTRATION / ADDITIONAL
+        totalAmountExclTax:
+          type: number
+          minimum: 0
+          description: 税抜合計金額。0以上
+        accountDivisionCode:
+          $ref: '#/components/schemas/RepairAccountDivisionCode'
+        document:
+          $ref: '#/components/schemas/RepairQuotationDocumentInput'
+          description: 見積書原本メタデータ。文書種別・日付・No.はサーバー側で設定する
+          x-word-subtable-title: payload.document要素（RepairQuotationDocumentInput）
+    RepairQuotationResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - quotationId
+        - quotationNo
+        - quotationPhase
+        - status
+        - createdAt
+      properties:
+        quotationId:
+          type: integer
+          format: int64
+          description: 作成した見積ID
+        quotationNo:
+          type: string
+          description: 受領見積番号
+        quotationPhase:
+          type: string
+          enum:
+            - ESTIMATE
+            - ORDER_REGISTRATION
+            - ADDITIONAL
+          description: 登録した見積区分
+        status:
+          type: string
+          description: 修理申請の現在ステータス
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+    RepairQuotationDocumentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - fileName
+        - storageFormat
+      properties:
+        fileName:
+          type: string
+          description: アップロード時の元ファイル名。拡張子は .pdf / .jpg / .jpeg / .png のいずれかとし、右ペインの見積書一覧に表示する
+        contentType:
+          allOf:
+            - $ref: '#/components/schemas/RepairUploadContentType'
+          description: 指定時は実際のfileパートと一致必須
+        fileSize:
+          type: integer
+          format: int64
+          description: ファイルサイズ。指定時は実際のfileパートと一致必須
+        storageFormat:
+          type: string
+          enum:
+            - ELECTRONIC_TRANSACTION
+            - SCANNED
+            - UNSPECIFIED
+          description: ELECTRONIC_TRANSACTION / SCANNED / UNSPECIFIED
+    GetRepairTaskTasksByRepairTaskIdQuotationsByQuotationIdPreviewUrlResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - quotationId
+        - previewUrl
+        - expiresAt
+      properties:
+        quotationId:
+          type: integer
+          format: int64
+          description: 見積ID
+        previewUrl:
+          type: string
+          description: 右側の見積書セクションへ表示する認可済みURL
+        expiresAt:
+          type: string
+          format: date-time
+          description: URL有効期限
+    PostRepairTaskTasksByRepairTaskIdOrderPreviewRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        settlementNo:
+          type: string
+          description: 院内決済No.
+        settlementOn:
+          type: string
+          format: date
+          description: 決済日
+    PostRepairTaskTasksByRepairTaskIdOrderRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - receptionUserId
+      properties:
+        settlementNo:
+          type: string
+          description: 院内決済No.
+        settlementOn:
+          type: string
+          format: date
+          description: 決済日
+        receptionUserId:
+          type: integer
+          format: int64
+          description: STEP2完了時の受付担当者ユーザーID
+    RepairOrderResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - orderId
+        - orderNo
+        - quotationId
+        - vendorName
+        - orderType
+        - settlementNo
+        - settlementOn
+        - orderOn
+        - paymentTerms
+        - totalAmount
+        - orderDocumentDeliveryMethod
+        - orderDocumentDeliveryStatus
+        - orderDocumentSentAt
+        - status
+        - document
+        - applicationStatus
+        - currentStep
+        - updatedAt
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          description: 発注ID
+        orderNo:
+          type: string
+          description: 発注番号
+        quotationId:
+          type: integer
+          format: int64
+          description: 唯一の有効な発注登録用見積ID
+        vendorName:
+          type: string
+          description: 発注先業者名
+        orderType:
+          type: string
+          description: 発注種別。修理発注では「修理」
+        settlementNo:
+          type: string
+          nullable: true
+          description: 院内決済No.
+        settlementOn:
+          type: string
+          format: date
+          nullable: true
+          description: 決済日
+        orderDocumentDeliveryMethod:
+          type: string
+          nullable: true
+          description: 発注書を外部送付しないため null
+        orderDocumentDeliveryStatus:
+          type: string
+          nullable: true
+          description: 発注書を外部送付しないため null
+        orderDocumentSentAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 発注書を外部送付しないため null
+        orderOn:
+          type: string
+          format: date
+          description: 発注登録確定日。サーバー側で設定する
+        paymentTerms:
+          type: string
+          description: 支払条件。修理発注では「未指定」
+        totalAmount:
+          type: number
+          nullable: true
+          description: 発注合計金額
+        status:
+          type: string
+          description: 発注ステータス
+        document:
+          $ref: '#/components/schemas/DocumentSummary'
+          description: 生成・保存した発注書
+          x-word-omit-subtable: true
+        applicationStatus:
+          type: string
+          description: 発注済
+        currentStep:
+          type: string
+          description: WORK_DATE
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PostRepairTaskTasksByRepairTaskIdWorkDateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - workPlannedOn
+        - receptionUserId
+      properties:
+        workPlannedOn:
+          type: string
+          format: date
+          description: 作業完了予定日
+        receptionUserId:
+          type: integer
+          format: int64
+          description: STEP3完了時の受付担当者ユーザーID
+    PostRepairTaskTasksByRepairTaskIdWorkDateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - repairTaskId
+        - status
+        - workPlannedOn
+        - currentStep
+        - updatedAt
+      properties:
+        repairTaskId:
+          type: integer
+          format: int64
+          description: 修理申請ID
+        status:
+          type: string
+          description: 納期確定
+        workPlannedOn:
+          type: string
+          format: date
+          description: 作業完了予定日
+        currentStep:
+          type: string
+          description: COMPLETE
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PostRepairTaskTasksByRepairTaskIdDocumentsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload
+        - files
+      properties:
+        payload:
+          $ref: '#/components/schemas/RepairDocumentRegistrationPayload'
+          description: 完了書類の業務データとファイルメタデータを格納するJSONパート
+        files:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: binary
+          description: 1件以上。payload.documents と同じ配列順で1対1に対応する全ファイル本体
+    RepairDocumentRegistrationPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - documents
+      properties:
+        documents:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DocumentInput'
+          description: 1件以上。登録するファイルごとに1要素を指定し、画面で入力した共通書類属性を各要素へ設定する
+          x-word-subtable-title: payload.documents要素（DocumentInput）
+    DocumentSummaryList:
+      type: array
+      items:
+        $ref: '#/components/schemas/DocumentSummary'
+    DocumentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - documentType
+        - fileName
+        - storageFormat
+      oneOf:
+        - properties:
+            documentType:
+              enum:
+                - その他
+          required:
+            - otherDocumentName
+        - properties:
+            documentType:
+              enum:
+                - 見積書（変更が発生した場合）
+          required:
+            - actualAmountExclTax
+            - accountDivisionCode
+        - properties:
+            documentType:
+              enum:
+                - 院内決済書類
+                - 修理報告書
+                - 検収書
+                - 納品書
+                - 請求書
+      properties:
+        documentType:
+          type: string
+          enum:
+            - 院内決済書類
+            - 修理報告書
+            - 検収書
+            - その他
+            - 見積書（変更が発生した場合）
+            - 納品書
+            - 請求書
+          description: 完了書類登録で指定する書類種別
+        fileName:
+          type: string
+          description: アップロード時の元ファイル名。拡張子は .pdf / .jpg / .jpeg / .png のいずれかとし、右ペインの各種完了書類一覧に表示する
+        contentType:
+          allOf:
+            - $ref: '#/components/schemas/RepairUploadContentType'
+          description: 指定時は同じ配列位置のfiles要素と一致必須
+        fileSize:
+          type: integer
+          format: int64
+          description: ファイルサイズ。指定時は同じ配列位置のfiles要素と一致必須
+        documentDate:
+          type: string
+          format: date
+          description: 文書日付
+        documentNo:
+          type: string
+          description: ドキュメントNo.
+        otherDocumentName:
+          type: string
+          description: documentType=その他 の場合は必須
+          x-word-required-label: 条件付き
+        actualAmountExclTax:
+          type: number
+          description: documentType=見積書（変更が発生した場合） の場合は必須
+          x-word-required-label: 条件付き
+        accountDivisionCode:
+          allOf:
+            - $ref: '#/components/schemas/RepairAccountDivisionCode'
+          description: documentType=見積書（変更が発生した場合） の場合は必須
+          x-word-required-label: 条件付き
+        storageFormat:
+          type: string
+          enum:
+            - ELECTRONIC_TRANSACTION
+            - SCANNED
+            - UNSPECIFIED
+          description: ELECTRONIC_TRANSACTION / SCANNED / UNSPECIFIED
+    GetRepairTaskTasksByRepairTaskIdDocumentsByDocumentIdPreviewUrlResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - documentId
+        - previewUrl
+        - expiresAt
+      properties:
+        documentId:
+          type: integer
+          format: int64
+          description: 完了書類ID
+        previewUrl:
+          type: string
+          description: 認可済みプレビューURL
+        expiresAt:
+          type: string
+          format: date-time
+          description: URL有効期限
+    PostRepairTaskTasksByRepairTaskIdCompleteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - confirmCompletion
+        - receptionUserId
+      properties:
+        confirmCompletion:
+          type: boolean
+          enum:
+            - true
+          description: 完了書類が0件の場合を含め、完了することを確認した値。true のみ許可する
+        completedOn:
+          type: string
+          format: date
+          description: 完了日。未指定時はサーバー処理日
+        alternativeReturnedFlag:
+          type: boolean
+          description: 代替機返却済みフラグ
+        receptionUserId:
+          type: integer
+          format: int64
+          description: STEP4完了時の受付担当者ユーザーID
+    PostRepairTaskTasksByRepairTaskIdRejectRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - receptionUserId
+      properties:
+        receptionUserId:
+          type: integer
+          format: int64
+          description: 申請却下時の受付担当者ユーザーID
+    PostRepairTaskTasksByRepairTaskIdDisposalApplicationRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - receptionUserId
+      properties:
+        receptionUserId:
+          type: integer
+          format: int64
+          description: 修理不能として終端する時点の受付担当者ユーザーID
+    PostRepairTaskTasksByRepairTaskIdCompleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - repairTaskId
+        - status
+        - completedOn
+        - lendingStatusRestored
+        - updatedAt
+      properties:
+        repairTaskId:
+          type: integer
+          format: int64
+          description: 修理申請ID
+        status:
+          type: string
+          description: 完了
+        completedOn:
+          type: string
+          format: date
+          description: 保存した完了日
+        lendingStatusRestored:
+          type: boolean
+          description: 貸出状態を 貸出可 へ戻した場合true
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    RepairDisposalApplicationResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - repairTaskId
+        - repairStatus
+        - completionReason
+        - disposalApplicationId
+        - disposalApplicationNo
+        - createdAt
+      properties:
+        repairTaskId:
+          type: integer
+          format: int64
+          description: 元修理申請ID
+        repairStatus:
+          type: string
+          description: 却下
+        completionReason:
+          type: string
+          description: UNREPAIRABLE
+        disposalApplicationId:
+          type: integer
+          format: int64
+          description: 作成した廃棄申請ID
+        disposalApplicationNo:
+          type: string
+          description: 廃棄申請No.
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+    RepairAccountDivisionCode:
+      type: string
+      enum:
+        - '01'
+        - '02'
+        - '03'
+        - '04'
+        - '05'
+        - '06'
+        - '07'
+        - '08'
+        - '09'
+        - '10'
+        - '11'
+        - '12'
+        - '13'
+        - '14'
+        - '15'
+        - '16'
+        - '17'
+      description: >-
+        勘定科目コード。表示名は01 医療機器、02 医療用具、03 鋼製小物、04 什器備品、05 家電製品、
+        06 その他器械備品、07 情報機器、08 ソフトウェア、09 車両他、10 放射線同位元素、
+        11 建物、12 建物付帯設備、13 その他、14 器械保守料、15 修繕費、16 器械賃借料、17 材料費とする
+    RepairUploadContentType:
+      type: string
+      enum:
+        - application/pdf
+        - image/jpeg
+        - image/png
+      description: 修理見積書・完了書類で受け付けるMIMEタイプ
+    RepairErrorCode:
+      type: string
+      description: 修理管理APIで返すエラーコード
+      enum:
+        - VALIDATION_ERROR
+        - IDEMPOTENCY_KEY_REQUIRED
+        - UNAUTHORIZED
+        - AUTH_403_REPAIR_MANAGEMENT_DENIED
+        - FACILITY_NOT_FOUND
+        - REPAIR_REQUEST_NOT_FOUND
+        - REPAIR_ASSET_NOT_FOUND
+        - REPAIR_STATUS_CONFLICT
+        - REPAIR_RECEPTION_DECISION_CONFLICT
+        - REPAIR_TASK_DELETE_NOT_ALLOWED
+        - REPAIR_QUOTATION_DELETE_NOT_ALLOWED
+        - REPAIR_DISPOSAL_APPLICATION_NOT_ALLOWED
+        - REPAIR_RFQ_NOT_FOUND
+        - REPAIR_RFQ_CONFLICT
+        - REPAIR_VENDOR_REQUEST_NOT_SENT
+        - REPAIR_QUOTATION_NOT_LINKED
+        - REPAIR_ORDER_QUOTATION_CONFLICT
+        - REPAIR_ORDER_ALREADY_REGISTERED
+        - IDEMPOTENCY_KEY_REUSED
+        - IDEMPOTENCY_REQUEST_IN_PROGRESS
+        - REPAIR_DOCUMENT_VALIDATION_ERROR
+        - REPAIR_DOCUMENT_LOCKED
+        - REPAIR_FILE_502_S3_OPERATION_FAILED
+        - REPAIR_DB_503_COMMIT_OUTCOME_UNKNOWN
+        - INTERNAL_SERVER_ERROR
+    ErrorResponse:
+      allOf:
+        - $ref: ../../common/schemas/error-response.yaml
+        - type: object
+          properties:
+            code:
+              $ref: '#/components/schemas/RepairErrorCode'

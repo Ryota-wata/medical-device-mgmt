@@ -1,0 +1,2438 @@
+openapi: 3.0.4
+info:
+  title: 点検管理 API API
+  version: '1.1'
+  description: 点検管理で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 点検管理
+    description: 点検管理 APIのAPI
+paths:
+  /quotation-data-box/inspection-requests/tasks:
+    get:
+      tags:
+        - 点検管理
+      operationId: getQuotationDataBoxInspectionRequestsTasks
+      summary: 点検タスク/日常点検設定一覧取得
+      description: 点検管理の一覧に表示する定期点検タスクおよび日常点検設定行を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: inspection_management
+      parameters:
+        - name: inspectionDateFilter
+          in: query
+          required: false
+          description: ALL / OVERDUE / CURRENT_MONTH / ONE_MONTH_BEFORE。日常点検行は ALL の場合のみ返す
+          schema:
+            type: string
+        - name: inspectionType
+          in: query
+          required: false
+          description: IN_HOUSE / MAKER / SPOT / DAILY。DB保存値へ変換して検索する
+          schema:
+            type: string
+        - name: inspectionGroupName
+          in: query
+          required: false
+          description: 点検グループ名の部分一致
+          schema:
+            type: string
+        - name: lendingStatusFilter
+          in: query
+          required: false
+          description: LENT / NOT_LENT
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          description: ページ番号。未指定時 1
+          schema:
+            type: integer
+            format: int32
+        - name: pageSize
+          in: query
+          required: false
+          description: 1ページ件数。未指定時 50
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionTaskListResponse'
+        '400':
+          description: 検索条件の列挙値またはページ指定が不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：InspectionTaskListResponse）
+      x-word-response-subtable-titles:
+        - items要素（InspectionTaskListItem）
+      x-word-response-subtables:
+        - Title: items要素（InspectionTaskListItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - inspectionTaskId
+              - int64
+              - ✓
+              - 点検タスクID
+            - - assetLedgerId
+              - int64
+              - ✓
+              - 資産台帳ID
+            - - qrCode
+              - string
+              - '-'
+              - 代表QR識別子
+            - - departmentName
+              - string
+              - '-'
+              - 部署
+            - - sectionName
+              - string
+              - '-'
+              - 部門または設置部署
+            - - itemName
+              - string
+              - '-'
+              - 品目
+            - - manufacturerName
+              - string
+              - '-'
+              - メーカー
+            - - modelName
+              - string
+              - '-'
+              - 型式
+            - - lendingStatus
+              - string
+              - '-'
+              - 貸出管理状態
+            - - inspectionType
+              - string
+              - ✓
+              - DB保存値。院内定期点検 / メーカー保守 / 院内スポット点検 / 日常点検
+            - - inspectionTypeLabel
+              - string
+              - ✓
+              - 画面表示値。院内点検 / メーカー点検 / スポット点検 / 日常点検
+            - - inspectionGroupName
+              - string
+              - '-'
+              - 点検グループ名。保守契約由来タスクは maintenance_contract_assets.inspection_group_name から返す
+            - - periodicMenuId
+              - int64
+              - '-'
+              - 定期点検メニューID。日常点検行は null
+            - - periodicMenuName
+              - string
+              - '-'
+              - 定期点検メニュー名
+            - - dailyBeforeMenuId
+              - int64
+              - '-'
+              - 使用前日常点検メニューID。設定変更モーダルの初期値に使用する
+            - - dailyBeforeMenuName
+              - string
+              - '-'
+              - 使用前日常点検メニュー名
+            - - dailyDuringMenuId
+              - int64
+              - '-'
+              - 使用中日常点検メニューID。設定変更モーダルの初期値に使用する
+            - - dailyDuringMenuName
+              - string
+              - '-'
+              - 使用中日常点検メニュー名
+            - - dailyAfterMenuId
+              - int64
+              - '-'
+              - 使用後日常点検メニューID。設定変更モーダルの初期値に使用する
+            - - dailyAfterMenuName
+              - string
+              - '-'
+              - 使用後日常点検メニュー名
+            - - cycleMonths
+              - int32
+              - '-'
+              - 点検周期。日常点検行は null
+            - - lastInspectionOn
+              - date
+              - '-'
+              - 前回点検日。日常点検行は null
+            - - nextInspectionOn
+              - date
+              - '-'
+              - 次回点検予定日。日常点検行は null
+            - - status
+              - string
+              - '-'
+              - 定期点検系ステータス。日常点検行は null
+            - - availableActions
+              - string[]
+              - ✓
+              - START / SCHEDULE / MAKER_RESULT / SKIP / EDIT / RELEASE / KARTE。種別・ステータス別の返却可否は処理仕様に従う
+    post:
+      tags:
+        - 点検管理
+      operationId: postQuotationDataBoxInspectionRequestsTasks
+      summary: 点検管理登録
+      description: 資産一覧画面の点検管理登録から、選択した原本資産（asset_ledgers）に定期点検タスクまたは日常点検設定行を作成/更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: inspection_management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionTaskUpsertRequest'
+      x-word-request-title: リクエスト（InspectionTaskUpsertRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 既存の日常点検設定行を更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxInspectionRequestsTasksResponse'
+        '201':
+          description: 新規作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxInspectionRequestsTasksResponse'
+        '400':
+          description: 入力不正、必須不足、点検種別とメニュー種別/タイミング不一致、メニュー分類不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、資産またはメニューが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 有効な同一資産・同一定期メニューの重複
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': InspectionTaskUpsertResponse
+        '201': InspectionTaskUpsertResponse
+      x-word-response-title: レスポンス（201/200：InspectionTaskUpsertResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/inspection-requests/schedule-export:
+    get:
+      tags:
+        - 点検管理
+      operationId: getQuotationDataBoxInspectionRequestsScheduleExport
+      summary: 点検予定表CSV出力
+      description: 点検管理の点検予定表をCSVで出力する。日常点検行は予定日を持たないため出力対象外とする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: inspection_management
+      parameters:
+        - name: inspectionDateFilter
+          in: query
+          required: false
+          description: ALL / OVERDUE / CURRENT_MONTH / ONE_MONTH_BEFORE。ALL の場合も日常点検行は出力しない
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          description: 出力対象開始日。指定時は inspectionDateFilter より優先
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          description: 出力対象終了日。指定時は inspectionDateFilter より優先
+          schema:
+            type: string
+            format: date
+        - name: inspectionType
+          in: query
+          required: false
+          description: IN_HOUSE / MAKER / SPOT。DAILY は指定不可
+          schema:
+            type: string
+        - name: inspectionGroupName
+          in: query
+          required: false
+          description: 点検グループ名の部分一致
+          schema:
+            type: string
+        - name: lendingStatusFilter
+          in: query
+          required: false
+          description: LENT / NOT_LENT
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: CSV出力成功
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: inspectionType=DAILY 指定など入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': text/csv
+        '400': ErrorResponse
+        '401': ErrorResponse
+        '403': ErrorResponse
+        '404': ErrorResponse
+        '500': ErrorResponse
+      x-word-response-title: レスポンス（200：text/csv）
+      x-word-response-subtable-titles: []
+      x-word-response-rows:
+        - - body
+          - text/csv
+          - ✓
+          - 点検予定表CSV。UTF-8 BOM付き
+  /quotation-data-box/inspection-requests/menus:
+    get:
+      tags:
+        - 点検管理
+      operationId: getQuotationDataBoxInspectionRequestsMenus
+      summary: 点検メニュー一覧取得
+      description: 点検メニューの一覧を取得する。資産ID指定時は対象資産の大分類・中分類・品目に一致するメニュー候補として返す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: inspection_management
+      parameters:
+        - name: menuType
+          in: query
+          required: false
+          description: PERIODIC / DAILY
+          schema:
+            type: string
+        - name: dailyTiming
+          in: query
+          required: false
+          description: BEFORE / DURING / AFTER
+          schema:
+            type: string
+        - name: assetLedgerId
+          in: query
+          required: false
+          description: 指定時は対象資産の分類に一致するメニューだけ返す
+          schema:
+            type: integer
+            format: int64
+        - name: keyword
+          in: query
+          required: false
+          description: メニュー名部分一致
+          schema:
+            type: string
+        - name: isActive
+          in: query
+          required: false
+          description: 未指定時 true
+          schema:
+            type: boolean
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionMenuListResponse'
+        '400':
+          description: 検索条件の列挙値が不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、指定 assetLedgerId が存在しない、または作業対象施設外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：InspectionMenuListResponse）
+      x-word-response-subtable-titles:
+        - menus要素（InspectionMenu）
+        - items要素（InspectionMenuItem）
+      x-word-response-subtables:
+        - Title: menus要素（InspectionMenu）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - inspectionMenuId
+              - int64
+              - ✓
+              - 点検メニューID
+            - - menuName
+              - string
+              - ✓
+              - メニュー名
+            - - menuType
+              - string
+              - ✓
+              - PERIODIC / DAILY
+            - - dailyTiming
+              - string
+              - '-'
+              - BEFORE / DURING / AFTER。日常点検のみ
+            - - cycleMonths
+              - int32
+              - '-'
+              - 周期（月）。定期点検のみ
+            - - largeClassName
+              - string
+              - '-'
+              - 大分類
+            - - mediumClassName
+              - string
+              - '-'
+              - 中分類
+            - - itemName
+              - string
+              - '-'
+              - 品目
+            - - isActive
+              - boolean
+              - ✓
+              - 有効フラグ
+            - - items
+              - InspectionMenuItem[]
+              - ✓
+              - 点検項目
+        - Title: items要素（InspectionMenuItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - inspectionMenuItemId
+              - int64
+              - ✓
+              - 点検項目ID
+            - - displayOrder
+              - int32
+              - ✓
+              - 表示順
+            - - itemName
+              - string
+              - ✓
+              - 項目名
+            - - itemContent
+              - string
+              - ✓
+              - 点検内容
+            - - inputType
+              - string
+              - ✓
+              - SELECT / FREE
+            - - evaluationType
+              - string
+              - ✓
+              - PASS_FAIL / UNIT / FREE
+            - - unitText
+              - string
+              - '-'
+              - 単位
+            - - selectOptions
+              - string[]
+              - '-'
+              - 選択肢
+    post:
+      tags:
+        - 点検管理
+      operationId: postQuotationDataBoxInspectionRequestsMenus
+      summary: 点検メニュー登録
+      description: 点検メニューと点検項目を登録する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: inspection_management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionMenuCreateRequest'
+      x-word-request-title: リクエスト（InspectionMenuCreateRequest）
+      x-word-request-subtable-titles:
+        - items要素（InspectionMenuItemInput）
+      x-word-request-subtables:
+        - Title: items要素（InspectionMenuItemInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - displayOrder
+              - int32
+              - ✓
+              - 表示順
+            - - itemName
+              - string
+              - ✓
+              - 項目名
+            - - itemContent
+              - string
+              - ✓
+              - 点検内容
+            - - inputType
+              - string
+              - ✓
+              - SELECT / FREE
+            - - evaluationType
+              - string
+              - ✓
+              - PASS_FAIL / UNIT / FREE
+            - - unitText
+              - string
+              - '-'
+              - 単位入力時の単位
+            - - selectOptions
+              - string[]
+              - '-'
+              - 選択式の場合の候補
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxInspectionRequestsMenusResponse'
+        '400':
+          description: 入力不正、必須不足、点検項目なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 有効な同一メニューが既に存在する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '201': InspectionMenuResponse
+      x-word-response-title: レスポンス（201：InspectionMenuResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/inspection-requests/menus/{menuId}:
+    put:
+      tags:
+        - 点検管理
+      operationId: putQuotationDataBoxInspectionRequestsMenusByMenuId
+      summary: 点検メニュー更新
+      description: 未使用の点検メニューを更新する。履歴整合とオフライン同期保護のため、有効タスクまたは点検結果で利用済みのメニューは更新不可とし、既存メニューを無効化して新メニューを作成する運用とする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: inspection_management
+      parameters:
+        - name: menuId
+          in: path
+          required: true
+          description: 点検メニューID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionMenuUpdateRequest'
+      x-word-request-title: リクエスト（InspectionMenuUpdateRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutQuotationDataBoxInspectionRequestsMenusByMenuIdResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象メニューが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 使用中または結果履歴ありのため更新不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': InspectionMenuResponse
+      x-word-response-title: レスポンス（200：InspectionMenuResponse）
+      x-word-response-subtable-titles: []
+    delete:
+      tags:
+        - 点検管理
+      operationId: deleteQuotationDataBoxInspectionRequestsMenusByMenuId
+      summary: 点検メニュー削除
+      description: 点検メニューを無効化する。物理削除は行わない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: inspection_management
+      parameters:
+        - name: menuId
+          in: path
+          required: true
+          description: 点検メニューID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      responses:
+        '204':
+          description: 無効化成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/-'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象メニューが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 有効な点検タスクまたは日常点検設定行で使用中
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：なし）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}:
+    put:
+      tags:
+        - 点検管理
+      operationId: putQuotationDataBoxInspectionRequestsTasksByInspectionTaskId
+      summary: 点検タスク/日常点検設定更新
+      description: 定期点検タスクまたは日常点検設定行を更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: inspection_management
+      parameters:
+        - name: inspectionTaskId
+          in: path
+          required: true
+          description: 点検タスクID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionTaskUpdateRequest'
+      x-word-request-title: リクエスト（InspectionTaskUpdateRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdResponse'
+        '400':
+          description: 入力不正、日常点検メニュー全解除指定、点検種別とメニュー種別/タイミング不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象タスクまたはメニューが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 点検実施中/完了済み、または有効行重複
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': InspectionTaskUpsertResponse
+      x-word-response-title: レスポンス（200：InspectionTaskUpsertResponse）
+      x-word-response-subtable-titles: []
+    delete:
+      tags:
+        - 点検管理
+      operationId: deleteQuotationDataBoxInspectionRequestsTasksByInspectionTaskId
+      summary: 点検タスク/日常点検設定解除
+      description: 定期点検タスクまたは日常点検設定行を論理解除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: inspection_management
+      parameters:
+        - name: inspectionTaskId
+          in: path
+          required: true
+          description: 点検タスクID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      responses:
+        '204':
+          description: 解除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/-'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 点検実施中のため解除不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：なし）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/start:
+    post:
+      tags:
+        - 点検管理
+      operationId: postQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdStart
+      summary: 定期点検開始
+      description: 定期点検画面でQR照合後に、対象タスクを 点検実施中 へ更新し、点検項目入力に必要なデータを返す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: inspection_management
+      parameters:
+        - name: inspectionTaskId
+          in: path
+          required: true
+          description: 点検タスクID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionTaskStartRequest'
+      x-word-request-title: リクエスト（InspectionTaskStartRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 開始成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeriodicInspectionStartResponse'
+        '400':
+          description: QRコード形式不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象タスクまたはQRが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: QR不一致、日常点検行指定、またはステータス遷移不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：PeriodicInspectionStartResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/schedule:
+    post:
+      tags:
+        - 点検管理
+      operationId: postQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdSchedule
+      summary: 点検日程調整
+      description: メーカー保守または院内スポット点検の日程を調整する。院内スポット点検は点検管理登録時点では予定日未定で作成し、本APIで初回予定日を設定する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: inspection_management
+      parameters:
+        - name: inspectionTaskId
+          in: path
+          required: true
+          description: 点検タスクID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionScheduleUpdateRequest'
+      x-word-request-title: リクエスト（InspectionScheduleUpdateRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 日程調整成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdScheduleResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象点検種別外またはステータス遷移不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': InspectionTaskUpsertResponse
+      x-word-response-title: レスポンス（200：InspectionTaskUpsertResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/skip:
+    post:
+      tags:
+        - 点検管理
+      operationId: postQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdSkip
+      summary: 点検スキップ
+      description: 周期を持つ定期点検タスクをスキップし、次回予定日とステータスを再計算する。スキップ専用ステータスは保存しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: inspection_management
+      parameters:
+        - name: inspectionTaskId
+          in: path
+          required: true
+          description: 点検タスクID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionSkipRequest'
+      x-word-request-title: リクエスト（InspectionSkipRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: スキップ成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdSkipResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 院内スポット点検/日常点検行指定、点検実施中、またはステータス遷移不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': InspectionTaskUpsertResponse
+      x-word-response-title: レスポンス（200：InspectionTaskUpsertResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/result:
+    post:
+      tags:
+        - 点検管理
+      operationId: postQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdResult
+      summary: 定期点検結果登録
+      description: 定期点検画面の完了時に点検結果を登録し、対象タスクの状態、前回点検日、次回予定日を更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '422'
+        - '500'
+      x-feature-code: inspection_management
+      parameters:
+        - name: inspectionTaskId
+          in: path
+          required: true
+          description: 点検タスクID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PeriodicInspectionResultRequest'
+      x-word-request-title: リクエスト（PeriodicInspectionResultRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeriodicInspectionResultResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象タスクまたは点検項目が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 日常点検行指定、ステータス不正、または遷移不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 点検結果明細がメニュー定義と一致しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：PeriodicInspectionResultResponse）
+      x-word-response-subtable-titles: []
+  /maker-maintenance-result/tasks/{maintenanceTaskId}:
+    get:
+      tags:
+        - 点検管理
+      operationId: getMakerMaintenanceResultTasksByMaintenanceTaskId
+      summary: メーカー保守結果登録詳細取得
+      description: メーカー保守 点検結果登録画面の初期表示に必要な対象タスク、資産、契約、添付登録制御情報を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: inspection_management
+      parameters:
+        - name: maintenanceTaskId
+          in: path
+          required: true
+          description: メーカー保守タスクID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MakerMaintenanceTaskDetailResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: メーカー保守以外または完了済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：MakerMaintenanceTaskDetailResponse）
+      x-word-response-subtable-titles:
+        - documentUploadPolicy要素（DocumentUploadPolicy）
+      x-word-response-subtables:
+        - Title: documentUploadPolicy要素（DocumentUploadPolicy）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentTypes
+              - string[]
+              - ✓
+              - 点検報告書 / その他
+            - - documentCategories
+              - string[]
+              - ✓
+              - REPORT / OTHER
+            - - allowedMimeTypes
+              - string[]
+              - ✓
+              - PDFおよび画像など、点検報告書添付として許可するMIMEタイプ
+            - - maxFileSizeBytes
+              - int64
+              - ✓
+              - 1ファイルあたりの上限サイズ
+            - - multipleFilesAllowed
+              - boolean
+              - ✓
+              - 複数添付可否
+  /maker-maintenance-result/tasks/{maintenanceTaskId}/result:
+    post:
+      tags:
+        - 点検管理
+      operationId: postMakerMaintenanceResultTasksByMaintenanceTaskIdResult
+      summary: メーカー保守結果登録
+      description: メーカー保守点検タスクに対して、点検結果、費用内訳、添付ファイル本体を受け取り、API内でAmazon S3へ保存したうえで添付メタデータを登録し、対象タスクを論理解除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+        - '502'
+      x-feature-code: inspection_management
+      parameters:
+        - name: maintenanceTaskId
+          in: path
+          required: true
+          description: メーカー保守タスクID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: Path Parameter
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostMakerMaintenanceResultTasksByMaintenanceTaskIdResultRequest'
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - payload.costRows要素（CostRowInput）
+        - payload.documents要素（InspectionDocumentInput）
+      x-word-request-subtables:
+        - Title: payload.costRows要素（CostRowInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - costType
+              - string
+              - ✓
+              - PARTS / LABOR / OTHER
+            - - summary
+              - string
+              - '-'
+              - 概要
+            - - amount
+              - decimal
+              - ✓
+              - 金額
+        - Title: payload.documents要素（InspectionDocumentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentCategory
+              - string
+              - '-'
+              - REPORT / OTHER。未指定時は REPORT
+            - - documentType
+              - string
+              - ✓
+              - 点検報告書 / その他
+            - - filePartName
+              - string
+              - ✓
+              - multipart/form-data 内のファイルパート名。ファイル本体とメタデータを対応付ける
+            - - fileName
+              - string
+              - ✓
+              - 画面表示・監査用のファイル名。S3オブジェクトキーとは一致させない
+            - - mimeType
+              - string
+              - '-'
+              - application_documents.mime_type に保存するMIMEタイプ。未指定時はAPIでファイル本体から判定する
+            - - fileSizeBytes
+              - int64
+              - '-'
+              - application_documents.file_size_bytes に保存するファイルサイズ。未指定時はAPIで算出する
+            - - contentHash
+              - string
+              - '-'
+              - 指定時はAPIで算出したハッシュと照合する。未指定時はAPIで算出値を保存する
+            - - documentDate
+              - date
+              - '-'
+              - 点検報告書等の文書日付。未指定時は点検実施日を使用する
+            - - storageFormat
+              - string
+              - '-'
+              - 電子取引 / スキャナ保存 / 未指定。保存先ではなく保存形式区分を表す。未指定時は 未指定
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MakerMaintenanceResultResponse'
+        '400':
+          description: 入力不正、費用金額不正、添付メタデータまたは添付ファイル不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 inspection_management なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: メーカー保守以外、完了済み、または既に解除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3への添付保存または保存後ロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：MakerMaintenanceResultResponse）
+      x-word-response-subtable-titles: []
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    InspectionTaskListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - totalCount
+        - page
+        - pageSize
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InspectionTaskListItem'
+          description: 一覧行
+          x-word-subtable-title: items要素（InspectionTaskListItem）
+        totalCount:
+          type: integer
+          format: int32
+          description: 総件数
+        page:
+          type: integer
+          format: int32
+          description: ページ番号
+        pageSize:
+          type: integer
+          format: int32
+          description: 1ページ件数
+    InspectionTaskListItem:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionTaskId
+        - assetLedgerId
+        - inspectionType
+        - inspectionTypeLabel
+        - availableActions
+      properties:
+        inspectionTaskId:
+          type: integer
+          format: int64
+          description: 点検タスクID
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳ID
+        qrCode:
+          type: string
+          description: 代表QR識別子
+        departmentName:
+          type: string
+          description: 部署
+        sectionName:
+          type: string
+          description: 部門または設置部署
+        itemName:
+          type: string
+          description: 品目
+        manufacturerName:
+          type: string
+          description: メーカー
+        modelName:
+          type: string
+          description: 型式
+        lendingStatus:
+          type: string
+          description: 貸出管理状態
+        inspectionType:
+          type: string
+          description: DB保存値。院内定期点検 / メーカー保守 / 院内スポット点検 / 日常点検
+        inspectionTypeLabel:
+          type: string
+          description: 画面表示値。院内点検 / メーカー点検 / スポット点検 / 日常点検
+        inspectionGroupName:
+          type: string
+          description: 点検グループ名。保守契約由来タスクは maintenance_contract_assets.inspection_group_name から返す
+        periodicMenuId:
+          type: integer
+          format: int64
+          description: 定期点検メニューID。日常点検行は null
+        periodicMenuName:
+          type: string
+          description: 定期点検メニュー名
+        dailyBeforeMenuId:
+          type: integer
+          format: int64
+          description: 使用前日常点検メニューID。設定変更モーダルの初期値に使用する
+        dailyBeforeMenuName:
+          type: string
+          description: 使用前日常点検メニュー名
+        dailyDuringMenuId:
+          type: integer
+          format: int64
+          description: 使用中日常点検メニューID。設定変更モーダルの初期値に使用する
+        dailyDuringMenuName:
+          type: string
+          description: 使用中日常点検メニュー名
+        dailyAfterMenuId:
+          type: integer
+          format: int64
+          description: 使用後日常点検メニューID。設定変更モーダルの初期値に使用する
+        dailyAfterMenuName:
+          type: string
+          description: 使用後日常点検メニュー名
+        cycleMonths:
+          type: integer
+          format: int32
+          description: 点検周期。日常点検行は null
+        lastInspectionOn:
+          type: string
+          format: date
+          description: 前回点検日。日常点検行は null
+        nextInspectionOn:
+          type: string
+          format: date
+          description: 次回点検予定日。日常点検行は null
+        status:
+          type: string
+          description: 定期点検系ステータス。日常点検行は null
+        availableActions:
+          type: array
+          items:
+            type: string
+          description: START / SCHEDULE / MAKER_RESULT / SKIP / EDIT / RELEASE / KARTE。種別・ステータス別の返却可否は処理仕様に従う
+    text/csv:
+      type: object
+      additionalProperties: false
+      required:
+        - body
+      properties:
+        body:
+          $ref: '#/components/schemas/text/csv'
+          description: 点検予定表CSV。UTF-8 BOM付き
+          x-word-omit-subtable: true
+    InspectionMenuListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - menus
+      properties:
+        menus:
+          type: array
+          items:
+            $ref: '#/components/schemas/InspectionMenu'
+          description: 点検メニュー一覧
+          x-word-subtable-title: menus要素（InspectionMenu）
+    InspectionMenu:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionMenuId
+        - menuName
+        - menuType
+        - isActive
+        - items
+      properties:
+        inspectionMenuId:
+          type: integer
+          format: int64
+          description: 点検メニューID
+        menuName:
+          type: string
+          description: メニュー名
+        menuType:
+          type: string
+          description: PERIODIC / DAILY
+        dailyTiming:
+          type: string
+          description: BEFORE / DURING / AFTER。日常点検のみ
+        cycleMonths:
+          type: integer
+          format: int32
+          description: 周期（月）。定期点検のみ
+        largeClassName:
+          type: string
+          description: 大分類
+        mediumClassName:
+          type: string
+          description: 中分類
+        itemName:
+          type: string
+          description: 品目
+        isActive:
+          type: boolean
+          description: 有効フラグ
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InspectionMenuItem'
+          description: 点検項目
+          x-word-subtable-title: items要素（InspectionMenuItem）
+    InspectionMenuItem:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionMenuItemId
+        - displayOrder
+        - itemName
+        - itemContent
+        - inputType
+        - evaluationType
+      properties:
+        inspectionMenuItemId:
+          type: integer
+          format: int64
+          description: 点検項目ID
+        displayOrder:
+          type: integer
+          format: int32
+          description: 表示順
+        itemName:
+          type: string
+          description: 項目名
+        itemContent:
+          type: string
+          description: 点検内容
+        inputType:
+          type: string
+          description: SELECT / FREE
+        evaluationType:
+          type: string
+          description: PASS_FAIL / UNIT / FREE
+        unitText:
+          type: string
+          description: 単位
+        selectOptions:
+          type: array
+          items:
+            type: string
+          description: 選択肢
+    InspectionMenuCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - menuName
+        - menuType
+        - largeClassName
+        - mediumClassName
+        - itemName
+        - items
+      properties:
+        menuName:
+          type: string
+          description: メニュー名
+        menuType:
+          type: string
+          description: PERIODIC / DAILY
+        dailyTiming:
+          type: string
+          description: BEFORE / DURING / AFTER。日常点検では必須
+        cycleMonths:
+          type: integer
+          format: int32
+          description: 周期（月）。定期点検では必須
+        largeClassName:
+          type: string
+          description: 大分類
+        mediumClassName:
+          type: string
+          description: 中分類
+        itemName:
+          type: string
+          description: 品目
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InspectionMenuItemInput'
+          description: 点検項目。1件以上
+          x-word-subtable-title: items要素（InspectionMenuItemInput）
+    PostQuotationDataBoxInspectionRequestsMenusResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - menu
+      properties:
+        menu:
+          $ref: '#/components/schemas/InspectionMenu'
+          description: 登録した点検メニュー
+          x-word-omit-subtable: true
+    InspectionMenuItemInput:
+      type: object
+      additionalProperties: false
+      required:
+        - displayOrder
+        - itemName
+        - itemContent
+        - inputType
+        - evaluationType
+      properties:
+        displayOrder:
+          type: integer
+          format: int32
+          description: 表示順
+        itemName:
+          type: string
+          description: 項目名
+        itemContent:
+          type: string
+          description: 点検内容
+        inputType:
+          type: string
+          description: SELECT / FREE
+        evaluationType:
+          type: string
+          description: PASS_FAIL / UNIT / FREE
+        unitText:
+          type: string
+          description: 単位入力時の単位
+        selectOptions:
+          type: array
+          items:
+            type: string
+          description: 選択式の場合の候補
+    InspectionMenuUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - menuName
+        - largeClassName
+        - mediumClassName
+        - itemName
+        - items
+      properties:
+        menuName:
+          type: string
+          description: メニュー名
+        dailyTiming:
+          type: string
+          description: 日常点検の場合のタイミング
+        cycleMonths:
+          type: integer
+          format: int32
+          description: 定期点検の場合の周期（月）
+        largeClassName:
+          type: string
+          description: 大分類
+        mediumClassName:
+          type: string
+          description: 中分類
+        itemName:
+          type: string
+          description: 品目
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InspectionMenuItemInput'
+          description: 点検項目。1件以上
+          x-word-omit-subtable: true
+    PutQuotationDataBoxInspectionRequestsMenusByMenuIdResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - menu
+      properties:
+        menu:
+          $ref: '#/components/schemas/InspectionMenu'
+          description: 更新後の点検メニュー
+          x-word-omit-subtable: true
+    '-':
+      type: object
+      additionalProperties: false
+      properties: {}
+    InspectionTaskUpsertRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - assetLedgerId
+        - inspectionType
+      properties:
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 原本資産の資産台帳ID（asset_ledgers.asset_ledger_id）
+        inspectionType:
+          type: string
+          description: 院内定期点検 / 院内スポット点検 / 日常点検。メーカー保守 は保守契約管理から連携するため本APIでは指定不可
+        periodicMenuId:
+          type: integer
+          format: int64
+          description: 院内定期点検または院内スポット点検で指定する点検メニューID。院内スポット点検では点検項目テンプレートとして参照し、点検周期は使用しない。メーカー保守は保守契約管理から連携するため本APIでは指定しない
+        dailyBeforeMenuId:
+          type: integer
+          format: int64
+          description: 日常点検 使用前メニューID
+        dailyDuringMenuId:
+          type: integer
+          format: int64
+          description: 日常点検 使用中メニューID
+        dailyAfterMenuId:
+          type: integer
+          format: int64
+          description: 日常点検 使用後メニューID
+        nextInspectionOn:
+          type: string
+          format: date
+          description: 院内定期点検の次回予定日。院内スポット点検は登録時点では指定せず、日程調整APIで設定する
+        vendorId:
+          type: integer
+          format: int64
+          description: 委託業者ID。院内点検で委託先を表示する場合に使用する
+    PostQuotationDataBoxInspectionRequestsTasksResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionTaskId
+        - upsertMode
+        - inspectionType
+        - assetLedgerId
+      properties:
+        inspectionTaskId:
+          type: integer
+          format: int64
+          description: 作成または更新した点検タスクID
+        upsertMode:
+          type: string
+          description: CREATED / UPDATED
+        inspectionType:
+          type: string
+          description: DB保存値
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳ID
+        periodicMenuId:
+          type: integer
+          format: int64
+          description: 定期点検メニューID。日常点検は null
+        dailyBeforeMenuId:
+          type: integer
+          format: int64
+          description: 使用前日常点検メニューID
+        dailyDuringMenuId:
+          type: integer
+          format: int64
+          description: 使用中日常点検メニューID
+        dailyAfterMenuId:
+          type: integer
+          format: int64
+          description: 使用後日常点検メニューID
+        nextInspectionOn:
+          type: string
+          format: date
+          description: 次回予定日。日常点検は null
+        status:
+          type: string
+          description: ステータス。日常点検は null
+    InspectionTaskUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        periodicMenuId:
+          type: integer
+          format: int64
+          description: 定期点検メニューID
+        dailyBeforeMenuId:
+          type: string
+          description: 日常点検 使用前メニューID。未指定は維持、null指定で一部解除
+        dailyDuringMenuId:
+          type: string
+          description: 日常点検 使用中メニューID。未指定は維持、null指定で一部解除
+        dailyAfterMenuId:
+          type: string
+          description: 日常点検 使用後メニューID。未指定は維持、null指定で一部解除
+        nextInspectionOn:
+          type: string
+          format: date
+          description: 院内定期点検の次回予定日。メーカー保守と院内スポット点検は日程調整APIで更新する
+        vendorId:
+          type: integer
+          format: int64
+          description: 委託業者ID
+    PutQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionTaskId
+        - inspectionType
+        - assetLedgerId
+      properties:
+        inspectionTaskId:
+          type: integer
+          format: int64
+          description: 更新した点検タスクID
+        inspectionType:
+          type: string
+          description: DB保存値
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳ID
+        periodicMenuId:
+          type: integer
+          format: int64
+          description: 定期点検メニューID。日常点検は null
+        dailyBeforeMenuId:
+          type: integer
+          format: int64
+          description: 使用前日常点検メニューID
+        dailyDuringMenuId:
+          type: integer
+          format: int64
+          description: 使用中日常点検メニューID
+        dailyAfterMenuId:
+          type: integer
+          format: int64
+          description: 使用後日常点検メニューID
+        nextInspectionOn:
+          type: string
+          format: date
+          description: 次回予定日。日常点検は null
+        status:
+          type: string
+          description: ステータス。日常点検は null
+    InspectionTaskStartRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - qrCode
+      properties:
+        qrCode:
+          type: string
+          description: 読み取ったQR識別子
+    PeriodicInspectionStartResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionTaskId
+        - status
+        - asset
+        - menu
+      properties:
+        inspectionTaskId:
+          type: integer
+          format: int64
+          description: 点検タスクID
+        status:
+          type: string
+          description: 更新後ステータス。点検実施中
+        asset:
+          type: string
+          description: 対象資産
+        menu:
+          $ref: '#/components/schemas/InspectionMenu'
+          description: 点検メニューと項目
+          x-word-omit-subtable: true
+    InspectionScheduleUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - nextInspectionOn
+      properties:
+        nextInspectionOn:
+          type: string
+          format: date
+          description: 調整後の次回予定日
+        reason:
+          type: string
+          description: 調整理由
+    PostQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdScheduleResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionTaskId
+        - nextInspectionOn
+        - status
+      properties:
+        inspectionTaskId:
+          type: integer
+          format: int64
+          description: 点検タスクID
+        nextInspectionOn:
+          type: string
+          format: date
+          description: 更新後予定日
+        status:
+          type: string
+          description: 更新後ステータス
+    InspectionSkipRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          description: スキップ理由
+    PostQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdSkipResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionTaskId
+        - status
+      properties:
+        inspectionTaskId:
+          type: integer
+          format: int64
+          description: 点検タスクID
+        nextInspectionOn:
+          type: string
+          format: date
+          description: 再計算後予定日
+        status:
+          type: string
+          description: 再計算後ステータス
+    PeriodicInspectionResultRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectedOn
+        - inspectorName
+        - overallResult
+        - resultDetails
+      properties:
+        inspectedOn:
+          type: string
+          format: date
+          description: 点検実施日
+        inspectorName:
+          type: string
+          description: 実施者名
+        overallResult:
+          type: string
+          description: PASS / REINSPECT / REPAIR_REQUEST
+        resultDetails:
+          type: array
+          items:
+            type: string
+          description: 点検項目ごとの結果
+        remarks:
+          type: string
+          description: 備考
+    PeriodicInspectionResultResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionResultId
+        - inspectionTaskId
+        - status
+        - lastInspectionOn
+      properties:
+        inspectionResultId:
+          type: integer
+          format: int64
+          description: 登録した点検結果ID
+        inspectionTaskId:
+          type: integer
+          format: int64
+          description: 点検タスクID
+        status:
+          type: string
+          description: 更新後ステータス
+        lastInspectionOn:
+          type: string
+          format: date
+          description: 前回点検日
+        nextInspectionOn:
+          type: string
+          format: date
+          description: 次回点検予定日
+        repairRequestSeed:
+          type: string
+          description: 修理申請へ連携する初期値。overallResult=REPAIR_REQUEST の場合に返す
+    MakerMaintenanceTaskDetailResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionTaskId
+        - asset
+        - defaultCostRows
+        - documentUploadPolicy
+      properties:
+        inspectionTaskId:
+          type: integer
+          format: int64
+          description: 点検タスクID
+        asset:
+          type: string
+          description: 対象機器情報
+        inspectionGroupName:
+          type: string
+          description: 保守・点検グループ名
+        vendorName:
+          type: string
+          description: 点検業者名
+        nextInspectionOn:
+          type: string
+          format: date
+          description: 予定日
+        defaultCostRows:
+          type: array
+          items:
+            type: string
+          description: 費用行初期値。通常は空配列
+        documentUploadPolicy:
+          $ref: '#/components/schemas/DocumentUploadPolicy'
+          description: 登録APIへ添付できるドキュメント種別、MIMEタイプ、ファイルサイズ上限。S3保存先情報は含めない
+          x-word-subtable-title: documentUploadPolicy要素（DocumentUploadPolicy）
+    DocumentUploadPolicy:
+      type: object
+      additionalProperties: false
+      required:
+        - documentTypes
+        - documentCategories
+        - allowedMimeTypes
+        - maxFileSizeBytes
+        - multipleFilesAllowed
+      properties:
+        documentTypes:
+          type: array
+          items:
+            type: string
+          description: 点検報告書 / その他
+        documentCategories:
+          type: array
+          items:
+            type: string
+          description: REPORT / OTHER
+        allowedMimeTypes:
+          type: array
+          items:
+            type: string
+          description: PDFおよび画像など、点検報告書添付として許可するMIMEタイプ
+        maxFileSizeBytes:
+          type: integer
+          format: int64
+          description: 1ファイルあたりの上限サイズ
+        multipleFilesAllowed:
+          type: boolean
+          description: 複数添付可否
+    PostMakerMaintenanceResultTasksByMaintenanceTaskIdResultRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload.inspectedOn
+        - payload.vendorName
+        - payload.costRows
+      properties:
+        payload.inspectedOn:
+          type: string
+          format: date
+          description: 点検実施日
+        payload.vendorName:
+          type: string
+          description: 点検業者名スナップショット
+        payload.vendorStaffName:
+          type: string
+          description: 担当者名
+        payload.vendorContact:
+          type: string
+          description: 連絡先
+        payload.costRows:
+          type: array
+          items:
+            $ref: '#/components/schemas/CostRowInput'
+          description: 費用行。0円登録時は空配列可
+          x-word-subtable-title: payload.costRows要素（CostRowInput）
+        payload.documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/InspectionDocumentInput'
+          description: 添付ファイルメタデータ。各要素の filePartName が files のファイル本体と対応する
+          x-word-subtable-title: payload.documents要素（InspectionDocumentInput）
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: 点検報告書・添付資料のファイル本体。payload.documents[].filePartName で参照する
+        payload.remarks:
+          type: string
+          description: 備考
+    MakerMaintenanceResultResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - inspectionResultId
+        - inspectionTaskId
+        - partsCost
+        - laborCost
+        - totalCost
+        - documentIds
+      properties:
+        inspectionResultId:
+          type: integer
+          format: int64
+          description: 登録した点検結果ID
+        inspectionTaskId:
+          type: integer
+          format: int64
+          description: 論理解除した点検タスクID
+        partsCost:
+          type: number
+          description: 部品費合計
+        laborCost:
+          type: number
+          description: 作業費等合計
+        totalCost:
+          type: number
+          description: 総額
+        documentIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 登録したドキュメントID
+    CostRowInput:
+      type: object
+      additionalProperties: false
+      required:
+        - costType
+        - amount
+      properties:
+        costType:
+          type: string
+          description: PARTS / LABOR / OTHER
+        summary:
+          type: string
+          description: 概要
+        amount:
+          type: number
+          description: 金額
+    InspectionDocumentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - documentType
+        - filePartName
+        - fileName
+      properties:
+        documentCategory:
+          type: string
+          description: REPORT / OTHER。未指定時は REPORT
+        documentType:
+          type: string
+          description: 点検報告書 / その他
+        filePartName:
+          type: string
+          description: multipart/form-data 内のファイルパート名。ファイル本体とメタデータを対応付ける
+        fileName:
+          type: string
+          description: 画面表示・監査用のファイル名。S3オブジェクトキーとは一致させない
+        mimeType:
+          type: string
+          description: application_documents.mime_type に保存するMIMEタイプ。未指定時はAPIでファイル本体から判定する
+        fileSizeBytes:
+          type: integer
+          format: int64
+          description: application_documents.file_size_bytes に保存するファイルサイズ。未指定時はAPIで算出する
+        contentHash:
+          type: string
+          description: 指定時はAPIで算出したハッシュと照合する。未指定時はAPIで算出値を保存する
+        documentDate:
+          type: string
+          format: date
+          description: 点検報告書等の文書日付。未指定時は点検実施日を使用する
+        storageFormat:
+          type: string
+          description: 電子取引 / スキャナ保存 / 未指定。保存先ではなく保存形式区分を表す。未指定時は 未指定
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

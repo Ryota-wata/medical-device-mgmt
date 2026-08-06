@@ -1,0 +1,334 @@
+# QR発行・ラベル印刷 API内部設計
+
+## 第1章 概要
+
+### 本書の目的
+
+本書は、QRコード新規発行画面（`/qr-issue`）および QRコード印刷画面（`/qr-print`）で利用する API の設計内容を整理し、クライアント、開発者、運用担当者が共通認識を持つことを目的とする。
+
+特に以下を明確にする。
+
+- 新規発行/再発行のプレビュー生成 I/F
+- 印刷ジョブ開始受付、取得、結果反映 I/F
+- 印刷開始受付時の `qr_codes` / `qr_print_job_items` 確定タイミング
+- 冪等キーによる二重送信対策と、ローカル印刷失敗時の終端方法
+- サーバーAPIとローカル印刷モジュールの責務分担
+- QRシンボルへ埋め込む遷移用URLと、読み取り後の認証・認可判定の責務境界
+
+### 対象システム概要
+
+QR発行・ラベル印刷は、資産管理用QRコードの新規発行・再発行を行う `/qr-issue` と、印刷プレビュー・印刷実行を行う `/qr-print` から構成される。
+
+QR識別子は施設単位で一意に管理し、新規発行時の採番確定と `qr_codes` / `qr_print_job_items` への保存は印刷開始受付時にサーバー側で行う。物理印刷の成功/失敗は、その後に端末上のローカル印刷モジュールが実行した結果を結果反映 API で更新する。
+
+テプラプリンタへの直接接続は端末上のローカル印刷モジュールが担い、サーバーAPIはプリンタ制御を行わない。
+
+QRシンボルへ埋め込む遷移用URLは資産詳細画面へ到達するための識別情報であり、QRコードの物理的所持または読み取り成功は資産詳細の閲覧権限を意味しない。読み取り後のログイン状態確認、対象資産解決、閲覧権限判定は資産一覧・資産詳細 API 側の責務とする。
+
+### 用語定義
+
+| 用語 | 説明 |
+| --- | --- |
+| 新規発行 | プレフィックス・2桁番号・5桁開始番号から新しい QR識別子を連番採番する発行方式 |
+| 再発行 | 既存 `qr_identifier` を再利用し、指定範囲の既存 QR を印刷し直す発行方式 |
+| 印刷ジョブ | 印刷開始ボタン押下1回分の実行単位。`qr_print_jobs` に保存する |
+| 印刷ジョブ明細 | 印刷ジョブ配下の個別 QR ごとの印刷対象および印刷結果。`qr_print_job_items` に保存する |
+| ローカル印刷モジュール | 端末上で起動し、テプラプリンタ一覧取得および印刷実行を担うローカル Web API |
+| 固定テンプレート | テプラクリエイターで事前作成したアプリ内固定ラベルテンプレート。DB テーブルは持たない |
+
+### 対象画面
+
+| 項目 | 内容 |
+| --- | --- |
+| 対象画面 | 5. QRコード新規発行画面 / 6. QRコード印刷画面 |
+| 対象URL | /qr-issue / /qr-print |
+| 主機能 | 新規発行/再発行プレビュー、印刷ジョブ開始受付、印刷ジョブ取得、印刷結果反映 |
+
+## 第2章 システム全体構成
+
+### APIの位置づけ
+
+本API群は、QR発行画面で入力された条件を検証してプレビュー情報を返却し、印刷画面で印刷ジョブ開始受付・状態参照・印刷結果反映を行うための I/F を提供する。
+
+テンプレート定義本体はテプラクリエイターで事前作成したファイルをフロントエンド資材として保持する。プリンタ候補はフロントエンドが端末のテプラ連携/ローカル印刷モジュールから取得する。本API群ではテンプレート一覧取得API、プリンタ候補取得API、DBマスタ配信は行わない。
+
+本API群は、印刷するQRシンボルに埋め込む `qrContentUrl` を生成・返却するが、そのURLへアクセスしたユーザーの認証誘導、資産詳細閲覧可否、他施設資産の閲覧制御は扱わない。これらは `/asset-detail/assets/by-qr` を含む資産一覧・資産詳細 API 側で判定する。
+
+### 画面とAPIの関係
+
+1. 新規発行/再発行条件の入力後、印刷画面へ遷移する前にプレビュー生成 API を呼び出す
+2. 印刷画面初期表示は、プレビュー生成結果とローカル印刷モジュールのプリンタ候補をもとにクライアント側で表示する
+3. 印刷開始押下時に印刷ジョブ開始受付 API を呼び出し、`qr_print_jobs`、`qr_codes`、`qr_print_job_items` を確定する
+4. クライアントは印刷ジョブ開始受付 API の確定結果を用いて、ローカル印刷モジュールへ印刷を依頼する
+5. ローカル印刷モジュールの実行完了後、結果反映 API を呼び出して `qr_print_job_items` と `qr_codes.print_status` を更新する
+6. 必要に応じて印刷ジョブ取得 API を呼び出し、ジョブ状態と明細結果を再取得する
+
+### 使用テーブル
+
+| テーブル | 利用内容 | 主な項目 |
+| --- | --- | --- |
+| qr_codes | 既存QR確認、新規発行確定、再発行情報更新、印刷状態更新 | qr_code_id, facility_id, qr_identifier, code_prefix, code_branch, code_serial, issue_type, label_template_key, free_entry_text, issued_by_user_id, issued_at, print_status, last_print_job_id, printed_at |
+| qr_print_jobs | 印刷ジョブ開始受付、冪等制御、ジョブ状態保持、集計結果更新 | qr_print_job_id, facility_id, template_key, printer_name, client_request_id, requested_by_user_id, requested_at, started_at, finished_at, status, success_count, failure_count, error_stage, error_summary |
+| qr_print_job_items | 印刷開始時の対象明細作成、印刷結果保持 | qr_print_job_item_id, qr_print_job_id, qr_code_id, print_order, status, printed_at, error_message |
+| facilities | 施設スコープ確認、共有システム管理者アカウントの未削除施設判定 | facility_id, facility_name, deleted_at |
+| users | 発行者・印刷実行者の監査、共有システム管理者アカウント判定 | user_id, name, account_type |
+
+## 第3章 共通仕様
+
+### API共通仕様
+
+- 通信方式: HTTPS
+- データ形式: JSON
+- 文字コード: UTF-8
+- 日時形式: ISO 8601（例: `2026-04-22T10:30:00+09:00`）
+- プレビューの QRシンボル自体は base64 PNG 文字列または同等の表示用データを返却する
+- 印刷用の最終確定データは印刷ジョブ開始受付 API のレスポンスを正本とし、クライアントはそれをローカル印刷モジュールへ渡す
+- QRシンボルへ埋め込む遷移用URLは、アプリ設定ベースURLに `facilityId` と `qr_identifier` の両方をクエリとして付与した形式を用いる
+- QRシンボルへ埋め込む遷移用URLには、認証トークン、ユーザーID、ロール、権限情報などユーザー認証・認可に関わる情報を含めない
+- `qrContentUrl` は `facilityId` / `qr_identifier` / アプリ設定ベースURLから決定的に生成する派生値であり、DBへは保存しない
+- QRコードの読み取り後に未ログインユーザーをログイン画面へ誘導し、ログイン後に元URLの資産解決処理を継続する制御は資産一覧・資産詳細 API およびフロントエンドの責務とする
+
+### 認証方式
+
+ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。
+
+### 権限モデル
+
+本API群で使用する `feature_code` は以下の通りとする。通常アカウントでは、対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）では、対象施設（`facilityId` または対象ジョブの `facility_id`）が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。テンプレート一覧はフロントエンド資材、プリンタ候補はテプラ連携/ローカル印刷モジュールの取得結果として扱うため、本APIの権限制御対象外とする。
+
+`qr_issue` はQR発行・ラベル印刷APIの実行可否を制御する権限であり、QRコード読み取り後の資産詳細閲覧権限ではない。資産詳細表示可否は、遷移先の資産一覧・資産詳細 API がログインユーザーの対象施設・対象資産に対する閲覧権限で判定する。
+
+| 管理単位名 | feature_code | 対象処理 |
+| --- | --- | --- |
+| QRコード発行 | `qr_issue` | プレビュー生成、印刷ジョブ開始受付、印刷ジョブ取得、印刷結果反映 |
+
+| 処理 | 必要 feature_code | 判定テーブル | 説明 |
+| --- | --- | --- | --- |
+| プレビュー生成 | `qr_issue` | 通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at` | 通常アカウントは対象施設で `qr_issue` が実効有効であること。共有システム管理者は対象施設が未削除であること。新規発行/再発行の採番条件を検証し、印刷対象一覧を返却する |
+| 印刷ジョブ開始受付 | `qr_issue` | 通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at` | 通常アカウントは対象施設で `qr_issue` が実効有効であること。共有システム管理者は対象施設が未削除であること。印刷開始受付と `qr_codes` / `qr_print_job_items` の確定を行う |
+| 印刷ジョブ取得 | `qr_issue` | 通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at` | 通常アカウントは対象ジョブ施設で `qr_issue` が実効有効であること。共有システム管理者は対象ジョブ施設が未削除であること。印刷プレビュー画面の表示情報と現在の結果を取得する |
+| 印刷結果反映 | `qr_issue` | 通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at` | 通常アカウントは対象ジョブ施設で `qr_issue` が実効有効であること。共有システム管理者は対象ジョブ施設が未削除であること。ローカル印刷モジュールの実行結果を `qr_codes` / 印刷結果へ反映する |
+
+### 永続化とトランザクション境界
+
+- `POST /qr-issue/preview` は入力検証と採番候補/再発行対象の導出だけを行い、`qr_codes` / `qr_print_jobs` / `qr_print_job_items` は永続化しない
+- `POST /qr-print/jobs` は 1 回の印刷開始受付を 1 DB トランザクションで完結させ、`qr_print_jobs` の作成、新規発行時の `qr_codes` 作成または再発行時の `qr_codes` 更新、`qr_print_job_items` の全件作成を同一トランザクションで行う
+- 新規発行時の採番競合は `(facility_id, code_prefix, code_branch)` 単位でサーバー側再採番またはリトライして解消し、解消できない場合のみ 409 を返す
+- `GET /qr-print/jobs/{qrPrintJobId}` は参照専用であり、ジョブ・明細・QRコードの保存値は更新しない。`qrContentUrl` は保存値ではなく、取得時に `facilityId` と `qr_identifier` から再生成する
+- `POST /qr-print/jobs/{qrPrintJobId}/result` は 1 回の結果反映を 1 DB トランザクションで完結させ、`qr_print_job_items`、`qr_codes.print_status` / `printed_at`、`qr_print_jobs` の集計列を同時更新する。新しい `qr_codes` 採番や `qr_print_job_items` 追加作成は行わない
+- テンプレート定義本体はフロントエンド資材、プリンタ候補はテプラ連携/ローカル印刷モジュール側の責務とし、サーバーDBには保存しない。テンプレート一覧取得APIおよびプリンタ候補取得APIは設けない
+
+### 施設スコープ仕様
+
+- 各 API は `facilityId` または対象ジョブの `facility_id` を基準に、認証済みユーザーが当該施設を作業対象施設として扱えるかを検証する
+- 各 API は `/auth/context` の返却値だけを信用せず、対象施設に対する実効 `qr_issue` または共有システム管理者例外を都度再判定する
+- 通常アカウントでは、対象施設に対する `user_facility_assignments` の有効割当、`facility_feature_settings(feature_code='qr_issue')`、`user_facility_feature_settings(feature_code='qr_issue')` のいずれかを満たさない場合は 403 を返却する
+- 共有システム管理者アカウントでは、対象施設または対象ジョブ施設の `facilities.deleted_at IS NULL` を確認できれば通常判定をバイパスし、削除済み施設の場合は 403 を返却する
+- `qr_identifier` の一意性判定および採番は施設単位で行う
+
+### エラーレスポンス仕様
+
+#### 基本エラーレスポンス（ErrorResponse）
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| code | string | ✓ | エラーコード |
+| message | string | ✓ | 利用者向けエラーメッセージ |
+| details | string[] | - | 入力エラーや補足情報 |
+
+## 第4章 API一覧
+
+| 機能名 | Method | Path | 概要 | 認証 |
+| --- | --- | --- | --- | --- |
+| QR発行プレビュー生成 | POST | /qr-issue/preview | 新規発行/再発行の条件を検証し、印刷プレビュー用のQR一覧を返す | 要 |
+| 印刷ジョブ開始受付 | POST | /qr-print/jobs | 印刷開始を受け付け、QR保存とジョブ/明細を確定する | 要 |
+| 印刷ジョブ取得 | GET | /qr-print/jobs/{qrPrintJobId} | 印刷開始受付後のジョブ詳細と明細結果を取得する | 要 |
+| 印刷結果反映 | POST | /qr-print/jobs/{qrPrintJobId}/result | ローカル印刷モジュールの実行結果を反映する | 要 |
+
+## 第5章 QR発行・ラベル印刷機能設計
+
+### postQrIssuePreview
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、対象施設（`facilityId` または対象ジョブの `facility_id`）が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による判定をバイパスする
+- 認可条件: 通常アカウントの場合、対象施設（`facilityId` または対象ジョブの `facility_id`）について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、対象施設（`facilityId` または対象ジョブの `facility_id`）について `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること
+
+#### 処理仕様
+
+1. 入力値の必須・桁数・形式を検証する
+2. 新規発行時は `(facility_id, code_prefix, code_branch)` 単位の既存最大 `code_serial` を参照し、`startSerial` 未指定時は候補値を補完する
+3. 新規発行時は `codePrefix-codeBranch-serial` 形式で指定枚数分の `qr_identifier` 候補一覧を生成する
+4. 再発行時は指定した `reissueStartQrIdentifier` を起点に、既存 `qr_codes` を連番で件数分取得し、1件でも欠番がある場合はエラーとする
+5. プレビュー生成時点では `qr_codes` / `qr_print_jobs` / `qr_print_job_items` を保存しない
+6. テンプレート定義本体はアプリ内固定のため、`templateKey` の妥当性だけを検証する
+
+#### 永続化マッピング
+
+| テーブル | 対象カラム / 操作 | 設定値 / 反映内容 | 備考 |
+| --- | --- | --- | --- |
+| `qr_codes` / `qr_print_jobs` / `qr_print_job_items` | 行作成・更新なし | 永続化しない | 本 API はプレビュー生成のみを行う |
+| 保存対象外入力 | リクエスト `templateKey` / `freeEntryText` / `issueCount` / `codePrefix` / `codeBranch` / `startSerial` / `reissueStartQrIdentifier` | レスポンス生成と後続印刷開始要求の材料としてのみ利用する | DB 保存は `POST /qr-print/jobs` で行う |
+| 保存対象外派生値 | レスポンス `items[*].previewImageBase64` / `rangeStartQrIdentifier` / `rangeEndQrIdentifier` | 都度生成して返却する | `previewImageBase64` と採番範囲は保存しない |
+
+### postQrPrintJobs
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、対象施設（`facilityId` または対象ジョブの `facility_id`）が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による判定をバイパスする
+- 認可条件: 通常アカウントの場合、対象施設（`facilityId` または対象ジョブの `facility_id`）について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、対象施設（`facilityId` または対象ジョブの `facility_id`）について `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること
+
+#### 処理仕様
+
+1. 入力値、`clientRequestId` の形式、`printOrder` 重複、件数整合を検証し、比較用に開始受付ペイロードを正規化する
+2. 正規化ルールは、`items` を `printOrder` 昇順で並べ、未指定と `null` は同値として扱う対象項目を統一し、比較対象を `facilityId` / `issueMode` / `templateKey` / `printerName` / `freeEntryText` / `items[*].printOrder` / `items[*].qrIdentifier` / `items[*].existingQrCodeId` とする
+3. 正規化済み開始受付ペイロードから `requestPayloadHash` を生成する。同一ユーザー・同一施設・同一 `clientRequestId` の再送は冪等に扱い、既存 `request_payload_hash` と一致する場合は既存ジョブを返し、不一致の場合は 409 を返す
+4. 冪等再送として既存ジョブを返す場合は、`qr_print_jobs` / `qr_codes` / `qr_print_job_items` の新規作成・更新を行わない
+5. `qr_print_jobs` に1件作成し、`client_request_id`、`request_payload_hash`、`requested_by_user_id`、`requested_at`、`started_at`、`status='IN_PROGRESS'` を設定する。`started_at` は印刷開始受付完了時刻とする
+6. 新規発行時は `(facility_id, qr_identifier)` と `(facility_id, code_prefix, code_branch, code_serial)` の重複を再検証したうえで `qr_codes` を作成し、`issue_type='NEW'`、`label_template_key`、`free_entry_text`、`issued_by_user_id`、`issued_at`、`print_status='PRINTING'`、`last_print_job_id` を設定する
+7. 再発行時は既存 `qr_codes` を再取得し、存在確認と `existingQrCodeId` / `qrIdentifier` の整合を検証したうえで、`issue_type='REISSUE'`、`label_template_key`、`free_entry_text`、`issued_by_user_id`、`issued_at`、`print_status='PRINTING'`、`last_print_job_id` を更新する
+8. `qr_print_job_items` を全件 `WAITING` で作成し、各明細に確定した `qr_code_id`、`print_order` を紐づける
+9. 印刷用の最終確定データとして、各明細の `qrIdentifier` と QRシンボル用遷移URLをレスポンスへ返却する。`qrContentUrl` は保存値ではなく、確定した `facilityId` / `qr_identifier` から生成し、認証トークン、ユーザーID、ロール、権限情報は含めない
+
+#### 永続化マッピング（印刷ジョブヘッダ）
+
+| テーブル | 対象カラム / 操作 | 設定値 / 反映内容 | 備考 |
+| --- | --- | --- | --- |
+| `qr_print_jobs` | `qr_print_job_id` | 新規採番する | レスポンス `qrPrintJobId` として返却する |
+| `qr_print_jobs` | `facility_id` / `template_key` / `printer_name` / `client_request_id` | リクエスト `facilityId` / `templateKey` / `printerName` / `clientRequestId` を保存する | 開始受付の正本 |
+| `qr_print_jobs` | `request_payload_hash` | 正規化済み開始受付ペイロードから生成した比較用ハッシュを保存する | 冪等判定に使用する |
+| `qr_print_jobs` | `requested_by_user_id` | 認証ユーザーIDを保存する | 印刷開始操作ユーザー |
+| `qr_print_jobs` | `requested_at` / `started_at` / `finished_at` | 現在時刻 / 現在時刻 / `NULL` を保存する | `started_at` は印刷開始受付完了時刻 |
+| `qr_print_jobs` | `status` / `success_count` / `failure_count` / `error_stage` / `error_summary` | `IN_PROGRESS` / `0` / `0` / `NULL` / `NULL` を保存する | 結果反映前の初期状態 |
+| `qr_print_jobs` | `created_at` / `updated_at` | 現在時刻を設定する | 監査用 |
+
+#### 永続化マッピング（QRコード）
+
+| テーブル | 対象カラム / 操作 | 設定値 / 反映内容 | 備考 |
+| --- | --- | --- | --- |
+| `qr_codes` | 新規発行: `facility_id` / `qr_identifier` / `code_prefix` / `code_branch` / `code_serial` | リクエスト `facilityId` と `items[*].qrIdentifier` から導出した採番構成要素を保存する | 新規発行時のみ新規作成する |
+| `qr_codes` | 新規発行: `issue_type` / `label_template_key` / `free_entry_text` | `NEW` / リクエスト `templateKey` / `freeEntryText` を保存する | テンプレート識別子とフリー記入項目の正本 |
+| `qr_codes` | 新規発行: `issued_by_user_id` / `issued_at` / `print_status` / `last_print_job_id` / `printed_at` | 認証ユーザーID / 現在時刻 / `PRINTING` / 新規 `qr_print_job_id` / `NULL` を保存する | 印刷開始受付完了時点の状態 |
+| `qr_codes` | 新規発行: `asset_ledger_id` / `created_at` / `updated_at` / `deleted_at` | `NULL` / 現在時刻 / 現在時刻 / `NULL` を保存する | 資産紐付けは別機能で行う |
+| `qr_codes` | 再発行: 対象 `existingQrCodeId` 行の `issue_type` / `label_template_key` / `free_entry_text` | `REISSUE` / リクエスト `templateKey` / `freeEntryText` で更新する | 既存 QR を再利用する |
+| `qr_codes` | 再発行: 対象 `existingQrCodeId` 行の `issued_by_user_id` / `issued_at` / `print_status` / `last_print_job_id` | 認証ユーザーID / 現在時刻 / `PRINTING` / 新規 `qr_print_job_id` で更新する | 印刷開始受付時点の最終発行情報へ更新する |
+| `qr_codes` | 再発行: `qr_identifier` / `code_prefix` / `code_branch` / `code_serial` / `asset_ledger_id` / `printed_at` | 変更しない | 再発行では既存 QR 識別子をそのまま再利用する |
+
+#### 永続化マッピング（印刷ジョブ明細）
+
+| テーブル | 対象カラム / 操作 | 設定値 / 反映内容 | 備考 |
+| --- | --- | --- | --- |
+| `qr_print_job_items` | `qr_print_job_item_id` | 明細ごとに新規採番する | レスポンス `items[*].qrPrintJobItemId` として返却する |
+| `qr_print_job_items` | `qr_print_job_id` / `qr_code_id` / `print_order` | 新規 `qr_print_job_id` / 確定した `qr_code_id` / リクエスト `items[*].printOrder` を保存する | 印刷対象一覧の正本 |
+| `qr_print_job_items` | `status` / `printed_at` / `error_message` | `WAITING` / `NULL` / `NULL` で作成する | 結果反映前の初期状態 |
+| `qr_print_job_items` | `created_at` / `updated_at` | 現在時刻を設定する | 監査用 |
+| 保存対象外派生値 | レスポンス `items[*].qrContentUrl` | 確定した `facilityId` / `qrIdentifier` から都度生成して返却する | DB には保存しない |
+
+### getQrPrintJobsByQrPrintJobId
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、対象施設（`facilityId` または対象ジョブの `facility_id`）が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による判定をバイパスする
+- 認可条件: 通常アカウントの場合、対象施設（`facilityId` または対象ジョブの `facility_id`）について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、対象施設（`facilityId` または対象ジョブの `facility_id`）について `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること
+
+#### 処理仕様
+
+1. `qr_print_jobs` と `qr_print_job_items` を取得する
+2. 印刷対象の `qrIdentifier`、表示順、現在ステータス、エラーメッセージを返却する
+3. `qrContentUrl` は保存値ではなく、ジョブの `facilityId`、各明細の `qrIdentifier` を URL パラメーター `qr_identifier` として用い、アプリ設定ベースURLから組み立てて返却する
+4. テンプレート表示名とシールサイズ表示は `templateKey` に対応するアプリ内固定定義から補完する
+5. ジョブ全体の成功/失敗件数、開始/終了時刻、失敗段階、エラー概要を返却する
+
+### postQrPrintJobsByQrPrintJobIdResult
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、対象施設（`facilityId` または対象ジョブの `facility_id`）が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による判定をバイパスする
+- 認可条件: 通常アカウントの場合、対象施設（`facilityId` または対象ジョブの `facility_id`）について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、対象施設（`facilityId` または対象ジョブの `facility_id`）について `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること
+
+#### 処理仕様
+
+1. 対象ジョブと明細を取得し、ジョブ内明細件数と `resultItems` 件数の一致を検証する
+2. 各 `resultItems` を `qrPrintJobItemId` で突合し、対象外明細や重複明細が含まれる場合はエラーとする
+3. 各 `resultItems` について `status` と `printedAt` / `errorMessage` の組み合わせを検証し、`PRINTED` では `printedAt` 必須・`errorMessage` 未指定、`FAILED` では `printedAt` 未指定・`errorMessage` 必須、`CANCELED` では `printedAt` 未指定とする
+4. ローカル印刷モジュール初期化失敗や印刷要求開始失敗など、物理印刷前に失敗した場合でも、本 API を呼び出して対象全件を `FAILED` として終端させる
+5. ジョブがすでに終端ステータスの場合、同一結果の再送は冪等に受理し、矛盾する更新要求は 409 とする
+6. 終端済みジョブへ同一結果を冪等再送する場合は、`qr_print_job_items` / `qr_codes` / `qr_print_jobs` を再更新せず既存終端結果を返す
+7. 印刷成功時は対応する `qr_print_job_items.status='PRINTED'` / `printed_at` を更新し、対応する `qr_codes.print_status='PRINTED'` / `printed_at` を更新する
+8. 印刷失敗またはキャンセル時は対応する `qr_print_job_items.status` / `error_message` を更新し、対応する `qr_codes.print_status` を `FAILED` または `CANCELED` へ更新する。失敗時は過去の最終成功 `printed_at` を上書きしない
+9. `jobErrorStage` / `jobErrorSummary` が指定された場合は `qr_print_jobs.error_stage` / `error_summary` へ反映し、未指定時は明細エラーから要約を補完する
+10. ジョブ全体の成功/失敗件数を集計し、全件 `PRINTED` の場合は `COMPLETED`、全件 `CANCELED` の場合は `CANCELED`、`PRINTED` を1件以上含みかつ `FAILED` または `CANCELED` を1件以上含む場合は `PARTIAL_FAILED`、それ以外で `FAILED` を1件以上含む場合は `FAILED` として `qr_print_jobs.status`、`success_count`、`failure_count`、`finished_at` を更新する
+
+#### 永続化マッピング（印刷ジョブ明細）
+
+| テーブル | 対象カラム / 操作 | 設定値 / 反映内容 | 備考 |
+| --- | --- | --- | --- |
+| `qr_print_job_items` | リクエスト `resultItems[*].qrPrintJobItemId` に一致する各行の `status` / `printed_at` / `error_message` | リクエスト `status` / `printedAt` / `errorMessage` で更新する | PRINTED は `printed_at` 必須、FAILED は `error_message` 必須 |
+| `qr_print_job_items` | 対象各行の `updated_at` | 現在時刻へ更新する | 結果反映日時として扱う |
+| `qr_print_job_items` | 対象各行の `qr_print_job_id` / `qr_code_id` / `print_order` / `created_at` | 変更しない | 開始受付時に確定済みのため更新しない |
+
+#### 永続化マッピング（QRコード）
+
+| テーブル | 対象カラム / 操作 | 設定値 / 反映内容 | 備考 |
+| --- | --- | --- | --- |
+| `qr_codes` | 対象明細に紐づく各行の `print_status` | 対応する `resultItems[*].status` に応じて `PRINTED` / `FAILED` / `CANCELED` へ更新する | 印刷状態の正本 |
+| `qr_codes` | 対象明細に紐づく各行の `printed_at` | `PRINTED` の場合はリクエスト `printedAt` で更新し、`FAILED` / `CANCELED` の場合は既存値を維持する | 過去の最終成功印刷時刻は失敗で上書きしない |
+| `qr_codes` | 対象明細に紐づく各行の `updated_at` | 現在時刻へ更新する | 状態更新時刻 |
+| `qr_codes` | 対象明細に紐づく各行の `issue_type` / `label_template_key` / `free_entry_text` / `issued_by_user_id` / `issued_at` / `last_print_job_id` / `asset_ledger_id` / `created_at` / `deleted_at` | 変更しない | 開始受付時点の確定値を維持する |
+
+#### 永続化マッピング（印刷ジョブヘッダ集計）
+
+| テーブル | 対象カラム / 操作 | 設定値 / 反映内容 | 備考 |
+| --- | --- | --- | --- |
+| `qr_print_jobs` | 対象 `qrPrintJobId` 行の `success_count` / `failure_count` | 結果反映後の `PRINTED` 件数 / `FAILED` または `CANCELED` 件数を保存する | レスポンス集計値の正本 |
+| `qr_print_jobs` | 対象 `qrPrintJobId` 行の `status` | 集計結果に応じて `COMPLETED` / `PARTIAL_FAILED` / `FAILED` / `CANCELED` へ更新する | ジョブ終端ステータス |
+| `qr_print_jobs` | 対象 `qrPrintJobId` 行の `error_stage` / `error_summary` | リクエスト `jobErrorStage` / `jobErrorSummary` を保存し、未指定時は明細エラーから補完する | ジョブ全体の失敗要約 |
+| `qr_print_jobs` | 対象 `qrPrintJobId` 行の `finished_at` / `updated_at` | 現在時刻 / 現在時刻へ更新する | 終端時刻と最終更新時刻 |
+| `qr_print_jobs` | 対象 `qrPrintJobId` 行の `facility_id` / `template_key` / `printer_name` / `client_request_id` / `request_payload_hash` / `requested_by_user_id` / `requested_at` / `started_at` / `created_at` | 変更しない | 開始受付時に確定済みのため更新しない |
+
+## 第6章 権限・業務ルール
+
+- テンプレート定義本体はテプラクリエイターで事前作成したファイルをフロントエンド資材として保持し、DB テーブル/テンプレート一覧取得APIは設けない
+- プリンタ候補はフロントエンドが端末上のテプラ連携/ローカル印刷モジュールから取得する前提とし、サーバーAPIでは管理しない
+- プレビュー生成時点では `qr_codes` / `qr_print_jobs` / `qr_print_job_items` を永続化しない
+- 新規発行時の最終採番確定と `qr_codes` 保存は `POST /qr-print/jobs` の印刷開始受付時に行う
+- `POST /qr-print/jobs` は `clientRequestId` を用いて冪等に扱い、同一操作の再送では正規化済み開始受付ペイロードの `requestPayloadHash` 一致時のみ既存ジョブを返し、不一致時は 409 とする
+- `qr_print_job_items` は `POST /qr-print/jobs` の印刷開始受付時に全件作成する
+- 印刷開始受付完了時点で `qr_codes.print_status` は `PRINTING` へ遷移し、`qr_print_jobs.started_at` には印刷開始受付完了時刻を記録する
+- 印刷結果反映 API は `qr_codes` の新規作成や採番を行わず、印刷状態と集計結果の更新のみを行う
+- ローカル印刷モジュール初期化失敗など物理印刷前の失敗でも、結果反映 API へ全件 `FAILED` を送ってジョブを終端させる
+- 再発行では新しい QR識別子を採番せず、既存 `qr_identifier` を再利用する
+- 同一ジョブへの同一結果再送は冪等に受理し、矛盾する結果更新は 409 とする
+- ジョブ終端ステータスは、全件 `PRINTED` の場合のみ `COMPLETED`、全件 `CANCELED` の場合のみ `CANCELED`、`PRINTED` を1件以上含む混在時は `PARTIAL_FAILED`、それ以外で `FAILED` を含む場合は `FAILED` とする
+- `qrContentUrl` は派生値として都度生成し、`qr_codes` / `qr_print_jobs` / `qr_print_job_items` には保存しない。URL には `facilityId` と `qr_identifier` を用い、生成ルール変更時は本機能の影響調査対象とする
+- `qrContentUrl` には認証トークン、ユーザーID、ロール、権限情報を含めない。QRコードの物理的所持または読み取り成功は資産詳細の閲覧権限を意味しない
+- QRコード読み取り後の未ログイン誘導、ログイン後の元URL復帰、`facilityId` と `qr_identifier` による対象資産解決、閲覧権限不足時の非表示、未発行・論理削除済み・未紐付・施設不一致などのエラー制御は資産一覧・資産詳細 API 側の責務とする
+
+## 第7章 エラーコード一覧
+
+| エラーコード | HTTP | 説明 |
+| --- | --- | --- |
+| AUTH_401 | 401 | 未認証 |
+| AUTH_403_QR_ISSUE_DENIED | 403 | 通常アカウントで対象施設または対象ジョブ施設に対する実効 `qr_issue` がない、または共有システム管理者で対象施設または対象ジョブ施設が削除済み |
+| QR_400_INVALID_INPUT | 400 | 入力形式または必須項目が不正 |
+| QR_400_RESULT_ITEM_COUNT_MISMATCH | 400 | 結果反映対象件数がジョブ明細件数と一致しない |
+| QR_404_FACILITY_NOT_FOUND | 404 | 対象施設が存在しない |
+| QR_404_QR_NOT_FOUND | 404 | 再発行対象またはジョブ対象QRが存在しない |
+| QR_404_PRINT_JOB_NOT_FOUND | 404 | 対象印刷ジョブが存在しない |
+| QR_409_REISSUE_RANGE_INVALID | 409 | 再発行対象に欠番または不整合がある |
+| QR_409_SERIAL_CONFLICT | 409 | 新規発行時の採番競合が解消できない |
+| QR_409_PRINT_JOB_REQUEST_CONFLICT | 409 | 同一 `clientRequestId` に対して異なる開始受付内容が送信された |
+| QR_409_PRINT_RESULT_CONFLICT | 409 | 印刷結果の再送内容が既存結果と矛盾する |
+| QR_500_INTERNAL | 500 | サーバー内部エラー |
+
+## 第8章 運用・保守方針
+
+- テンプレート一覧はフロントエンド資材として保持するアプリ内固定定義から表示し、プリンタ候補はフロントエンドが端末上のテプラ連携/ローカル印刷モジュールから取得する。サーバー側にテンプレート一覧取得API、プリンタ候補取得API、DBマスタは設けない
+- QRコードの採番規則や `qr_identifier` 形式を変更する場合は、`qr_codes` の複合ユニーク制約と API の再発行ロジックを同時に見直す
+- QRコード読み取り後の資産詳細遷移、ログイン誘導、閲覧権限判定の仕様を変更する場合は、資産一覧・資産詳細 API 設計書と整合確認する
+- ローカル印刷モジュールとの連携仕様を変更する場合は、`POST /qr-print/jobs` の印刷用確定レスポンスと `POST /qr-print/jobs/{qrPrintJobId}/result` の request/response を同時に更新する
+- 結果未反映のまま長時間 `IN_PROGRESS` に留まるジョブは、通信断または端末異常の可能性があるため、運用上の監視対象として扱う

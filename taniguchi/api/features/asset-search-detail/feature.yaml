@@ -1,0 +1,75 @@
+$schema: ../../feature.schema.json
+id: API-012
+slug: asset-search-detail
+title: 資産一覧・資産詳細
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /asset-search-result
+  - /asset-detail
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/asset-search-detail.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_資産一覧・資産詳細.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-013
+  - API-014
+  - API-019
+  - API-029
+  - API-030
+  - API-031
+
+dbTables:
+  - asset_ledgers
+  - facilities
+  - facility_locations
+  - ship_asset_masters
+  - user_column_settings
+  - user_column_setting_presets
+  - user_column_setting_preset_items
+  - users
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+  - facility_column_settings
+  - user_facility_column_settings
+  - facility_collaboration_groups
+  - facility_collaboration_group_facilities
+  - facility_external_view_settings
+  - facility_external_column_settings
+  - qr_codes
+  - applications
+  - application_assets
+  - application_status_histories
+  - inspection_tasks
+  - inspection_results
+  - lending_devices
+  - lending_transactions
+  - asset_photos
+  - asset_documents
+  - application_documents
+
+permissionCodes:
+  - original_list_view
+  - original_application
+  - inspection_management
+  - maintenance_contract
+  - lending_management
+  - management_department_edit
+  - original_list_edit
+  - original_price_column

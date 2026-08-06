@@ -1,0 +1,524 @@
+openapi: 3.0.4
+info:
+  title: SHIP部署マスタ API
+  version: 1.0.0
+  description: SHIP部署マスタ画面で部署マスタと諸室区分マスタを参照・保守するHTTP APIの外部I/F契約。
+servers:
+  - url: /api
+tags:
+  - name: ShipDepartmentMaster
+    description: SHIP部署マスタ
+security:
+  - BearerAuth: []
+paths:
+  /ship-department-master/departments:
+    get:
+      tags: [ShipDepartmentMaster]
+      operationId: listShipDepartments
+      summary: 部署マスタ一覧取得
+      description: 有効な部署マスタを部門名・部署名で絞り込んで取得する。条件間はAND、文字列は部分一致とする。
+      x-feature-code: ship_dept_master_list
+      x-authorization-mode: feature-code
+      parameters:
+        - $ref: "#/components/parameters/DivisionNameQuery"
+        - $ref: "#/components/parameters/DepartmentNameQuery"
+      responses:
+        "200":
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShipDepartmentListResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/FacilityNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags: [ShipDepartmentMaster]
+      operationId: createShipDepartment
+      summary: 部署マスタ新規作成
+      description: 部門名と部署名の組み合わせを部署マスタへ登録する。
+      x-feature-code: ship_dept_master_edit
+      x-authorization-mode: feature-code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShipDepartmentInput"
+      responses:
+        "201":
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShipDepartmentResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/FacilityNotFound"
+        "409":
+          description: 部門名と部署名の組み合わせが重複
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: SHIP_DEPARTMENT_DUPLICATE
+                message: 同じ部門名と部署名の組み合わせが既に登録されています。
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /ship-department-master/departments/{shipDepartmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ShipDepartmentId"
+    put:
+      tags: [ShipDepartmentMaster]
+      operationId: updateShipDepartment
+      summary: 部署マスタ更新
+      description: 指定した有効な部署マスタの部門名と部署名を更新する。
+      x-feature-code: ship_dept_master_edit
+      x-authorization-mode: feature-code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShipDepartmentInput"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShipDepartmentResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: 作業対象施設または対象部署マスタが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                facilityNotFound:
+                  value:
+                    code: FACILITY_NOT_FOUND
+                    message: 作業対象施設が存在しないか、削除されています。
+                shipDepartmentNotFound:
+                  value:
+                    code: SHIP_DEPARTMENT_NOT_FOUND
+                    message: 対象のSHIP部署マスタが存在しないか、論理削除されています。
+        "409":
+          description: 部門名と部署名の組み合わせが重複
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: SHIP_DEPARTMENT_DUPLICATE
+                message: 同じ部門名と部署名の組み合わせが既に登録されています。
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags: [ShipDepartmentMaster]
+      operationId: deleteShipDepartment
+      summary: 部署マスタ削除
+      description: 指定した有効な部署マスタを論理削除する。
+      x-feature-code: ship_dept_master_edit
+      x-authorization-mode: feature-code
+      responses:
+        "204":
+          description: 削除成功。レスポンスボディは返却しない。
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: 作業対象施設または対象部署マスタが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                facilityNotFound:
+                  value:
+                    code: FACILITY_NOT_FOUND
+                    message: 作業対象施設が存在しないか、削除されています。
+                shipDepartmentNotFound:
+                  value:
+                    code: SHIP_DEPARTMENT_NOT_FOUND
+                    message: 対象のSHIP部署マスタが存在しないか、論理削除されています。
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /ship-department-master/room-categories:
+    get:
+      tags: [ShipDepartmentMaster]
+      operationId: listShipRoomCategories
+      summary: 諸室区分マスタ一覧取得
+      description: 有効な諸室区分マスタを諸室区分①・②で絞り込んで取得する。条件間はAND、文字列は部分一致とする。
+      x-feature-code: ship_dept_master_list
+      x-authorization-mode: feature-code
+      parameters:
+        - $ref: "#/components/parameters/RoomCategory1Query"
+        - $ref: "#/components/parameters/RoomCategory2Query"
+      responses:
+        "200":
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShipRoomCategoryListResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/FacilityNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags: [ShipDepartmentMaster]
+      operationId: createShipRoomCategory
+      summary: 諸室区分マスタ新規作成
+      description: 諸室区分①と諸室区分②の組み合わせを諸室区分マスタへ登録する。
+      x-feature-code: ship_dept_master_edit
+      x-authorization-mode: feature-code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShipRoomCategoryInput"
+      responses:
+        "201":
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShipRoomCategoryResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/FacilityNotFound"
+        "409":
+          description: 諸室区分①と諸室区分②の組み合わせが重複
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: SHIP_ROOM_CATEGORY_DUPLICATE
+                message: 同じ諸室区分①と諸室区分②の組み合わせが既に登録されています。
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /ship-department-master/room-categories/{shipRoomCategoryId}:
+    parameters:
+      - $ref: "#/components/parameters/ShipRoomCategoryId"
+    put:
+      tags: [ShipDepartmentMaster]
+      operationId: updateShipRoomCategory
+      summary: 諸室区分マスタ更新
+      description: 指定した有効な諸室区分マスタの諸室区分①と諸室区分②を更新する。
+      x-feature-code: ship_dept_master_edit
+      x-authorization-mode: feature-code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShipRoomCategoryInput"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShipRoomCategoryResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: 作業対象施設または対象諸室区分マスタが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                facilityNotFound:
+                  value:
+                    code: FACILITY_NOT_FOUND
+                    message: 作業対象施設が存在しないか、削除されています。
+                shipRoomCategoryNotFound:
+                  value:
+                    code: SHIP_ROOM_CATEGORY_NOT_FOUND
+                    message: 対象のSHIP諸室区分マスタが存在しないか、論理削除されています。
+        "409":
+          description: 諸室区分①と諸室区分②の組み合わせが重複
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                code: SHIP_ROOM_CATEGORY_DUPLICATE
+                message: 同じ諸室区分①と諸室区分②の組み合わせが既に登録されています。
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags: [ShipDepartmentMaster]
+      operationId: deleteShipRoomCategory
+      summary: 諸室区分マスタ削除
+      description: 指定した有効な諸室区分マスタを論理削除する。
+      x-feature-code: ship_dept_master_edit
+      x-authorization-mode: feature-code
+      responses:
+        "204":
+          description: 削除成功。レスポンスボディは返却しない。
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: 作業対象施設または対象諸室区分マスタが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                facilityNotFound:
+                  value:
+                    code: FACILITY_NOT_FOUND
+                    message: 作業対象施設が存在しないか、削除されています。
+                shipRoomCategoryNotFound:
+                  value:
+                    code: SHIP_ROOM_CATEGORY_NOT_FOUND
+                    message: 対象のSHIP諸室区分マスタが存在しないか、論理削除されています。
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  parameters:
+    DivisionNameQuery:
+      name: divisionName
+      in: query
+      required: false
+      description: 部門名の部分一致条件
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    DepartmentNameQuery:
+      name: departmentName
+      in: query
+      required: false
+      description: 部署名の部分一致条件
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    RoomCategory1Query:
+      name: roomCategory1
+      in: query
+      required: false
+      description: 諸室区分①の部分一致条件
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    RoomCategory2Query:
+      name: roomCategory2
+      in: query
+      required: false
+      description: 諸室区分②の部分一致条件
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    ShipDepartmentId:
+      name: shipDepartmentId
+      in: path
+      required: true
+      description: SHIP部署ID
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    ShipRoomCategoryId:
+      name: shipRoomCategoryId
+      in: path
+      required: true
+      description: SHIP諸室区分ID
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  schemas:
+    ShipDepartmentInput:
+      type: object
+      additionalProperties: false
+      required: [divisionName, departmentName]
+      properties:
+        divisionName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: 部門名
+        departmentName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: 部署名
+    ShipDepartmentSummary:
+      allOf:
+        - $ref: "#/components/schemas/ShipDepartmentInput"
+        - type: object
+          additionalProperties: false
+          required: [shipDepartmentId]
+          properties:
+            shipDepartmentId:
+              type: integer
+              format: int64
+              minimum: 1
+              description: SHIP部署ID
+    ShipDepartmentResponse:
+      type: object
+      additionalProperties: false
+      required: [item]
+      properties:
+        item:
+          $ref: "#/components/schemas/ShipDepartmentSummary"
+          description: 登録または更新後の部署マスタ
+    ShipDepartmentListResponse:
+      type: object
+      additionalProperties: false
+      required: [totalCount, items]
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          minimum: 0
+          description: 絞り込み後の一覧件数
+        items:
+          type: array
+          description: 部署マスタ一覧
+          items:
+            $ref: "#/components/schemas/ShipDepartmentSummary"
+    ShipRoomCategoryInput:
+      type: object
+      additionalProperties: false
+      required: [roomCategory1, roomCategory2]
+      properties:
+        roomCategory1:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: 諸室区分①
+        roomCategory2:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: 諸室区分②
+    ShipRoomCategorySummary:
+      allOf:
+        - $ref: "#/components/schemas/ShipRoomCategoryInput"
+        - type: object
+          additionalProperties: false
+          required: [shipRoomCategoryId]
+          properties:
+            shipRoomCategoryId:
+              type: integer
+              format: int64
+              minimum: 1
+              description: SHIP諸室区分ID
+    ShipRoomCategoryResponse:
+      type: object
+      additionalProperties: false
+      required: [item]
+      properties:
+        item:
+          $ref: "#/components/schemas/ShipRoomCategorySummary"
+          description: 登録または更新後の諸室区分マスタ
+    ShipRoomCategoryListResponse:
+      type: object
+      additionalProperties: false
+      required: [totalCount, items]
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          minimum: 0
+          description: 絞り込み後の一覧件数
+        items:
+          type: array
+          description: 諸室区分マスタ一覧
+          items:
+            $ref: "#/components/schemas/ShipRoomCategorySummary"
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml
+  responses:
+    ValidationError:
+      description: 入力値または検索条件が不正
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: VALIDATION_ERROR
+            message: 入力内容を確認してください。
+    Unauthorized:
+      description: Bearerトークンが未付与または無効
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: UNAUTHORIZED
+            message: 認証が必要です。
+    Forbidden:
+      description: 作業対象施設に対する必要なfeature_codeがない
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    FacilityNotFound:
+      description: 作業対象施設が存在しない、または削除済み
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: FACILITY_NOT_FOUND
+            message: 作業対象施設が存在しないか、削除されています。
+    InternalServerError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: INTERNAL_SERVER_ERROR
+            message: サーバー内部エラーが発生しました。

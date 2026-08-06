@@ -1,0 +1,3303 @@
+openapi: 3.0.4
+info:
+  title: 編集リスト API API
+  version: '1.1'
+  description: 編集リストで利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 編集リスト
+    description: 編集リスト APIのAPI
+paths:
+  /edit-lists:
+    get:
+      tags:
+        - 編集リスト
+      operationId: getEditLists
+      summary: 編集リスト一覧取得
+      description: 通常編集リストまたはリモデル編集リストの選択モーダルで表示する編集リスト一覧を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: listType
+          in: query
+          required: true
+          description: PURCHASE または REMODEL。導線と一致必須
+          schema:
+            type: string
+        - name: facilityId
+          in: query
+          required: false
+          description: 対象施設ID。省略時は作業対象施設
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          required: false
+          description: ACTIVE / ARCHIVED / CLOSED。省略時は削除済み以外
+          schema:
+            type: string
+        - name: keyword
+          in: query
+          required: false
+          description: 編集リスト名の部分一致
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: 既定50、最大200
+          schema:
+            type: integer
+            format: int32
+        - name: cursor
+          in: query
+          required: false
+          description: 次ページ取得カーソル
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 編集リスト権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+    post:
+      tags:
+        - 編集リスト
+      operationId: postEditLists
+      summary: 編集リスト新規作成
+      description: 通常購入用またはリモデル用の編集リストを作成し、対象施設の原本資産を作業スナップショットとして複製する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一作成操作の冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEditListsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListCreateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 編集リスト権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 冪等キー競合または対象施設不整合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}:
+    delete:
+      tags:
+        - 編集リスト
+      operationId: deleteEditListsByEditListId
+      summary: 編集リスト削除
+      description: 編集リストを論理削除する。RFQ、申請、見積、履歴は削除せず参照関係を保持する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 削除対象編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteEditListsByEditListIdRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListDeleteResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 編集リスト権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 編集リストなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 他ユーザーが有効ロック保持中
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/lock:
+    post:
+      tags:
+        - 編集リスト
+      operationId: postEditListsByEditListIdLock
+      summary: 作業ロック取得
+      description: 既存編集リストを開く時点で編集リスト単位の作業ロックを取得する。他ユーザーが作業中の場合は画面入場を拒否する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '423'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: ロック対象編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEditListsByEditListIdLockRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: ロック取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListLockResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 編集リスト権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 編集リストなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '423':
+          description: 他ユーザーが作業中
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '423': EditListLockedErrorResponse
+      x-word-response-title: レスポンス（成功時）
+    delete:
+      tags:
+        - 編集リスト
+      operationId: deleteEditListsByEditListIdLock
+      summary: 作業ロック解除
+      description: 画面離脱またはログアウト時に作業ロックを通常解除する。強制解除APIは提供しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteEditListsByEditListIdLockRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 解除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListLockReleaseResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 編集リストまたはロックなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致または解除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/lock/heartbeat:
+    post:
+      tags:
+        - 編集リスト
+      operationId: postEditListsByEditListIdLockHeartbeat
+      summary: 作業ロックheartbeat
+      description: 作業中ユーザーの最終操作/heartbeatを更新し、作業ロックの有効期限を延長する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEditListsByEditListIdLockHeartbeatRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 延長成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListLockHeartbeatResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 編集リストまたはロックなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致または期限切れ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/items:
+    get:
+      tags:
+        - 編集リスト
+      operationId: getEditListsByEditListIdItems
+      summary: 編集リスト明細取得
+      description: 編集リスト画面入場後の初期表示データとして、ヘッダー情報、固定列、フリーカラム、明細、RFQ/申請紐づき状態を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+        - name: lockToken
+          in: query
+          required: true
+          description: 画面入場時に取得した作業ロックトークン
+          schema:
+            type: string
+        - name: includeDeleted
+          in: query
+          required: false
+          description: 通常 false。監査参照用途のみ true を許可
+          schema:
+            type: boolean
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListItemsResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 編集リスト権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 編集リストなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致または期限切れ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles:
+        - items要素（EditListItem）
+      x-word-response-subtables:
+        - Title: items要素（EditListItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - editListItemId
+              - int64
+              - ✓
+              - edit_list_items.edit_list_item_id。画面上の asset.no や 90000 + index は返さない
+            - - rowNo
+              - int32
+              - ✓
+              - 編集リスト内の表示順
+            - - sourceType
+              - string
+              - ✓
+              - BASE_ASSET / APPLICATION / MANUAL / QUOTATION
+            - - sourceAssetLedgerId
+              - int64
+              - '-'
+              - 原本資産コピー元
+            - - sourceApplicationId
+              - int64
+              - '-'
+              - 申請由来行の申請ID
+            - - sourceApplicationAssetId
+              - int64
+              - '-'
+              - 申請由来行の申請明細ID
+            - - sourceQuotationItemId
+              - int64
+              - '-'
+              - 見積DB Link 追加行の見積明細ID
+            - - shipAssetMasterId
+              - int64
+              - '-'
+              - 解決済みSHIP資産マスタID
+            - - remodelDecision
+              - string
+              - ✓
+              - UNDECIDED / NEW / REPLACE / ADDITION / DISPOSAL / TRANSFER
+            - - categoryName
+              - string
+              - '-'
+              - Category表示値
+            - - largeClassName
+              - string
+              - '-'
+              - 大分類表示値
+            - - mediumClassName
+              - string
+              - '-'
+              - 中分類表示値
+            - - itemName
+              - string
+              - '-'
+              - 品目表示値
+            - - makerName
+              - string
+              - '-'
+              - メーカー表示値
+            - - modelName
+              - string
+              - '-'
+              - 型式表示値
+            - - quantity
+              - int32
+              - '-'
+              - 数量
+            - - unit
+              - string
+              - '-'
+              - 単位
+            - - rfqNo
+              - string
+              - '-'
+              - 現在表示用の見積依頼No.
+            - - rfqGroupName
+              - string
+              - '-'
+              - 現在表示用の見積グループ名
+            - - applicationNo
+              - string
+              - '-'
+              - 申請No.
+            - - quotationNo
+              - string
+              - '-'
+              - 見積番号。RFQグループ名とは別項目
+            - - fixedValues
+              - object
+              - ✓
+              - fixedColumns[].columnKey をキーにした固定58列の値。DB列は edit_list_items の作業スナップショットに対応する
+            - - freeColumnValues
+              - object
+              - '-'
+              - フリーカラム値。edit_list_free_column_id または column_key をキーにする
+            - - recordStatus
+              - string
+              - ✓
+              - ACTIVE / DELETED
+            - - updatedAt
+              - datetime
+              - ✓
+              - 最終更新日時
+    post:
+      tags:
+        - 編集リスト
+      operationId: postEditListsByEditListIdItems
+      summary: 編集リスト明細追加
+      description: 編集リストへ BASE_ASSET / APPLICATION / MANUAL / QUOTATION の明細を追加する。インライン新規要望、更新方針、増設方針は本APIの業務ケースとして扱う。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一追加操作の冪等キー
+          schema:
+            type: string
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEditListsByEditListIdItemsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - items要素（EditListItemCreateInput）
+      x-word-request-subtables:
+        - Title: items要素（EditListItemCreateInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - itemName
+              - string
+              - '-'
+              - 品目名
+            - - makerName
+              - string
+              - '-'
+              - メーカー名
+            - - modelName
+              - string
+              - '-'
+              - 型式
+            - - quantity
+              - int32
+              - '-'
+              - 数量。インライン新規要望で未指定時は1
+            - - unit
+              - string
+              - '-'
+              - 単位。インライン新規要望で未指定時は台
+            - - requestItems
+              - RequestCandidateInput[]
+              - '-'
+              - 要望1〜3。application_assets 複数明細へ分解しない
+            - - desiredDeliveryOn
+              - date
+              - '-'
+              - 希望納期
+            - - priority
+              - string
+              - '-'
+              - 優先順位
+            - - usagePurpose
+              - string
+              - '-'
+              - 使用用途
+            - - commentText
+              - string
+              - '-'
+              - コメント
+      responses:
+        '201':
+          description: 追加成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListItemsCreateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 編集リスト権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 編集リストまたは元明細なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致、クローズ済み、または冪等キー競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/items/{editListItemId}:
+    patch:
+      tags:
+        - 編集リスト
+      operationId: patchEditListsByEditListIdItemsByEditListItemId
+      summary: セル編集保存
+      description: 編集リスト明細の単一セルまたは小範囲の編集値を保存する。原本資産、申請正本、見積正本は直接更新しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+        - name: editListItemId
+          in: path
+          required: true
+          description: 編集リスト明細ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchEditListsByEditListIdItemsByEditListItemIdRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListItemUpdateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 編集リスト権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 明細なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致、期限切れ、または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+    delete:
+      tags:
+        - 編集リスト
+      operationId: deleteEditListsByEditListIdItemsByEditListItemId
+      summary: 編集リスト明細削除
+      description: 編集リスト明細を論理削除する。元の原本資産、申請、見積明細、既存RFQの採用履歴は削除しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+        - name: editListItemId
+          in: path
+          required: true
+          description: 削除対象明細ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteEditListsByEditListIdItemsByEditListItemIdRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListItemDeleteResponse'
+        '404':
+          description: 明細なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/items/bulk:
+    patch:
+      tags:
+        - 編集リスト
+      operationId: patchEditListsByEditListIdItemsBulk
+      summary: 一括編集保存
+      description: 選択した複数明細に対して、同一カラムの値を一括保存する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchEditListsByEditListIdItemsBulkRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListBulkUpdateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象明細なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/items/reorder:
+    patch:
+      tags:
+        - 編集リスト
+      operationId: patchEditListsByEditListIdItemsReorder
+      summary: 行順変更
+      description: 画面上のドラッグ操作などで変更した明細表示順を row_no として保存する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchEditListsByEditListIdItemsReorderRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - orders要素（RowOrderInput）
+      x-word-request-subtables:
+        - Title: orders要素（RowOrderInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - editListItemId
+              - int64
+              - ✓
+              - 編集リスト明細ID
+            - - rowNo
+              - int32
+              - ✓
+              - 保存後行番号。1始まり
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListReorderResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致または行番号競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/free-columns:
+    get:
+      tags:
+        - 編集リスト
+      operationId: getEditListsByEditListIdFreeColumns
+      summary: フリーカラム一覧取得
+      description: 編集リスト固有のフリーカラム定義を取得する。明細取得レスポンスにも含めるが、モーダル単体再取得用に提供する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+        - name: lockToken
+          in: query
+          required: true
+          description: 画面入場時の作業ロックトークン
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreeColumnListResponse'
+        '409':
+          description: ロック不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+    post:
+      tags:
+        - 編集リスト
+      operationId: postEditListsByEditListIdFreeColumns
+      summary: フリーカラム追加
+      description: 編集リスト単位のフリーカラムを追加する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一追加操作の冪等キー
+          schema:
+            type: string
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEditListsByEditListIdFreeColumnsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 追加成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostEditListsByEditListIdFreeColumnsResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致または冪等キー競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '201': FreeColumnResponse
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/free-columns/{freeColumnId}:
+    patch:
+      tags:
+        - 編集リスト
+      operationId: patchEditListsByEditListIdFreeColumnsByFreeColumnId
+      summary: フリーカラム名更新
+      description: フリーカラムの表示名を更新する。column_key は変更しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+        - name: freeColumnId
+          in: path
+          required: true
+          description: フリーカラムID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchEditListsByEditListIdFreeColumnsByFreeColumnIdRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchEditListsByEditListIdFreeColumnsByFreeColumnIdResponse'
+        '404':
+          description: フリーカラムなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': FreeColumnResponse
+      x-word-response-title: レスポンス（成功時）
+    delete:
+      tags:
+        - 編集リスト
+      operationId: deleteEditListsByEditListIdFreeColumnsByFreeColumnId
+      summary: フリーカラム削除
+      description: フリーカラム定義と入力済み値を論理削除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+        - name: freeColumnId
+          in: path
+          required: true
+          description: フリーカラムID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteEditListsByEditListIdFreeColumnsByFreeColumnIdRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreeColumnDeleteResponse'
+        '404':
+          description: フリーカラムなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/data-link/preview:
+    post:
+      tags:
+        - 編集リスト
+      operationId: postEditListsByEditListIdDataLinkPreview
+      summary: Data Linkプレビュー
+      description: 選択行に対して資産Master、業者Master、原本リストから転記した場合の差分をプレビューする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEditListsByEditListIdDataLinkPreviewRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: プレビュー成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataLinkPreviewResponse'
+        '400':
+          description: 対象行または転記カラムが空
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致または未対応カラム指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/data-link/apply:
+    post:
+      tags:
+        - 編集リスト
+      operationId: postEditListsByEditListIdDataLinkApply
+      summary: Data Link適用
+      description: Data Linkの結果を編集リスト側の作業値へ反映する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一適用操作の冪等キー
+          schema:
+            type: string
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEditListsByEditListIdDataLinkApplyRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 適用成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataLinkApplyResponse'
+        '400':
+          description: 対象不足または未対応カラム指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致、期限切れ、冪等キー競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/quotation-link/candidates:
+    get:
+      tags:
+        - 編集リスト
+      operationId: getEditListsByEditListIdQuotationLinkCandidates
+      summary: 見積DB Link候補取得
+      description: 編集リスト配下の有効RFQ、見積フェーズ、見積明細、紐付け済み/未紐付け状態、紐付け可能な編集リスト明細を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+        - name: lockToken
+          in: query
+          required: true
+          description: 作業ロックトークン
+          schema:
+            type: string
+        - name: rfqId
+          in: query
+          required: false
+          description: 対象RFQ ID。省略時は編集リスト配下の候補RFQ一覧を返す
+          schema:
+            type: integer
+            format: int64
+        - name: quotationPhase
+          in: query
+          required: false
+          description: LIST_PRICE / ESTIMATE / ORDER_REGISTRATION / FINAL_ASSET_REGISTRATION
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationLinkCandidatesResponse'
+        '404':
+          description: 編集リストまたはRFQなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/quotation-link/apply:
+    post:
+      tags:
+        - 編集リスト
+      operationId: postEditListsByEditListIdQuotationLinkApply
+      summary: 見積DB Link適用
+      description: 見積明細を編集リスト明細へ1対1で紐づけ、見積ヘッダー/明細分類/価格情報を編集リストへ一括転記する。未紐付け見積明細から新規行も追加できる。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一適用操作の冪等キー
+          schema:
+            type: string
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEditListsByEditListIdQuotationLinkApplyRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - pairings要素（QuotationPairingInput）
+        - additions要素（QuotationAdditionInput）
+      x-word-request-subtables:
+        - Title: pairings要素（QuotationPairingInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - quotationItemId
+              - int64
+              - ✓
+              - 見積明細ID
+            - - editListItemId
+              - int64
+              - ✓
+              - 紐付け先編集リスト明細ID
+        - Title: additions要素（QuotationAdditionInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - quotationItemId
+              - int64
+              - ✓
+              - 追加元見積明細ID
+            - - inheritFromEditListItemId
+              - int64
+              - '-'
+              - 新設置場所情報と執行年度だけを継承する元明細ID
+      responses:
+        '200':
+          description: 適用成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationLinkApplyResponse'
+        '400':
+          description: 適用対象なしまたは入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: RFQ、見積、明細なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致、1対1制約違反、冪等キー競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/quotation-link/{editListItemId}:
+    delete:
+      tags:
+        - 編集リスト
+      operationId: deleteEditListsByEditListIdQuotationLinkByEditListItemId
+      summary: 見積DB Link解除
+      description: 編集リスト明細と見積明細の有効リンクを解除する。転記済みの編集リスト作業値は明示指定がない限り残す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+        - name: editListItemId
+          in: path
+          required: true
+          description: 解除対象編集リスト明細ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteEditListsByEditListIdQuotationLinkByEditListItemIdRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 解除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationLinkDeleteResponse'
+        '404':
+          description: 有効リンクなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/applications/disposal-transfer:
+    post:
+      tags:
+        - 編集リスト
+      operationId: postEditListsByEditListIdApplicationsDisposalTransfer
+      summary: 廃棄・移設申請一括作成
+      description: リモデル編集リストで選択した廃棄予定または移設明細から、廃棄申請・移設申請の申請正本を一括作成する。廃棄依頼グループと後続処理は移動・廃棄管理側へ委譲する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code-all
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '403'
+        - '409'
+      x-feature-codes:
+        - remodel_edit_list
+        - transfer_disposal
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一作成操作の冪等キー
+          schema:
+            type: string
+        - name: editListId
+          in: path
+          required: true
+          description: リモデル編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEditListsByEditListIdApplicationsDisposalTransferRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 作成成功または一部スキップ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalTransferCreateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 廃棄・移設権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ロック不一致または重複作成
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/applications/disposal:
+    post:
+      tags:
+        - 編集リスト
+      operationId: postEditListsByEditListIdApplicationsDisposal
+      summary: 廃棄申請個別作成
+      description: 廃棄予定明細だけを明示して廃棄申請を作成する互換/個別API。一括APIと同じ検証、採番、重複判定を用いる。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code-all
+      x-word-status-order:
+        - '200'
+        - '409'
+      x-feature-codes:
+        - remodel_edit_list
+        - transfer_disposal
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一作成操作の冪等キー
+          schema:
+            type: string
+        - name: editListId
+          in: path
+          required: true
+          description: リモデル編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEditListsByEditListIdApplicationsDisposalRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 作成成功または一部スキップ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalTransferCreateResponse'
+        '409':
+          description: ロック不一致または重複作成
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/applications/transfer:
+    post:
+      tags:
+        - 編集リスト
+      operationId: postEditListsByEditListIdApplicationsTransfer
+      summary: 移設申請個別作成
+      description: 移設明細だけを明示して移設申請を作成する互換/個別API。一括APIと同じ検証、採番、重複判定を用いる。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code-all
+      x-word-status-order:
+        - '200'
+        - '409'
+      x-feature-codes:
+        - remodel_edit_list
+        - transfer_disposal
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一作成操作の冪等キー
+          schema:
+            type: string
+        - name: editListId
+          in: path
+          required: true
+          description: リモデル編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEditListsByEditListIdApplicationsTransferRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 作成成功または一部スキップ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalTransferCreateResponse'
+        '409':
+          description: ロック不一致または重複作成
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /edit-lists/{editListId}/rfq-groups:
+    post:
+      tags:
+        - 編集リスト
+      operationId: postEditListsByEditListIdRfqGroups
+      summary: RFQグループ作成
+      description: 選択した編集リスト明細から通常購入またはリモデルの見積依頼グループを作成する。RFQ No.は作成確定時だけサーバー採番する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '403'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+        - normal_purchase
+        - remodel_purchase
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一作成操作の冪等キー
+          schema:
+            type: string
+        - name: editListId
+          in: path
+          required: true
+          description: 編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEditListsByEditListIdRfqGroupsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: RFQ作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditListRfqCreateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: RFQ作成権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象明細なし、ロック不一致、冪等キー競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /user-column-settings:
+    get:
+      tags:
+        - 編集リスト
+      operationId: getUserColumnSettings
+      summary: 表示カラム設定取得
+      description: 編集リスト画面の表示カラム設定とブックマーク一覧を取得する。列幅、列順、ソート、列内フィルターは取得対象外である。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '403'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      x-legacy-path: /user-column-settings?screenId=edit_list
+      parameters:
+        - name: screenId
+          in: query
+          required: true
+          description: edit_list 固定
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserColumnSettingsScreenIdEditListResponse'
+        '403':
+          description: 編集リスト表示権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': UserColumnSettingsResponse
+      x-word-response-title: レスポンス（成功時）
+    put:
+      tags:
+        - 編集リスト
+      operationId: putUserColumnSettings
+      summary: 表示カラム設定保存
+      description: 編集リスト画面の現在の表示/非表示設定をユーザー別に保存する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      x-legacy-path: /user-column-settings?screenId=edit_list
+      parameters:
+        - name: screenId
+          in: query
+          required: true
+          description: edit_list 固定
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutUserColumnSettingsScreenIdEditListRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutUserColumnSettingsScreenIdEditListResponse'
+        '400':
+          description: カラムキー不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': UserColumnSettingsResponse
+      x-word-response-title: レスポンス（成功時）
+  /user-column-setting-presets:
+    post:
+      tags:
+        - 編集リスト
+      operationId: postUserColumnSettingPresets
+      summary: 表示カラムブックマーク保存
+      description: 編集リスト画面の現在の表示/非表示設定をブックマークとして保存する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '201'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一保存操作の冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostUserColumnSettingPresetsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserColumnSettingPresetResponse'
+        '409':
+          description: ブックマーク名重複または冪等キー競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+  /user-column-setting-presets/{presetId}/apply:
+    post:
+      tags:
+        - 編集リスト
+      operationId: postUserColumnSettingPresetsByPresetIdApply
+      summary: 表示カラムブックマーク適用
+      description: 保存済みブックマークを現在の表示カラム設定へ適用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '404'
+        - '409'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: presetId
+          in: path
+          required: true
+          description: ブックマークID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostUserColumnSettingPresetsByPresetIdApplyRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 適用成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostUserColumnSettingPresetsByPresetIdApplyResponse'
+        '404':
+          description: ブックマークなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 無効カラムを含む
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': UserColumnSettingsResponse
+      x-word-response-title: レスポンス（成功時）
+  /user-column-setting-presets/{presetId}:
+    delete:
+      tags:
+        - 編集リスト
+      operationId: deleteUserColumnSettingPresetsByPresetId
+      summary: 表示カラムブックマーク削除
+      description: 保存済み表示カラムブックマークを論理削除する。現在の表示カラム設定は変更しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '404'
+      x-feature-codes:
+        - normal_edit_list
+        - remodel_edit_list
+      parameters:
+        - name: presetId
+          in: path
+          required: true
+          description: ブックマークID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserColumnSettingPresetDeleteResponse'
+        '404':
+          description: ブックマークなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    EditListListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - items[].editListId
+        - items[].listName
+        - items[].listType
+        - items[].status
+        - items[].facilities
+        - items[].createdAt
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+          description: 編集リスト候補
+        items[].editListId:
+          type: integer
+          format: int64
+          description: 編集リストID
+        items[].listName:
+          type: string
+          description: 編集リスト名
+        items[].listType:
+          type: string
+          description: PURCHASE / REMODEL
+        items[].status:
+          type: string
+          description: ACTIVE / ARCHIVED / CLOSED
+        items[].facilities:
+          type: array
+          items:
+            type: string
+          description: 対象施設
+        items[].createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+        nextCursor:
+          type: string
+          description: 次ページカーソル
+    PostEditListsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - listName
+        - listType
+        - primaryFacilityId
+        - facilityIds
+      properties:
+        listName:
+          type: string
+          description: 編集リスト名。最大200文字
+        listType:
+          type: string
+          description: PURCHASE または REMODEL
+        primaryFacilityId:
+          type: integer
+          format: int64
+          description: 主施設ID。作業対象施設と一致または作業対象施設配下
+        facilityIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 対象施設ID配列。1件以上
+    EditListCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - editListId
+        - listName
+        - listType
+        - status
+        - copiedItemCount
+        - createdAt
+      properties:
+        editListId:
+          type: integer
+          format: int64
+          description: 作成した編集リストID
+        listName:
+          type: string
+          description: 編集リスト名
+        listType:
+          type: string
+          description: PURCHASE / REMODEL
+        status:
+          type: string
+          description: ACTIVE
+        copiedItemCount:
+          type: integer
+          format: int32
+          description: 原本コピー明細数
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+    DeleteEditListsByEditListIdRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        lockToken:
+          type: string
+          description: 有効ロックが存在する場合はロック保持者本人の lockToken が必須
+    EditListDeleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - editListId
+        - deletedAt
+      properties:
+        editListId:
+          type: integer
+          format: int64
+          description: 削除した編集リストID
+        deletedAt:
+          type: string
+          format: date-time
+          description: 削除日時
+    PostEditListsByEditListIdLockRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - listType
+      properties:
+        listType:
+          type: string
+          description: 呼び出し導線のリスト種別。対象編集リストと一致必須
+    EditListLockResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - editListId
+        - lockToken
+        - lockedByUserId
+        - lockedByUserName
+        - lockedAt
+        - lockExpiresAt
+      properties:
+        editListId:
+          type: integer
+          format: int64
+          description: 編集リストID
+        lockToken:
+          type: string
+          description: 更新系APIで必須のロックトークン
+        lockedByUserId:
+          type: integer
+          format: int64
+          description: ロック保持ユーザーID
+        lockedByUserName:
+          type: string
+          description: ロック保持ユーザー名
+        lockedAt:
+          type: string
+          format: date-time
+          description: ロック取得日時
+        lockExpiresAt:
+          type: string
+          format: date-time
+          description: ロック有効期限
+    PostEditListsByEditListIdLockHeartbeatRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+      properties:
+        lockToken:
+          type: string
+          description: 作業ロックトークン
+    EditListLockHeartbeatResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - editListId
+        - lockExpiresAt
+      properties:
+        editListId:
+          type: integer
+          format: int64
+          description: 編集リストID
+        lockExpiresAt:
+          type: string
+          format: date-time
+          description: 更新後のロック有効期限
+    DeleteEditListsByEditListIdLockRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+      properties:
+        lockToken:
+          type: string
+          description: 作業ロックトークン
+        releaseReason:
+          type: string
+          description: LEAVE_SCREEN / LOGOUT。省略時 LEAVE_SCREEN
+    EditListLockReleaseResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - editListId
+        - releasedAt
+        - releaseReason
+      properties:
+        editListId:
+          type: integer
+          format: int64
+          description: 編集リストID
+        releasedAt:
+          type: string
+          format: date-time
+          description: 解除日時
+        releaseReason:
+          type: string
+          description: 解除理由
+    EditListItemsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - editList
+        - lock
+        - fixedColumns
+        - freeColumns
+        - items
+        - rfqLinks
+      properties:
+        editList:
+          type: string
+          description: 編集リストヘッダー
+        lock:
+          type: string
+          description: 検証済み作業ロック状態
+        fixedColumns:
+          type: array
+          items:
+            type: string
+          description: 固定列定義
+        freeColumns:
+          type: array
+          items:
+            type: string
+          description: 有効なフリーカラム定義
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditListItem'
+          description: 編集リスト明細
+          x-word-subtable-title: items要素（EditListItem）
+        rfqLinks:
+          type: array
+          items:
+            type: string
+          description: RFQ/申請/見積紐づき状態
+    EditListItem:
+      type: object
+      additionalProperties: false
+      required:
+        - editListItemId
+        - rowNo
+        - sourceType
+        - remodelDecision
+        - fixedValues
+        - recordStatus
+        - updatedAt
+      properties:
+        editListItemId:
+          type: integer
+          format: int64
+          description: edit_list_items.edit_list_item_id。画面上の asset.no や 90000 + index は返さない
+        rowNo:
+          type: integer
+          format: int32
+          description: 編集リスト内の表示順
+        sourceType:
+          type: string
+          description: BASE_ASSET / APPLICATION / MANUAL / QUOTATION
+        sourceAssetLedgerId:
+          type: integer
+          format: int64
+          description: 原本資産コピー元
+        sourceApplicationId:
+          type: integer
+          format: int64
+          description: 申請由来行の申請ID
+        sourceApplicationAssetId:
+          type: integer
+          format: int64
+          description: 申請由来行の申請明細ID
+        sourceQuotationItemId:
+          type: integer
+          format: int64
+          description: 見積DB Link 追加行の見積明細ID
+        shipAssetMasterId:
+          type: integer
+          format: int64
+          description: 解決済みSHIP資産マスタID
+        remodelDecision:
+          type: string
+          description: UNDECIDED / NEW / REPLACE / ADDITION / DISPOSAL / TRANSFER
+        categoryName:
+          type: string
+          description: Category表示値
+        largeClassName:
+          type: string
+          description: 大分類表示値
+        mediumClassName:
+          type: string
+          description: 中分類表示値
+        itemName:
+          type: string
+          description: 品目表示値
+        makerName:
+          type: string
+          description: メーカー表示値
+        modelName:
+          type: string
+          description: 型式表示値
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+        unit:
+          type: string
+          description: 単位
+        rfqNo:
+          type: string
+          description: 現在表示用の見積依頼No.
+        rfqGroupName:
+          type: string
+          description: 現在表示用の見積グループ名
+        applicationNo:
+          type: string
+          description: 申請No.
+        quotationNo:
+          type: string
+          description: 見積番号。RFQグループ名とは別項目
+        fixedValues:
+          type: object
+          additionalProperties: true
+          description: fixedColumns[].columnKey をキーにした固定58列の値。DB列は edit_list_items の作業スナップショットに対応する
+        freeColumnValues:
+          type: object
+          additionalProperties: true
+          description: フリーカラム値。edit_list_free_column_id または column_key をキーにする
+        recordStatus:
+          type: string
+          description: ACTIVE / DELETED
+        updatedAt:
+          type: string
+          format: date-time
+          description: 最終更新日時
+    PostEditListsByEditListIdItemsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - addMode
+      properties:
+        lockToken:
+          type: string
+          description: 作業ロックトークン
+        addMode:
+          type: string
+          description: INLINE_NEW / REPLACE / ADDITION / MANUAL / APPLICATION / QUOTATION
+        sourceEditListItemId:
+          type: integer
+          format: int64
+          description: 更新/増設/見積DB Link追加時のコピー元明細
+        quantity:
+          type: integer
+          format: int32
+          description: ADDITION の作成件数。1..99
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditListItemCreateInput'
+          description: 追加明細。インライン新規要望では複数行指定可
+          x-word-subtable-title: items要素（EditListItemCreateInput）
+    EditListItemsCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - createdItems
+        - updatedItems
+        - createdApplications
+      properties:
+        createdItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditListItem'
+          description: 作成した明細
+          x-word-omit-subtable: true
+        updatedItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditListItem'
+          description: REPLACE で廃棄予定化した元行など
+          x-word-omit-subtable: true
+        createdApplications:
+          type: array
+          items:
+            type: string
+          description: インライン新規要望で作成した申請
+    EditListItemCreateInput:
+      type: object
+      additionalProperties: false
+      properties:
+        itemName:
+          type: string
+          description: 品目名
+        makerName:
+          type: string
+          description: メーカー名
+        modelName:
+          type: string
+          description: 型式
+        quantity:
+          type: integer
+          format: int32
+          description: 数量。インライン新規要望で未指定時は1
+        unit:
+          type: string
+          description: 単位。インライン新規要望で未指定時は台
+        requestItems:
+          type: array
+          items:
+            type: string
+          description: 要望1〜3。application_assets 複数明細へ分解しない
+        desiredDeliveryOn:
+          type: string
+          format: date
+          description: 希望納期
+        priority:
+          type: string
+          description: 優先順位
+        usagePurpose:
+          type: string
+          description: 使用用途
+        commentText:
+          type: string
+          description: コメント
+    PatchEditListsByEditListIdItemsByEditListItemIdRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - fields
+      properties:
+        lockToken:
+          type: string
+          description: POST /edit-lists/{editListId}/lock で取得した作業ロックトークン
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用。指定時は対象行または編集リストの更新日時と一致必須
+        fields:
+          type: object
+          additionalProperties: true
+          description: 更新対象フィールド。固定列、フリーカラムを含む
+        fields.freeColumnValues:
+          type: object
+          additionalProperties: true
+          description: edit_list_free_column_id または column_key をキーにしたフリーカラム値
+    EditListItemUpdateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+        - lockExpiresAt
+      properties:
+        item:
+          $ref: '#/components/schemas/EditListItem'
+          description: 更新後明細
+          x-word-omit-subtable: true
+        lockExpiresAt:
+          type: string
+          format: date-time
+          description: 延長後ロック期限
+    PatchEditListsByEditListIdItemsBulkRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - editListItemIds
+        - fieldKey
+      properties:
+        lockToken:
+          type: string
+          description: POST /edit-lists/{editListId}/lock で取得した作業ロックトークン
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用。指定時は対象行または編集リストの更新日時と一致必須
+        editListItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 対象明細ID配列。1件以上
+        fieldKey:
+          type: string
+          description: 更新カラムキー
+        value:
+          type: string
+          description: 更新値。空値指定はクリアとして扱う
+        expectedUpdatedAtMap:
+          type: object
+          additionalProperties: true
+          description: 明細IDごとの競合検知用更新日時
+    EditListBulkUpdateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - updatedCount
+        - items
+        - lockExpiresAt
+      properties:
+        updatedCount:
+          type: integer
+          format: int32
+          description: 更新明細数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditListItem'
+          description: 更新後明細
+          x-word-omit-subtable: true
+        lockExpiresAt:
+          type: string
+          format: date-time
+          description: 延長後ロック期限
+    PatchEditListsByEditListIdItemsReorderRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - orders
+      properties:
+        lockToken:
+          type: string
+          description: POST /edit-lists/{editListId}/lock で取得した作業ロックトークン
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用。指定時は対象行または編集リストの更新日時と一致必須
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/RowOrderInput'
+          description: 明細IDと行番号の配列
+          x-word-subtable-title: orders要素（RowOrderInput）
+    EditListReorderResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - updatedCount
+        - items
+      properties:
+        updatedCount:
+          type: integer
+          format: int32
+          description: 更新件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditListItem'
+          description: 更新後の行順
+          x-word-omit-subtable: true
+    RowOrderInput:
+      type: object
+      additionalProperties: false
+      required:
+        - editListItemId
+        - rowNo
+      properties:
+        editListItemId:
+          type: integer
+          format: int64
+          description: 編集リスト明細ID
+        rowNo:
+          type: integer
+          format: int32
+          description: 保存後行番号。1始まり
+    DeleteEditListsByEditListIdItemsByEditListItemIdRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+      properties:
+        lockToken:
+          type: string
+          description: POST /edit-lists/{editListId}/lock で取得した作業ロックトークン
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用。指定時は対象行または編集リストの更新日時と一致必須
+    EditListItemDeleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - editListItemId
+        - deletedAt
+      properties:
+        editListItemId:
+          type: integer
+          format: int64
+          description: 削除明細ID
+        deletedAt:
+          type: string
+          format: date-time
+          description: 削除日時
+    FreeColumnListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - items[].freeColumnId
+        - items[].columnKey
+        - items[].columnName
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+          description: フリーカラム定義
+        items[].freeColumnId:
+          type: integer
+          format: int64
+          description: フリーカラムID
+        items[].columnKey:
+          type: string
+          description: サーバー生成の不変キー
+        items[].columnName:
+          type: string
+          description: 表示名
+    PostEditListsByEditListIdFreeColumnsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - columnName
+      properties:
+        lockToken:
+          type: string
+          description: POST /edit-lists/{editListId}/lock で取得した作業ロックトークン
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用。指定時は対象行または編集リストの更新日時と一致必須
+        columnName:
+          type: string
+          description: 列名。前後空白除去後に1〜200文字
+    PostEditListsByEditListIdFreeColumnsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          type: string
+          description: 追加したフリーカラム
+    PatchEditListsByEditListIdFreeColumnsByFreeColumnIdRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - columnName
+      properties:
+        lockToken:
+          type: string
+          description: POST /edit-lists/{editListId}/lock で取得した作業ロックトークン
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用。指定時は対象行または編集リストの更新日時と一致必須
+        columnName:
+          type: string
+          description: 更新後列名。前後空白除去後に1〜200文字
+    PatchEditListsByEditListIdFreeColumnsByFreeColumnIdResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          type: string
+          description: 更新後フリーカラム
+    DeleteEditListsByEditListIdFreeColumnsByFreeColumnIdRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+      properties:
+        lockToken:
+          type: string
+          description: POST /edit-lists/{editListId}/lock で取得した作業ロックトークン
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用。指定時は対象行または編集リストの更新日時と一致必須
+    FreeColumnDeleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - freeColumnId
+        - deletedValueCount
+      properties:
+        freeColumnId:
+          type: integer
+          format: int64
+          description: 削除したフリーカラムID
+        deletedValueCount:
+          type: integer
+          format: int32
+          description: 同時に論理削除した値件数
+    PostEditListsByEditListIdDataLinkPreviewRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - editListItemIds
+        - dataSource
+        - linkKey
+        - sourceColumnKeys
+      properties:
+        lockToken:
+          type: string
+          description: POST /edit-lists/{editListId}/lock で取得した作業ロックトークン
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用。指定時は対象行または編集リストの更新日時と一致必須
+        editListItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 対象明細ID配列。空配列は拒否
+        dataSource:
+          type: string
+          description: ASSET_MASTER / VENDOR_MASTER / BASE_LEDGER
+        linkKey:
+          type: string
+          description: 照合キー。資産Master ID、業者ID/業者名、QRコードなど
+        sourceColumnKeys:
+          type: array
+          items:
+            type: string
+          description: 転記対象ソースカラムキー。空配列は拒否
+    DataLinkPreviewResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - matchedCount
+        - unmatchedCount
+        - changedColumnCount
+        - totalRows
+        - samples
+      properties:
+        matchedCount:
+          type: integer
+          format: int32
+          description: 紐づけ成功件数
+        unmatchedCount:
+          type: integer
+          format: int32
+          description: 紐づけなし件数
+        changedColumnCount:
+          type: integer
+          format: int32
+          description: 変更対象カラム数
+        totalRows:
+          type: integer
+          format: int32
+          description: 対象行数
+        samples:
+          type: array
+          items:
+            type: string
+          description: 最大20行の差分サンプル
+    PostEditListsByEditListIdDataLinkApplyRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - editListItemIds
+        - dataSource
+        - linkKey
+        - sourceColumnKeys
+      properties:
+        lockToken:
+          type: string
+          description: POST /edit-lists/{editListId}/lock で取得した作業ロックトークン
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用。指定時は対象行または編集リストの更新日時と一致必須
+        editListItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 対象明細ID配列
+        dataSource:
+          type: string
+          description: ASSET_MASTER / VENDOR_MASTER / BASE_LEDGER
+        linkKey:
+          type: string
+          description: 照合キー
+        sourceColumnKeys:
+          type: array
+          items:
+            type: string
+          description: 転記対象ソースカラムキー
+    DataLinkApplyResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - matchedCount
+        - unmatchedCount
+        - updatedItemCount
+        - updatedColumnCount
+        - lockExpiresAt
+      properties:
+        matchedCount:
+          type: integer
+          format: int32
+          description: 紐づけ成功件数
+        unmatchedCount:
+          type: integer
+          format: int32
+          description: 紐づけなし件数
+        updatedItemCount:
+          type: integer
+          format: int32
+          description: 更新明細数
+        updatedColumnCount:
+          type: integer
+          format: int32
+          description: 更新カラム総数
+        lockExpiresAt:
+          type: string
+          format: date-time
+          description: 延長後ロック期限
+    QuotationLinkCandidatesResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqs
+        - quotationItems
+        - editListItems
+        - links
+      properties:
+        rfqs:
+          type: array
+          items:
+            type: string
+          description: 編集リスト配下のRFQ候補
+        quotationItems:
+          type: array
+          items:
+            type: string
+          description: 対象見積明細
+        editListItems:
+          type: array
+          items:
+            type: string
+          description: 紐付け可能な編集リスト明細
+        links:
+          type: array
+          items:
+            type: string
+          description: 既存紐付け状態
+    PostEditListsByEditListIdQuotationLinkApplyRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - rfqId
+        - quotationId
+      properties:
+        lockToken:
+          type: string
+          description: POST /edit-lists/{editListId}/lock で取得した作業ロックトークン
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用。指定時は対象行または編集リストの更新日時と一致必須
+        rfqId:
+          type: integer
+          format: int64
+          description: 対象RFQ ID。editListId 配下の有効RFQに限定
+        quotationId:
+          type: integer
+          format: int64
+          description: 対象見積ID
+        pairings:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotationPairingInput'
+          description: 既存行への紐付け指定
+          x-word-subtable-title: pairings要素（QuotationPairingInput）
+        additions:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotationAdditionInput'
+          description: 未紐付け見積明細から追加する指定
+          x-word-subtable-title: additions要素（QuotationAdditionInput）
+    QuotationLinkApplyResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - linkedCount
+        - unlinkedCount
+        - addedCount
+        - createdItems
+      properties:
+        linkedCount:
+          type: integer
+          format: int32
+          description: 紐付け更新件数
+        unlinkedCount:
+          type: integer
+          format: int32
+          description: 未紐付け件数
+        addedCount:
+          type: integer
+          format: int32
+          description: 追加明細件数
+        createdItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditListItem'
+          description: 追加された編集リスト明細
+          x-word-omit-subtable: true
+    QuotationPairingInput:
+      type: object
+      additionalProperties: false
+      required:
+        - quotationItemId
+        - editListItemId
+      properties:
+        quotationItemId:
+          type: integer
+          format: int64
+          description: 見積明細ID
+        editListItemId:
+          type: integer
+          format: int64
+          description: 紐付け先編集リスト明細ID
+    QuotationAdditionInput:
+      type: object
+      additionalProperties: false
+      required:
+        - quotationItemId
+      properties:
+        quotationItemId:
+          type: integer
+          format: int64
+          description: 追加元見積明細ID
+        inheritFromEditListItemId:
+          type: integer
+          format: int64
+          description: 新設置場所情報と執行年度だけを継承する元明細ID
+    DeleteEditListsByEditListIdQuotationLinkByEditListItemIdRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+      properties:
+        lockToken:
+          type: string
+          description: POST /edit-lists/{editListId}/lock で取得した作業ロックトークン
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用。指定時は対象行または編集リストの更新日時と一致必須
+        clearTransferredValues:
+          type: boolean
+          description: true の場合、見積DB Linkで転記した見積系項目をクリアする。既定 false
+    QuotationLinkDeleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - editListItemId
+        - unlinkedQuotationItemId
+      properties:
+        editListItemId:
+          type: integer
+          format: int64
+          description: 解除対象明細ID
+        unlinkedQuotationItemId:
+          type: integer
+          format: int64
+          description: 解除した見積明細ID
+    PostEditListsByEditListIdApplicationsDisposalTransferRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - editListItemIds
+      properties:
+        lockToken:
+          type: string
+          description: 作業ロックトークン
+        editListItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 選択明細ID配列
+    DisposalTransferCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - created
+        - skipped
+      properties:
+        created:
+          type: array
+          items:
+            type: string
+          description: 作成結果
+        skipped:
+          type: array
+          items:
+            type: string
+          description: スキップ結果
+    PostEditListsByEditListIdApplicationsDisposalRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - editListItemIds
+      properties:
+        lockToken:
+          type: string
+          description: 作業ロックトークン
+        editListItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 廃棄予定明細ID配列
+    PostEditListsByEditListIdApplicationsTransferRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - editListItemIds
+      properties:
+        lockToken:
+          type: string
+          description: 作業ロックトークン
+        editListItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 移設明細ID配列
+    PostEditListsByEditListIdRfqGroupsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockToken
+        - rfqGroupName
+        - editListItemIds
+      properties:
+        lockToken:
+          type: string
+          description: 作業ロックトークン
+        rfqGroupName:
+          type: string
+          description: 見積依頼グループ名
+        editListItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: RFQに採用する編集リスト明細ID配列
+    EditListRfqCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - created
+        - skipped
+        - rfqId
+        - rfqGroupId
+        - rfqNo
+        - managementType
+        - returnTo
+        - editListId
+      properties:
+        created:
+          type: array
+          items:
+            type: string
+          description: 採用明細
+        skipped:
+          type: array
+          items:
+            type: string
+          description: スキップ明細
+        rfqId:
+          type: integer
+          format: int64
+          description: rfqs.rfq_id
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 画面遷移用ID。rfqId と同値
+        rfqNo:
+          type: string
+          description: 確定RFQ No.
+        managementType:
+          type: string
+          description: PURCHASE / REMODEL
+        returnTo:
+          type: string
+          description: 後続画面の既定戻り先
+        editListId:
+          type: integer
+          format: int64
+          description: 編集リストID
+    GetUserColumnSettingsScreenIdEditListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - columns
+        - presets
+      properties:
+        columns:
+          type: array
+          items:
+            type: string
+          description: 表示カラム設定
+        presets:
+          type: array
+          items:
+            type: string
+          description: 表示カラムブックマーク
+    PutUserColumnSettingsScreenIdEditListRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - columns
+      properties:
+        columns:
+          type: array
+          items:
+            type: string
+          description: カラムキーと表示フラグの配列
+    PutUserColumnSettingsScreenIdEditListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - columns
+      properties:
+        columns:
+          type: array
+          items:
+            type: string
+          description: 保存後設定
+    PostUserColumnSettingPresetsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - screenId
+        - presetName
+        - columns
+      properties:
+        screenId:
+          type: string
+          description: edit_list 固定
+        presetName:
+          type: string
+          description: ブックマーク名。ユーザー・画面内で有効名重複不可
+        columns:
+          type: array
+          items:
+            type: string
+          description: ブックマークに保存する表示状態
+    UserColumnSettingPresetResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - preset
+      properties:
+        preset:
+          type: string
+          description: 作成したブックマーク
+    PostUserColumnSettingPresetsByPresetIdApplyRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - screenId
+      properties:
+        screenId:
+          type: string
+          description: edit_list 固定
+    PostUserColumnSettingPresetsByPresetIdApplyResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - columns
+      properties:
+        columns:
+          type: array
+          items:
+            type: string
+          description: 適用後の表示カラム設定
+    UserColumnSettingPresetDeleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - presetId
+        - deletedAt
+      properties:
+        presetId:
+          type: integer
+          format: int64
+          description: 削除したブックマークID
+        deletedAt:
+          type: string
+          format: date-time
+          description: 削除日時
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

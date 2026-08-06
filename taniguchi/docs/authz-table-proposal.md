@@ -501,8 +501,8 @@
   - `user_facility_column_settings` は `facility_column_settings.is_enabled=true` かつ `column_catalogs.related_feature_code` に対応する `user_facility_feature_settings.is_enabled=true` のカラムのみ ON にできる
   - `facility_feature_settings` には `feature_catalogs.config_scope in ('FACILITY', 'FACILITY_USER')` の機能のみ登録できる
   - `facility_column_settings` は `column_catalogs.related_feature_code` に対応する `facility_feature_settings.is_enabled=true` の場合のみ ON にできる
-  - `facility_external_view_settings` には原則 `usage_context='EXTERNAL'` の機能のみ登録できる。資産一覧・資産詳細の公開設定は `機能要件.md` の正本に従い、既存の `original_list_view` を登録対象とする
-  - `facility_external_column_settings` には原則 `usage_context='EXTERNAL'` かつ `column_catalogs.related_feature_code` に対応する `facility_external_view_settings.is_enabled=true` のカラムのみ登録できる。価格カラム共有は `機能要件.md` の正本に従い、既存の `original_price_column` を登録対象とする
+  - `facility_external_view_settings` には原則 `usage_context='EXTERNAL'` の機能のみ登録できる。資産一覧・資産詳細の公開設定は認証・認可API設計に従い、既存の `original_list_view` を登録対象とする
+  - `facility_external_column_settings` には原則 `usage_context='EXTERNAL'` かつ `column_catalogs.related_feature_code` に対応する `facility_external_view_settings.is_enabled=true` のカラムのみ登録できる。価格カラム共有は認証・認可API設計に従い、既存の `original_price_column` を登録対象とする
   - 病院ユーザーの `users.facility_id` 更新時は、対応する `user_facility_assignments` の既定担当施設も同時に同期する
 
 ### 9-5. 他施設公開設定の粒度

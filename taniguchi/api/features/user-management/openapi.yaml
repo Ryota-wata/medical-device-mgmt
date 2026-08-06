@@ -1,0 +1,1846 @@
+openapi: 3.0.4
+info:
+  title: ユーザー管理 API API
+  version: '1.1'
+  description: ユーザー管理で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: ユーザー管理
+    description: ユーザー管理 APIのAPI
+paths:
+  /user-management/context:
+    get:
+      tags:
+        - ユーザー管理
+      operationId: getUserManagementContext
+      summary: 画面コンテキスト取得
+      description: ユーザー管理画面の初期表示に必要な管理可能な初期施設候補、機能カタログ、カラムカタログ、ログインユーザーの操作制約を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '500'
+      x-feature-code: user_list_view
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserManagementContextResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 選択中施設に対する実効 user_list_view なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：UserManagementContextResponse）
+      x-word-response-subtable-titles:
+        - initialFacilities要素（FacilityCandidate）
+        - featureCatalogs要素（FeatureCatalogItem）
+        - columnCatalogs要素（ColumnCatalogItem）
+        - permissions要素（UserManagementPermissionContext）
+      x-word-response-subtables:
+        - Title: initialFacilities要素（FacilityCandidate）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityCode
+              - string
+              - ✓
+              - 施設コード
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - establishmentId
+              - int64
+              - ✓
+              - 設立母体ID
+            - - systemContractStatus
+              - string
+              - ✓
+              - システム利用契約状態
+        - Title: featureCatalogs要素（FeatureCatalogItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - featureCode
+              - string
+              - ✓
+              - 機能コード
+            - - featureName
+              - string
+              - ✓
+              - 機能名
+            - - categoryCode
+              - string
+              - ✓
+              - 大分類コード
+            - - menuGroupCode
+              - string
+              - '-'
+              - メニューグループコード
+            - - featureKind
+              - string
+              - ✓
+              - 機能種別
+            - - usageContext
+              - string
+              - ✓
+              - 利用文脈
+            - - sortOrder
+              - int32
+              - ✓
+              - 表示順
+        - Title: columnCatalogs要素（ColumnCatalogItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - columnCode
+              - string
+              - ✓
+              - カラムコード
+            - - columnName
+              - string
+              - ✓
+              - カラム名
+            - - relatedFeatureCode
+              - string
+              - ✓
+              - 関連機能コード
+            - - columnGroupCode
+              - string
+              - ✓
+              - カラム分類コード
+            - - usageContext
+              - string
+              - ✓
+              - 利用文脈
+            - - sortOrder
+              - int32
+              - ✓
+              - 表示順
+        - Title: permissions要素（UserManagementPermissionContext）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - canViewList
+              - boolean
+              - ✓
+              - 一覧表示可否
+            - - canCreateUser
+              - boolean
+              - ✓
+              - 新規作成可否。通常アカウントでは user_edit と user_facility_assignment_edit の両方が必要。共有システム管理者アカウントでは選択中施設が未削除であれば可
+            - - canEditUserProfile
+              - boolean
+              - ✓
+              - 基本情報編集可否
+            - - canEditFacilityAssignments
+              - boolean
+              - ✓
+              - 担当施設編集可否
+            - - canSendSetupInvitation
+              - boolean
+              - ✓
+              - 初回設定案内送信可否
+            - - canDeleteUser
+              - boolean
+              - ✓
+              - 削除可否
+  /user-management/users:
+    get:
+      tags:
+        - ユーザー管理
+      operationId: getUserManagementUsers
+      summary: ユーザー一覧取得
+      description: 検索条件に一致するユーザー一覧をページング取得する。一覧 API は要約情報のみを返し、編集に必要な詳細情報は別 API で取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      x-feature-code: user_list_view
+      parameters:
+        - name: name
+          in: query
+          required: false
+          description: ユーザー名の部分一致条件
+          schema:
+            type: string
+        - name: sectionName
+          in: query
+          required: false
+          description: 部署の部分一致条件。users.section_name を対象とする
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          description: ページ番号。既定値 1
+          schema:
+            type: integer
+            format: int32
+        - name: pageSize
+          in: query
+          required: false
+          description: ページサイズ。既定値 50、上限 200
+          schema:
+            type: integer
+            format: int32
+        - name: sortBy
+          in: query
+          required: false
+          description: 並び替え項目。updatedAt / name / sectionName / positionName / emailAddress
+          schema:
+            type: string
+        - name: sortOrder
+          in: query
+          required: false
+          description: 並び順。asc / desc
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserManagementUserListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 選択中施設に対する実効 user_list_view なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：UserManagementUserListResponse）
+      x-word-response-subtable-titles:
+        - items要素（UserManagementUserSummary）
+        - accessibleFacilities要素（UserAccessibleFacilitySummary）
+      x-word-response-subtables:
+        - Title: items要素（UserManagementUserSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - userId
+              - int64
+              - ✓
+              - ユーザーID
+            - - name
+              - string
+              - ✓
+              - ユーザー名。操作ボタンのアクセシビリティラベルおよび検索対象として利用する
+            - - sectionName
+              - string
+              - '-'
+              - 所属部署
+            - - positionName
+              - string
+              - '-'
+              - 役職
+            - - phoneNumber
+              - string
+              - '-'
+              - 連絡先
+            - - emailAddress
+              - string
+              - ✓
+              - メールアドレス
+            - - accessibleFacilities
+              - UserAccessibleFacilitySummary[]
+              - ✓
+              - アクセス可能施設
+            - - updatedAt
+              - string(datetime)
+              - ✓
+              - 集約更新トークンとしても使う更新日時
+        - Title: accessibleFacilities要素（UserAccessibleFacilitySummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+    post:
+      tags:
+        - ユーザー管理
+      operationId: postUserManagementUsers
+      summary: ユーザー新規作成
+      description: >-
+        ユーザー基本情報、既定施設、担当施設、施設別機能設定、施設別表示カラム設定を一括登録する。新規作成は利用可能な担当施設がないと成立しないため、基本情報権限と担当施設権限の両方を必須とし、作成後も選択中施設の管理対象に残るよう担当施設へ選択中施設を含める。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code-all
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-codes:
+        - user_edit
+        - user_facility_assignment_edit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostUserManagementUsersRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - facilityAssignments要素（UserFacilityAssignmentWriteModel）
+      x-word-request-subtables:
+        - Title: facilityAssignments要素（UserFacilityAssignmentWriteModel）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 担当施設ID
+            - - enabledFeatureCodes
+              - string[]
+              - ✓
+              - 当該施設でユーザーへ許可するユーザー別設定対象機能コード一覧。config_scope=FACILITY_USER のみ
+            - - enabledColumnCodes
+              - string[]
+              - ✓
+              - 当該施設でユーザーへ表示許可するカラムコード一覧
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserManagementUserCreateResponse'
+        '400':
+          description: 入力不正、選択中施設または既定施設が担当施設に含まれない、担当施設重複、同一設立母体違反
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 選択中施設に対する実効 user_edit または user_facility_assignment_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 指定施設が存在しない、論理削除済み、または管理可能な担当施設候補外である。機能コード、カラムコードが存在しない場合も含む
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: メールアドレス重複、または施設提供設定と矛盾する機能・カラム指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：UserManagementUserCreateResponse）
+      x-word-response-subtable-titles:
+        - item要素（UserManagementUserProfileDetail）
+      x-word-response-subtables:
+        - Title: item要素（UserManagementUserProfileDetail）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - userId
+              - int64
+              - ✓
+              - ユーザーID
+            - - name
+              - string
+              - ✓
+              - ユーザー名
+            - - emailAddress
+              - string
+              - ✓
+              - メールアドレス
+            - - defaultFacilityId
+              - int64
+              - '-'
+              - 既定施設ID
+            - - defaultFacilityName
+              - string
+              - '-'
+              - 既定施設名
+            - - departmentName
+              - string
+              - '-'
+              - 所属部門
+            - - sectionName
+              - string
+              - '-'
+              - 所属部署
+            - - positionName
+              - string
+              - '-'
+              - 役職
+            - - phoneNumber
+              - string
+              - '-'
+              - 連絡先
+            - - lastLoginAt
+              - string(datetime)
+              - '-'
+              - 最終ログイン日時。新規作成直後は null
+            - - createdAt
+              - string(datetime)
+              - ✓
+              - 作成日時
+            - - updatedAt
+              - string(datetime)
+              - ✓
+              - 集約更新トークンとしても使う更新日時
+  /user-management/users/{userId}:
+    get:
+      tags:
+        - ユーザー管理
+      operationId: getUserManagementUsersByUserId
+      summary: ユーザー基本情報取得
+      description: 指定したユーザーの基本情報詳細を取得する。基本情報編集で必要な項目のみを返却し、担当施設・権限設定は含めない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: user_edit
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 対象ユーザーID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserManagementUsersByUserIdResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 選択中施設に対する実効 user_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ユーザーが存在しない、または選択中施設の管理対象外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': UserManagementUserProfileResponse
+      x-word-response-title: レスポンス（200：UserManagementUserProfileResponse）
+      x-word-response-subtable-titles:
+        - item要素（UserManagementUserProfileDetail）
+      x-word-response-subtables:
+        - Title: item要素（UserManagementUserProfileDetail）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - userId
+              - int64
+              - ✓
+              - ユーザーID
+            - - name
+              - string
+              - ✓
+              - ユーザー名
+            - - emailAddress
+              - string
+              - ✓
+              - メールアドレス
+            - - defaultFacilityId
+              - int64
+              - '-'
+              - 既定施設ID
+            - - defaultFacilityName
+              - string
+              - '-'
+              - 既定施設名
+            - - departmentName
+              - string
+              - '-'
+              - 所属部門
+            - - sectionName
+              - string
+              - '-'
+              - 所属部署
+            - - positionName
+              - string
+              - '-'
+              - 役職
+            - - phoneNumber
+              - string
+              - '-'
+              - 連絡先
+            - - lastLoginAt
+              - string(datetime)
+              - '-'
+              - 最終ログイン日時
+            - - createdAt
+              - string(datetime)
+              - ✓
+              - 作成日時
+            - - updatedAt
+              - string(datetime)
+              - ✓
+              - 集約更新トークンとしても使う更新日時
+    delete:
+      tags:
+        - ユーザー管理
+      operationId: deleteUserManagementUsersByUserId
+      summary: ユーザー削除
+      description: 指定したユーザーを論理削除する。自身の削除は認めない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: user_edit
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 削除対象ユーザーID
+          schema:
+            type: integer
+            format: int64
+        - name: lastKnownUpdatedAt
+          in: query
+          required: true
+          description: 取得時点の updatedAt。競合検知に用いる
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 選択中施設に対する実効 user_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ユーザーが存在しない、または選択中施設の管理対象外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 更新競合、または自身削除禁止
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：No Content）
+      x-word-response-lines:
+        - Body は返却しない。
+  /user-management/users/{userId}/facility-assignments:
+    get:
+      tags:
+        - ユーザー管理
+      operationId: getUserManagementUsersByUserIdFacilityAssignments
+      summary: ユーザー担当施設・権限詳細取得
+      description: 指定したユーザーの既定施設、担当施設、ユーザー施設別機能設定、ユーザー施設別表示カラム設定の詳細を取得する。ユーザー管理画面の編集モーダルにおける担当施設・権限タブの初期表示に利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: user_facility_assignment_edit
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 対象ユーザーID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserManagementUsersByUserIdFacilityAssignmentsResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 選択中施設に対する実効 user_facility_assignment_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ユーザーが存在しない、または選択中施設の管理対象外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': UserManagementFacilityAssignmentsResponse
+      x-word-response-title: レスポンス（200：UserManagementFacilityAssignmentsResponse）
+      x-word-response-subtable-titles:
+        - items要素（UserFacilityAssignmentDetail）
+      x-word-response-subtables:
+        - Title: items要素（UserFacilityAssignmentDetail）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - userFacilityAssignmentId
+              - int64
+              - ✓
+              - ユーザー施設割当ID
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityCode
+              - string
+              - ✓
+              - 施設コード
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - isDefault
+              - boolean
+              - ✓
+              - 既定施設フラグ
+            - - availableFeatureCodes
+              - string[]
+              - ✓
+              - 当該施設で提供されているユーザー別設定対象の機能コード一覧。config_scope=FACILITY_USER のみ
+            - - availableColumnCodes
+              - string[]
+              - ✓
+              - 当該施設で提供されているカラムコード一覧
+            - - enabledFeatureCodes
+              - string[]
+              - ✓
+              - 当該ユーザーへ有効化済みのユーザー別設定対象機能コード一覧。config_scope=FACILITY_USER のみ
+            - - enabledColumnCodes
+              - string[]
+              - ✓
+              - 当該ユーザーへ有効化済みのカラムコード一覧
+    put:
+      tags:
+        - ユーザー管理
+      operationId: putUserManagementUsersByUserIdFacilityAssignments
+      summary: ユーザー担当施設・権限更新
+      description: >-
+        指定したユーザーの既定施設、担当施設、ユーザー施設別機能設定、ユーザー施設別表示カラム設定を更新する。更新対象はユーザー管理画面の編集モーダルにおける担当施設・権限タブの入力内容に閉じ、基本情報項目は変更しない。更新後も対象ユーザーは選択中施設の管理対象に残る必要がある。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: user_facility_assignment_edit
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 更新対象ユーザーID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutUserManagementUsersByUserIdFacilityAssignmentsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - facilityAssignments要素（UserFacilityAssignmentWriteModel）
+      x-word-request-subtables:
+        - Title: facilityAssignments要素（UserFacilityAssignmentWriteModel）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 担当施設ID
+            - - enabledFeatureCodes
+              - string[]
+              - ✓
+              - 当該施設でユーザーへ許可するユーザー別設定対象機能コード一覧
+            - - enabledColumnCodes
+              - string[]
+              - ✓
+              - 当該施設でユーザーへ表示許可するカラムコード一覧
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutUserManagementUsersByUserIdFacilityAssignmentsResponse'
+        '400':
+          description: 入力不正、選択中施設または既定施設が担当施設に含まれない、担当施設重複、同一設立母体違反
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 選択中施設に対する実効 user_facility_assignment_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ユーザーが存在しない、または選択中施設の管理対象外。指定施設が存在しない、論理削除済み、または管理可能な担当施設候補外である場合、機能コード、カラムコードが存在しない場合も含む
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 施設提供設定と矛盾する機能・カラム指定、または更新競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': UserManagementFacilityAssignmentsResponse
+      x-word-response-title: レスポンス（200：UserManagementFacilityAssignmentsResponse）
+      x-word-response-subtable-titles:
+        - items要素（UserFacilityAssignmentDetail）
+      x-word-response-subtables:
+        - Title: items要素（UserFacilityAssignmentDetail）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - userFacilityAssignmentId
+              - int64
+              - ✓
+              - ユーザー施設割当ID
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityCode
+              - string
+              - ✓
+              - 施設コード
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - isDefault
+              - boolean
+              - ✓
+              - 既定施設フラグ
+            - - availableFeatureCodes
+              - string[]
+              - ✓
+              - 当該施設で提供されているユーザー別設定対象の機能コード一覧。config_scope=FACILITY_USER のみ
+            - - availableColumnCodes
+              - string[]
+              - ✓
+              - 当該施設で提供されているカラムコード一覧
+            - - enabledFeatureCodes
+              - string[]
+              - ✓
+              - 当該ユーザーへ有効化済みのユーザー別設定対象機能コード一覧。config_scope=FACILITY_USER のみ
+            - - enabledColumnCodes
+              - string[]
+              - ✓
+              - 当該ユーザーへ有効化済みのカラムコード一覧
+  /user-management/facilities:
+    get:
+      tags:
+        - ユーザー管理
+      operationId: getUserManagementFacilities
+      summary: 施設候補取得
+      description: 担当施設選択で利用する管理可能な担当施設候補と、各施設で提供されている機能・表示カラムをページング取得する。他施設閲覧用の間接参照候補は含めない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      x-feature-code: user_facility_assignment_edit
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          description: 施設コードまたは施設名の部分一致条件
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          description: ページ番号。既定値 1
+          schema:
+            type: integer
+            format: int32
+        - name: pageSize
+          in: query
+          required: false
+          description: ページサイズ。既定値 20、上限 100
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserManagementFacilityListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 選択中施設に対する実効 user_facility_assignment_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：UserManagementFacilityListResponse）
+      x-word-response-subtable-titles:
+        - items要素（FacilityPermissionCandidate）
+      x-word-response-subtables:
+        - Title: items要素（FacilityPermissionCandidate）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityCode
+              - string
+              - ✓
+              - 施設コード
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - establishmentId
+              - int64
+              - ✓
+              - 設立母体ID
+            - - systemContractStatus
+              - string
+              - ✓
+              - システム利用契約状態
+            - - availableFeatureCodes
+              - string[]
+              - ✓
+              - 当該施設で提供されているユーザー別設定対象の機能コード一覧。config_scope=FACILITY_USER のみ
+            - - availableColumnCodes
+              - string[]
+              - ✓
+              - 当該施設で提供されているカラムコード一覧
+  /user-management/users/{userId}/profile:
+    put:
+      tags:
+        - ユーザー管理
+      operationId: putUserManagementUsersByUserIdProfile
+      summary: ユーザー基本情報更新
+      description: 指定したユーザーの基本情報を更新する。担当施設や既定施設は変更せず、user_edit 権限の範囲に閉じる。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: user_edit
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 更新対象ユーザーID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutUserManagementUsersByUserIdProfileRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutUserManagementUsersByUserIdProfileResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 選択中施設に対する実効 user_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ユーザーが存在しない、または選択中施設の管理対象外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: メールアドレス重複または更新競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': UserManagementUserProfileResponse
+      x-word-response-title: レスポンス（200：UserManagementUserProfileResponse）
+      x-word-response-subtable-titles:
+        - item要素（UserManagementUserProfileDetail）
+      x-word-response-subtables:
+        - Title: item要素（UserManagementUserProfileDetail）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - userId
+              - int64
+              - ✓
+              - ユーザーID
+            - - name
+              - string
+              - ✓
+              - ユーザー名
+            - - emailAddress
+              - string
+              - ✓
+              - メールアドレス
+            - - defaultFacilityId
+              - int64
+              - '-'
+              - 既定施設ID
+            - - defaultFacilityName
+              - string
+              - '-'
+              - 既定施設名
+            - - departmentName
+              - string
+              - '-'
+              - 所属部門
+            - - sectionName
+              - string
+              - '-'
+              - 所属部署
+            - - positionName
+              - string
+              - '-'
+              - 役職
+            - - phoneNumber
+              - string
+              - '-'
+              - 連絡先
+            - - lastLoginAt
+              - string(datetime)
+              - '-'
+              - 最終ログイン日時
+            - - createdAt
+              - string(datetime)
+              - ✓
+              - 作成日時
+            - - updatedAt
+              - string(datetime)
+              - ✓
+              - 更新後の集約更新トークン
+  /user-management/users/{userId}/setup-invitation:
+    post:
+      tags:
+        - ユーザー管理
+      operationId: postUserManagementUsersByUserIdSetupInvitation
+      summary: 初回設定案内送信
+      description: 未利用ユーザーに対して初回パスワード設定案内を送信する。トークン生成とメール送信は認証基盤へ委譲し、ユーザー管理 API は依頼結果だけを返す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '202'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: user_edit
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: 対象ユーザーID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '202':
+          description: 送信依頼受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSetupInvitationResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 選択中施設に対する実効 user_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ユーザーが存在しない、または選択中施設の管理対象外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象ユーザーがすでに初回利用済みである
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: トークン発行または送信依頼に失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（202：UserSetupInvitationResponse）
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    UserManagementContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - initialFacilityCount
+        - initialFacilities
+        - featureCatalogs
+        - columnCatalogs
+        - permissions
+      properties:
+        initialFacilityCount:
+          type: integer
+          format: int32
+          description: 初期施設候補件数
+        initialFacilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacilityCandidate'
+          description: 初期表示用の管理可能施設候補
+          x-word-subtable-title: initialFacilities要素（FacilityCandidate）
+        featureCatalogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeatureCatalogItem'
+          description: 担当施設・権限設定で利用する機能カタログ
+          x-word-subtable-title: featureCatalogs要素（FeatureCatalogItem）
+        columnCatalogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ColumnCatalogItem'
+          description: 担当施設・権限設定で利用するカラムカタログ
+          x-word-subtable-title: columnCatalogs要素（ColumnCatalogItem）
+        permissions:
+          $ref: '#/components/schemas/UserManagementPermissionContext'
+          description: ログインユーザーの操作制約
+          x-word-subtable-title: permissions要素（UserManagementPermissionContext）
+    FacilityCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityCode
+        - facilityName
+        - establishmentId
+        - systemContractStatus
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        facilityCode:
+          type: string
+          description: 施設コード
+        facilityName:
+          type: string
+          description: 施設名
+        establishmentId:
+          type: integer
+          format: int64
+          description: 設立母体ID
+        systemContractStatus:
+          type: string
+          description: システム利用契約状態
+    FeatureCatalogItem:
+      type: object
+      additionalProperties: false
+      required:
+        - featureCode
+        - featureName
+        - categoryCode
+        - featureKind
+        - usageContext
+        - sortOrder
+      properties:
+        featureCode:
+          type: string
+          description: 機能コード
+        featureName:
+          type: string
+          description: 機能名
+        categoryCode:
+          type: string
+          description: 大分類コード
+        menuGroupCode:
+          type: string
+          description: メニューグループコード
+        featureKind:
+          type: string
+          description: 機能種別
+        usageContext:
+          type: string
+          description: 利用文脈
+        sortOrder:
+          type: integer
+          format: int32
+          description: 表示順
+    ColumnCatalogItem:
+      type: object
+      additionalProperties: false
+      required:
+        - columnCode
+        - columnName
+        - relatedFeatureCode
+        - columnGroupCode
+        - usageContext
+        - sortOrder
+      properties:
+        columnCode:
+          type: string
+          description: カラムコード
+        columnName:
+          type: string
+          description: カラム名
+        relatedFeatureCode:
+          type: string
+          description: 関連機能コード
+        columnGroupCode:
+          type: string
+          description: カラム分類コード
+        usageContext:
+          type: string
+          description: 利用文脈
+        sortOrder:
+          type: integer
+          format: int32
+          description: 表示順
+    UserManagementPermissionContext:
+      type: object
+      additionalProperties: false
+      required:
+        - canViewList
+        - canCreateUser
+        - canEditUserProfile
+        - canEditFacilityAssignments
+        - canSendSetupInvitation
+        - canDeleteUser
+      properties:
+        canViewList:
+          type: boolean
+          description: 一覧表示可否
+        canCreateUser:
+          type: boolean
+          description: 新規作成可否。通常アカウントでは user_edit と user_facility_assignment_edit の両方が必要。共有システム管理者アカウントでは選択中施設が未削除であれば可
+        canEditUserProfile:
+          type: boolean
+          description: 基本情報編集可否
+        canEditFacilityAssignments:
+          type: boolean
+          description: 担当施設編集可否
+        canSendSetupInvitation:
+          type: boolean
+          description: 初回設定案内送信可否
+        canDeleteUser:
+          type: boolean
+          description: 削除可否
+    UserManagementUserListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - page
+        - pageSize
+        - totalCount
+        - items
+      properties:
+        page:
+          type: integer
+          format: int32
+          description: 現在ページ
+        pageSize:
+          type: integer
+          format: int32
+          description: ページサイズ
+        totalCount:
+          type: integer
+          format: int32
+          description: 検索結果総件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserManagementUserSummary'
+          description: ユーザー一覧
+          x-word-subtable-title: items要素（UserManagementUserSummary）
+    UserManagementUserSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - name
+        - emailAddress
+        - accessibleFacilities
+        - updatedAt
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID
+        name:
+          type: string
+          description: ユーザー名。操作ボタンのアクセシビリティラベルおよび検索対象として利用する
+        sectionName:
+          type: string
+          description: 所属部署
+        positionName:
+          type: string
+          description: 役職
+        phoneNumber:
+          type: string
+          description: 連絡先
+        emailAddress:
+          type: string
+          description: メールアドレス
+        accessibleFacilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserAccessibleFacilitySummary'
+          description: アクセス可能施設
+          x-word-subtable-title: accessibleFacilities要素（UserAccessibleFacilitySummary）
+        updatedAt:
+          type: string
+          description: 集約更新トークンとしても使う更新日時
+    UserAccessibleFacilitySummary:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        facilityName:
+          type: string
+          description: 施設名
+    GetUserManagementUsersByUserIdResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/UserManagementUserProfileDetail'
+          description: ユーザー基本情報
+          x-word-subtable-title: item要素（UserManagementUserProfileDetail）
+    UserManagementUserProfileDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - name
+        - emailAddress
+        - createdAt
+        - updatedAt
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID
+        name:
+          type: string
+          description: ユーザー名
+        emailAddress:
+          type: string
+          description: メールアドレス
+        defaultFacilityId:
+          type: integer
+          format: int64
+          description: 既定施設ID
+        defaultFacilityName:
+          type: string
+          description: 既定施設名
+        departmentName:
+          type: string
+          description: 所属部門
+        sectionName:
+          type: string
+          description: 所属部署
+        positionName:
+          type: string
+          description: 役職
+        phoneNumber:
+          type: string
+          description: 連絡先
+        lastLoginAt:
+          type: string
+          description: 最終ログイン日時
+        createdAt:
+          type: string
+          description: 作成日時
+        updatedAt:
+          type: string
+          description: 更新後の集約更新トークン
+    GetUserManagementUsersByUserIdFacilityAssignmentsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - updatedAt
+        - items
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID
+        defaultFacilityId:
+          type: integer
+          format: int64
+          description: 既定施設ID
+        updatedAt:
+          type: string
+          description: 集約更新トークンとしても使う更新日時
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserFacilityAssignmentDetail'
+          description: 担当施設一覧
+          x-word-subtable-title: items要素（UserFacilityAssignmentDetail）
+    UserFacilityAssignmentDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - userFacilityAssignmentId
+        - facilityId
+        - facilityCode
+        - facilityName
+        - isDefault
+        - availableFeatureCodes
+        - availableColumnCodes
+        - enabledFeatureCodes
+        - enabledColumnCodes
+      properties:
+        userFacilityAssignmentId:
+          type: integer
+          format: int64
+          description: ユーザー施設割当ID
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        facilityCode:
+          type: string
+          description: 施設コード
+        facilityName:
+          type: string
+          description: 施設名
+        isDefault:
+          type: boolean
+          description: 既定施設フラグ
+        availableFeatureCodes:
+          type: array
+          items:
+            type: string
+          description: 当該施設で提供されているユーザー別設定対象の機能コード一覧。config_scope=FACILITY_USER のみ
+        availableColumnCodes:
+          type: array
+          items:
+            type: string
+          description: 当該施設で提供されているカラムコード一覧
+        enabledFeatureCodes:
+          type: array
+          items:
+            type: string
+          description: 当該ユーザーへ有効化済みのユーザー別設定対象機能コード一覧。config_scope=FACILITY_USER のみ
+        enabledColumnCodes:
+          type: array
+          items:
+            type: string
+          description: 当該ユーザーへ有効化済みのカラムコード一覧
+    UserManagementFacilityListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - page
+        - pageSize
+        - totalCount
+        - items
+      properties:
+        page:
+          type: integer
+          format: int32
+          description: 現在ページ
+        pageSize:
+          type: integer
+          format: int32
+          description: ページサイズ
+        totalCount:
+          type: integer
+          format: int32
+          description: 検索結果件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacilityPermissionCandidate'
+          description: 管理可能な施設候補一覧
+          x-word-subtable-title: items要素（FacilityPermissionCandidate）
+    FacilityPermissionCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityCode
+        - facilityName
+        - establishmentId
+        - systemContractStatus
+        - availableFeatureCodes
+        - availableColumnCodes
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        facilityCode:
+          type: string
+          description: 施設コード
+        facilityName:
+          type: string
+          description: 施設名
+        establishmentId:
+          type: integer
+          format: int64
+          description: 設立母体ID
+        systemContractStatus:
+          type: string
+          description: システム利用契約状態
+        availableFeatureCodes:
+          type: array
+          items:
+            type: string
+          description: 当該施設で提供されているユーザー別設定対象の機能コード一覧。config_scope=FACILITY_USER のみ
+        availableColumnCodes:
+          type: array
+          items:
+            type: string
+          description: 当該施設で提供されているカラムコード一覧
+    PostUserManagementUsersRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - emailAddress
+        - defaultFacilityId
+        - facilityAssignments
+      properties:
+        name:
+          type: string
+          description: ユーザー名
+        emailAddress:
+          type: string
+          description: メールアドレス（ログイン ID）
+        defaultFacilityId:
+          type: integer
+          format: int64
+          description: 既定施設ID
+        departmentName:
+          type: string
+          description: 所属部門
+        sectionName:
+          type: string
+          description: 所属部署
+        positionName:
+          type: string
+          description: 役職
+        phoneNumber:
+          type: string
+          description: 連絡先
+        facilityAssignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserFacilityAssignmentWriteModel'
+          description: 担当施設ごとの割当・機能・表示カラム設定
+          x-word-subtable-title: facilityAssignments要素（UserFacilityAssignmentWriteModel）
+    UserManagementUserCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/UserManagementUserProfileDetail'
+          description: 登録後のユーザー基本情報
+          x-word-subtable-title: item要素（UserManagementUserProfileDetail）
+    UserFacilityAssignmentWriteModel:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - enabledFeatureCodes
+        - enabledColumnCodes
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 担当施設ID
+        enabledFeatureCodes:
+          type: array
+          items:
+            type: string
+          description: 当該施設でユーザーへ許可するユーザー別設定対象機能コード一覧
+        enabledColumnCodes:
+          type: array
+          items:
+            type: string
+          description: 当該施設でユーザーへ表示許可するカラムコード一覧
+    PutUserManagementUsersByUserIdProfileRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lastKnownUpdatedAt
+        - name
+        - emailAddress
+      properties:
+        lastKnownUpdatedAt:
+          type: string
+          description: 取得時点の updatedAt。競合検知に用いる
+        name:
+          type: string
+          description: ユーザー名
+        emailAddress:
+          type: string
+          description: メールアドレス
+        departmentName:
+          type: string
+          description: 所属部門
+        sectionName:
+          type: string
+          description: 所属部署
+        positionName:
+          type: string
+          description: 役職
+        phoneNumber:
+          type: string
+          description: 連絡先
+    PutUserManagementUsersByUserIdProfileResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/UserManagementUserProfileDetail'
+          description: 更新後のユーザー基本情報
+          x-word-subtable-title: item要素（UserManagementUserProfileDetail）
+    PutUserManagementUsersByUserIdFacilityAssignmentsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lastKnownUpdatedAt
+        - defaultFacilityId
+        - facilityAssignments
+      properties:
+        lastKnownUpdatedAt:
+          type: string
+          description: 取得時点の updatedAt。競合検知に用いる
+        defaultFacilityId:
+          type: integer
+          format: int64
+          description: 既定施設ID
+        facilityAssignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserFacilityAssignmentWriteModel'
+          description: 担当施設ごとの割当・機能・表示カラム設定
+          x-word-subtable-title: facilityAssignments要素（UserFacilityAssignmentWriteModel）
+    PutUserManagementUsersByUserIdFacilityAssignmentsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - updatedAt
+        - items
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID
+        defaultFacilityId:
+          type: integer
+          format: int64
+          description: 既定施設ID
+        updatedAt:
+          type: string
+          description: 更新後の集約更新トークン
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserFacilityAssignmentDetail'
+          description: 更新後の担当施設一覧
+          x-word-subtable-title: items要素（UserFacilityAssignmentDetail）
+    UserSetupInvitationResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - targetEmailAddress
+      properties:
+        status:
+          type: string
+          description: 受理状態。ACCEPTED
+        targetEmailAddress:
+          type: string
+          description: 送信対象メールアドレス
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

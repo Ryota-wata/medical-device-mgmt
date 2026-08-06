@@ -1,0 +1,3761 @@
+openapi: 3.0.4
+info:
+  title: データ突合 API API
+  version: 1.1.0
+  description: データ突合で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: データ突合
+    description: データ突合 APIのAPI
+paths:
+  /data-matching/context:
+    get:
+      tags:
+        - データ突合
+      operationId: getDataMatchingContext
+      summary: 画面コンテキスト取得
+      description: データ突合画面の初期表示に必要な対象施設、進行中セッション、統合対象一覧、件数サマリ、共通フィルタ候補を取得する。進行中セッションがある場合はその再開情報を返し、ない場合は新規開始可能な候補一覧を返却する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: facilityId
+          in: query
+          required: false
+          description: 対象施設ID。Bearer トークンから作業対象施設を導出できる場合は省略可能
+          schema:
+            type: integer
+            format: int64
+          x-word-required-label: 条件付き
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataMatchingContextResponse'
+        '400':
+          description: facilityId 不正など入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DataMatchingContextResponse）
+      x-word-response-subtable-titles:
+        - selectedFacility（FacilitySummary）
+        - surveyBase（SurveyBaseSummary）
+        - activeSession（DataMatchingSessionSummary）
+        - currentMergedSummary（DataMatchingMergedSummary）
+        - targetLists要素（DataMatchingTargetList）
+        - filterOptions（DataMatchingFilterOptions）
+        - categories / largeClasses / mediumClasses / assetItems / manufacturers / models 要素（MasterOption）
+      x-word-response-subtables:
+        - Title: selectedFacility（FacilitySummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+        - Title: surveyBase（SurveyBaseSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetSurveySessionId
+              - int64
+              - ✓
+              - 基底に採用する現有品調査セッションID
+            - - sourceLabel
+              - string
+              - ✓
+              - '画面表示用ラベル。例: 現有品調査リスト_2026-04-20'
+            - - recordCount
+              - int32
+              - ✓
+              - 基底調査レコード件数
+            - - createdAt
+              - datetime
+              - ✓
+              - 調査セッション作成日時
+        - Title: activeSession（DataMatchingSessionSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - sessionId
+              - int64
+              - ✓
+              - データ突合セッションID
+            - - sessionStatus
+              - string
+              - ✓
+              - セッション状態。IN_PROGRESS / CONFIRMED
+            - - lockVersion
+              - int64
+              - ✓
+              - 更新競合検知と一覧 snapshot 固定に用いる asset_data_matching_sessions.lock_version
+            - - sessionUpdatedAt
+              - datetime
+              - ✓
+              - セッション最終更新日時
+            - - createdByUserId
+              - int64
+              - ✓
+              - セッション作成者ユーザーID
+            - - createdAt
+              - datetime
+              - ✓
+              - セッション作成日時
+            - - confirmedAt
+              - datetime
+              - '-'
+              - 原本確定日時。CONFIRMED 時のみ設定
+            - - pendingListCount
+              - int32
+              - ✓
+              - 未完了の統合対象リスト件数
+            - - completedListCount
+              - int32
+              - ✓
+              - 完了済み統合対象リスト件数
+        - Title: currentMergedSummary（DataMatchingMergedSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - mergedItemCount
+              - int32
+              - ✓
+              - merged_into_item_id IS NULL AND item_status='ACTIVE' の現在有効な統合リスト行数
+            - - sourceListLabels
+              - string[]
+              - ✓
+              - すでに統合済みのリスト表示名
+            - - remainingListCount
+              - int32
+              - ✓
+              - 未完了リスト件数
+            - - unreadyItemCount
+              - int32
+              - ✓
+              - 原本確定を阻害している統合リスト行件数（資産マスタ未設定・無効、マスタ由来ID不整合、必須項目不足、または QR 阻害）
+            - - qrBlockingItemCount
+              - int32
+              - ✓
+              - QR 解決または QR 紐付け可否が原因で原本確定を阻害している統合リスト行件数
+        - Title: targetLists要素（DataMatchingTargetList）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - sessionListId
+              - int64|null
+              - ✓
+              - 進行中セッション配下の統合対象リストID。未開始時は null
+            - - listType
+              - string
+              - ✓
+              - 論理リスト種別。FIXED_ASSET / ME_LEDGER / OTHER_LEDGER / SURVEY_BASE
+            - - assetImportJobId
+              - int64|null
+              - ✓
+              - 対応する資産インポートジョブID。調査基底行は null
+            - - sourceLabel
+              - string
+              - ✓
+              - 画面表示用リスト名
+            - - recordCount
+              - int32
+              - ✓
+              - リスト件数
+            - - sourceOrder
+              - int32
+              - ✓
+              - 統合順
+            - - mergeStatus
+              - string
+              - ✓
+              - リスト状態。BASE_LOADED / PENDING / COMPLETED / SKIPPED
+            - - createdAt
+              - datetime
+              - ✓
+              - リスト作成日時
+            - - createdBy
+              - string
+              - '-'
+              - 画面表示用作成者名
+        - Title: filterOptions（DataMatchingFilterOptions）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - departmentNames
+              - string[]
+              - ✓
+              - 共通部門候補
+            - - sectionNames
+              - string[]
+              - ✓
+              - 共通部署候補
+            - - categories
+              - MasterOption[]
+              - ✓
+              - カテゴリ候補
+            - - largeClasses
+              - MasterOption[]
+              - ✓
+              - 大分類候補
+            - - mediumClasses
+              - MasterOption[]
+              - ✓
+              - 中分類候補
+            - - assetItems
+              - MasterOption[]
+              - ✓
+              - 品目候補
+            - - manufacturers
+              - MasterOption[]
+              - ✓
+              - メーカー候補
+            - - models
+              - MasterOption[]
+              - ✓
+              - 型式候補
+        - Title: categories / largeClasses / mediumClasses / assetItems / manufacturers / models 要素（MasterOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - id
+              - int64
+              - ✓
+              - マスタID
+            - - label
+              - string
+              - ✓
+              - 画面表示用名称
+  /data-matching/sessions:
+    post:
+      tags:
+        - データ突合
+      operationId: postDataMatchingSessions
+      summary: データ突合セッション開始
+      description: データ突合セッションを開始する。既存の進行中セッションがあればそれを返し、なければ現有品調査を基底に新規セッションを作成して統合対象リストを確定する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDataMatchingSessionsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 既存進行中セッションを再開
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataMatchingSessionStartResponse'
+        '201':
+          description: 新規セッション作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataMatchingSessionStartResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象施設、または基底に使える現有品調査セッションが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200 / 201：DataMatchingSessionStartResponse）
+      x-word-response-subtable-titles:
+        - targetLists要素（DataMatchingTargetList）
+      x-word-response-subtables:
+        - Title: targetLists要素（DataMatchingTargetList）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - sessionListId
+              - int64
+              - ✓
+              - 統合対象リストID
+            - - listType
+              - string
+              - ✓
+              - 論理リスト種別。SURVEY_BASE / FIXED_ASSET / ME_LEDGER / OTHER_LEDGER
+            - - assetImportJobId
+              - int64|null
+              - ✓
+              - 対応する資産インポートジョブID
+            - - sourceLabel
+              - string
+              - ✓
+              - 画面表示用リスト名
+            - - recordCount
+              - int32
+              - ✓
+              - 対象件数
+            - - sourceOrder
+              - int32
+              - ✓
+              - 統合順
+            - - mergeStatus
+              - string
+              - ✓
+              - リスト状態
+  /data-matching/sessions/{sessionId}/merged-items:
+    get:
+      tags:
+        - データ突合
+      operationId: getDataMatchingSessionsBySessionIdMergedItems
+      summary: 統合リスト一覧取得
+      description: 現在の統合リストを取得する。選択中リストに対する 対応中 / 対応済み タブ、共通フィルタ、一致検索を反映した上パネル表示に利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: データ突合セッションID
+          schema:
+            type: integer
+            format: int64
+        - name: sessionListId
+          in: query
+          required: true
+          description: 現在突合中の統合対象リストID
+          schema:
+            type: integer
+            format: int64
+        - name: tab
+          in: query
+          required: false
+          description: 取得対象タブ。PENDING / COMPLETED。既定値は PENDING
+          schema:
+            type: string
+        - name: departmentName
+          in: query
+          required: false
+          description: 共通部門名の完全一致条件
+          schema:
+            type: string
+        - name: sectionName
+          in: query
+          required: false
+          description: 共通部署名の完全一致条件
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          required: false
+          description: カテゴリID
+          schema:
+            type: integer
+            format: int64
+        - name: largeClassId
+          in: query
+          required: false
+          description: 大分類ID
+          schema:
+            type: integer
+            format: int64
+        - name: mediumClassId
+          in: query
+          required: false
+          description: 中分類ID
+          schema:
+            type: integer
+            format: int64
+        - name: assetItemId
+          in: query
+          required: false
+          description: 品目ID
+          schema:
+            type: integer
+            format: int64
+        - name: manufacturerId
+          in: query
+          required: false
+          description: メーカーID
+          schema:
+            type: integer
+            format: int64
+        - name: modelId
+          in: query
+          required: false
+          description: 型式ID
+          schema:
+            type: integer
+            format: int64
+        - name: keyword
+          in: query
+          required: false
+          description: 資産番号 / ME番号 / 品目 / メーカー / 型式の部分一致条件
+          schema:
+            type: string
+        - name: matchMode
+          in: query
+          required: false
+          description: 一致検索種別。NONE / CATEGORY / ASSET_NO / LARGE_CLASS / ASSET_ITEM / MANUFACTURER
+          schema:
+            type: string
+        - name: lockVersion
+          in: query
+          required: false
+          description: 一覧取得中の snapshot 固定に用いる session lock version。初回要求では省略可
+          schema:
+            type: integer
+            format: int64
+        - name: cursor
+          in: query
+          required: false
+          description: 既定ソート順の続き位置を表す continuation token
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          required: false
+          description: 取得件数。1-500、既定値 100
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataMatchingMergedItemListResponse'
+        '400':
+          description: tab / フィルタ条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象セッションまたは対象統合リストが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: セッションが CONFIRMED など取得不可状態である、または一覧 snapshot の lockVersion が失効した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DataMatchingMergedItemListResponse）
+      x-word-response-subtable-titles:
+        - currentList（CurrentListSummary）
+        - progress（MatchingProgressSummary）
+        - items要素（MergedItemSummary）
+      x-word-response-subtables:
+        - Title: currentList（CurrentListSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - sessionListId
+              - int64
+              - ✓
+              - 統合対象リストID
+            - - listType
+              - string
+              - ✓
+              - 論理リスト種別
+            - - sourceLabel
+              - string
+              - ✓
+              - 画面表示用リスト名
+            - - mergeStatus
+              - string
+              - ✓
+              - リスト状態
+        - Title: progress（MatchingProgressSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - totalItems
+              - int32
+              - ✓
+              - 現在リストに対して判定対象となる統合リスト総件数
+            - - completedItems
+              - int32
+              - ✓
+              - 現在リストに対して判定済みの統合リスト件数
+            - - pendingItems
+              - int32
+              - ✓
+              - 現在リストに対して未判定の統合リスト件数
+            - - progressPercent
+              - int32
+              - ✓
+              - 進捗率（0-100）
+        - Title: items要素（MergedItemSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetDataMatchingItemId
+              - int64
+              - ✓
+              - 統合リスト行ID
+            - - matchingStatus
+              - string|null
+              - ✓
+              - 選択中リストに対する突合状況。FULL_MATCH / PARTIAL_MATCH / QUANTITY_MISMATCH / RECHECK / UNCONFIRMED / UNREGISTERED
+            - - creationType
+              - string
+              - ✓
+              - 行生成起点。SURVEY_BASE / UNCONFIRMED_IMPORT
+            - - qrIdentifier
+              - string
+              - '-'
+              - QR識別子
+            - - assetNo
+              - string
+              - '-'
+              - 資産番号
+            - - equipmentNo
+              - string
+              - '-'
+              - ME番号
+            - - departmentName
+              - string
+              - ✓
+              - 共通部門名
+            - - sectionName
+              - string
+              - ✓
+              - 共通部署名
+            - - roomName
+              - string
+              - '-'
+              - 室名
+            - - categoryName
+              - string
+              - '-'
+              - カテゴリ名
+            - - largeClassName
+              - string
+              - '-'
+              - 大分類名
+            - - mediumClassName
+              - string
+              - '-'
+              - 中分類名
+            - - assetItemName
+              - string
+              - '-'
+              - 紐付け先SHIP資産マスタ由来の品目名
+            - - manufacturerName
+              - string
+              - '-'
+              - 資産固有の有効メーカー表示値。空の場合は紐付け先SHIP資産マスタのメーカー名へフォールバックする
+            - - modelName
+              - string
+              - '-'
+              - 資産固有の有効型式表示値。空の場合は紐付け先SHIP資産マスタの型式へフォールバックする
+            - - detailType
+              - string|null
+              - ✓
+              - 明細区分。MAIN / DETAIL / ACCESSORY
+            - - parentAssetDataMatchingItemId
+              - int64|null
+              - ✓
+              - 親統合リスト行ID
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - purchasedOn
+              - date
+              - '-'
+              - 購入日
+            - - sourceSummary
+              - string
+              - '-'
+              - 統合元サマリ
+            - - decisionNote
+              - string
+              - '-'
+              - 選択中リストに対する有効判定メモ
+            - - completedForCurrentList
+              - boolean
+              - ✓
+              - 現在リストに対して判定済みなら true
+  /data-matching/sessions/{sessionId}/fixed-asset-ledger-items:
+    get:
+      tags:
+        - データ突合
+      operationId: getDataMatchingSessionsBySessionIdFixedAssetLedgerItems
+      summary: 固定資産台帳（対応中）一覧取得
+      description: 選択中の固定資産台帳リストに対する対応中一覧と件数サマリを取得する。/data-matching 下パネルおよび参考画面 /data-matching/ledger の表示に利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: データ突合セッションID
+          schema:
+            type: integer
+            format: int64
+        - name: sessionListId
+          in: query
+          required: true
+          description: 現在突合中の固定資産台帳リストID
+          schema:
+            type: integer
+            format: int64
+        - name: departmentName
+          in: query
+          required: false
+          description: 共通部門名の完全一致条件
+          schema:
+            type: string
+        - name: sectionName
+          in: query
+          required: false
+          description: 共通部署名の完全一致条件
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          required: false
+          description: カテゴリID
+          schema:
+            type: integer
+            format: int64
+        - name: largeClassId
+          in: query
+          required: false
+          description: 大分類ID
+          schema:
+            type: integer
+            format: int64
+        - name: mediumClassId
+          in: query
+          required: false
+          description: 中分類ID
+          schema:
+            type: integer
+            format: int64
+        - name: assetItemId
+          in: query
+          required: false
+          description: 品目ID
+          schema:
+            type: integer
+            format: int64
+        - name: manufacturerId
+          in: query
+          required: false
+          description: メーカーID
+          schema:
+            type: integer
+            format: int64
+        - name: modelId
+          in: query
+          required: false
+          description: 型式ID
+          schema:
+            type: integer
+            format: int64
+        - name: keyword
+          in: query
+          required: false
+          description: 資産番号 / ME番号 / 品目 / メーカー / 型式の部分一致条件
+          schema:
+            type: string
+        - name: matchMode
+          in: query
+          required: false
+          description: 一致検索種別。NONE / CATEGORY / ASSET_NO / LARGE_CLASS / ASSET_ITEM / MANUFACTURER
+          schema:
+            type: string
+        - name: lockVersion
+          in: query
+          required: false
+          description: 一覧取得中の snapshot 固定に用いる session lock version。初回要求では省略可
+          schema:
+            type: integer
+            format: int64
+        - name: cursor
+          in: query
+          required: false
+          description: 既定ソート順の続き位置を表す continuation token
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          required: false
+          description: 取得件数。1-500、既定値 100
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FixedAssetLedgerItemListResponse'
+        '400':
+          description: フィルタ条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象セッションまたは対象統合リストが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 固定資産台帳以外のリストを指定した、または一覧 snapshot の lockVersion が失効した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：FixedAssetLedgerItemListResponse）
+      x-word-response-subtable-titles:
+        - items要素（FixedAssetLedgerItemSummary）
+      x-word-response-subtables:
+        - Title: items要素（FixedAssetLedgerItemSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetImportRowId
+              - int64
+              - ✓
+              - 資産インポート行ID
+            - - matchingStatus
+              - string|null
+              - ✓
+              - 当該リストに対する突合状況。未処理の場合は null
+            - - qrIdentifier
+              - string|null
+              - ✓
+              - QRコード表示列。対応中の未処理行では null
+            - - assetNo
+              - string
+              - '-'
+              - 資産番号
+            - - managementNo
+              - string
+              - '-'
+              - ME管理機器番号
+            - - departmentName
+              - string
+              - '-'
+              - 共通部門名
+            - - sectionName
+              - string
+              - '-'
+              - 共通部署名
+            - - roomName
+              - string
+              - '-'
+              - 室名
+            - - categoryName
+              - string
+              - '-'
+              - カテゴリ名
+            - - largeClassName
+              - string
+              - '-'
+              - 大分類名
+            - - mediumClassName
+              - string
+              - '-'
+              - 中分類名
+            - - assetItemName
+              - string
+              - '-'
+              - 選択SHIP資産マスタ由来の品目名
+            - - manufacturerName
+              - string
+              - '-'
+              - 取込行固有の有効メーカー表示値。空の場合は選択SHIP資産マスタのメーカー名へフォールバックする
+            - - modelName
+              - string
+              - '-'
+              - 取込行固有の有効型式表示値。空の場合は選択SHIP資産マスタの型式へフォールバックする
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - purchasedOn
+              - date
+              - '-'
+              - 購入日
+  /data-matching/sessions/{sessionId}/me-ledger-items:
+    get:
+      tags:
+        - データ突合
+      operationId: getDataMatchingSessionsBySessionIdMeLedgerItems
+      summary: ME管理台帳（対応中）一覧取得
+      description: 選択中のME管理台帳リストに対する対応中一覧と件数サマリを取得する。/data-matching 下パネルおよび参考画面 /data-matching/me-ledger の表示に利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: データ突合セッションID
+          schema:
+            type: integer
+            format: int64
+        - name: sessionListId
+          in: query
+          required: true
+          description: 現在突合中のME管理台帳リストID
+          schema:
+            type: integer
+            format: int64
+        - name: departmentName
+          in: query
+          required: false
+          description: 共通部門名の完全一致条件
+          schema:
+            type: string
+        - name: sectionName
+          in: query
+          required: false
+          description: 共通部署名の完全一致条件
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          required: false
+          description: カテゴリID
+          schema:
+            type: integer
+            format: int64
+        - name: largeClassId
+          in: query
+          required: false
+          description: 大分類ID
+          schema:
+            type: integer
+            format: int64
+        - name: mediumClassId
+          in: query
+          required: false
+          description: 中分類ID
+          schema:
+            type: integer
+            format: int64
+        - name: assetItemId
+          in: query
+          required: false
+          description: 品目ID
+          schema:
+            type: integer
+            format: int64
+        - name: manufacturerId
+          in: query
+          required: false
+          description: メーカーID
+          schema:
+            type: integer
+            format: int64
+        - name: modelId
+          in: query
+          required: false
+          description: 型式ID
+          schema:
+            type: integer
+            format: int64
+        - name: keyword
+          in: query
+          required: false
+          description: 資産番号 / ME番号 / 品目 / メーカー / 型式の部分一致条件
+          schema:
+            type: string
+        - name: matchMode
+          in: query
+          required: false
+          description: 一致検索種別。NONE / CATEGORY / ASSET_NO / LARGE_CLASS / ASSET_ITEM / MANUFACTURER
+          schema:
+            type: string
+        - name: lockVersion
+          in: query
+          required: false
+          description: 一覧取得中の snapshot 固定に用いる session lock version。初回要求では省略可
+          schema:
+            type: integer
+            format: int64
+        - name: cursor
+          in: query
+          required: false
+          description: 既定ソート順の続き位置を表す continuation token
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          required: false
+          description: 取得件数。1-500、既定値 100
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MELedgerItemListResponse'
+        '400':
+          description: フィルタ条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象セッションまたは対象統合リストが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ME管理台帳以外のリストを指定した、または一覧 snapshot の lockVersion が失効した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：MELedgerItemListResponse）
+      x-word-response-subtable-titles:
+        - items要素（MELedgerItemSummary）
+      x-word-response-subtables:
+        - Title: items要素（MELedgerItemSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetImportRowId
+              - int64
+              - ✓
+              - 資産インポート行ID
+            - - matchingStatus
+              - string|null
+              - ✓
+              - 当該リストに対する突合状況。未処理の場合は null
+            - - qrIdentifier
+              - string|null
+              - ✓
+              - QRコード表示列。対応中の未処理行では null
+            - - managementNo
+              - string
+              - '-'
+              - ME管理機器番号
+            - - assetNo
+              - string
+              - '-'
+              - 資産番号
+            - - departmentName
+              - string
+              - '-'
+              - 共通部門名
+            - - sectionName
+              - string
+              - '-'
+              - 共通部署名
+            - - roomName
+              - string
+              - '-'
+              - 室名
+            - - categoryName
+              - string
+              - '-'
+              - カテゴリ名
+            - - largeClassName
+              - string
+              - '-'
+              - 大分類名
+            - - mediumClassName
+              - string
+              - '-'
+              - 中分類名
+            - - assetItemName
+              - string
+              - '-'
+              - 選択SHIP資産マスタ由来の品目名
+            - - manufacturerName
+              - string
+              - '-'
+              - 取込行固有の有効メーカー表示値。空の場合は選択SHIP資産マスタのメーカー名へフォールバックする
+            - - modelName
+              - string
+              - '-'
+              - 取込行固有の有効型式表示値。空の場合は選択SHIP資産マスタの型式へフォールバックする
+            - - serialNo
+              - string
+              - '-'
+              - シリアル番号
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - purchasedOn
+              - date
+              - '-'
+              - 購入日。取得元は要件保留中のため現時点では null
+            - - inspectionDate
+              - date
+              - '-'
+              - 検収日。互換・補助情報であり本画面の一覧表示には使用しない
+  /data-matching/sessions/{sessionId}/matches:
+    post:
+      tags:
+        - データ突合
+      operationId: postDataMatchingSessionsBySessionIdMatches
+      summary: 突合結果登録
+      description: 完全一致 / 部分一致 / 数量不一致 / 再確認の突合結果を登録する。上パネル複数件と下パネル1件を、要求 representativeItemId で指定した 1 つの代表統合リスト行へ集約する。下パネルには取込突き合わせで確定済みかつ有効なSHIP資産マスタへ紐付く行だけを指定でき、品目名は選択マスタ由来、メーカー名・型式は取込行固有の有効表示値として引き継ぐ。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: データ突合セッションID
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 更新系 API の冪等性キー。同一 sessionId + 実行ユーザー + API パスで一意に扱う
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDataMatchingSessionsBySessionIdMatchesRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataMatchingRegisterMatchResponse'
+        '400':
+          description: 入力不正、選択件数不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象セッション、対象統合リスト、対象行が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'セッション競合、現在処理対象リスト以外の指定、再集約不可 item の指定、代表行を含む階層矛盾、既に判定済み、台帳行の二重消費、台帳行の未確定・資産マスタ未設定・無効・分類ID不整合、または 台帳1 : 現有品調査n 制約違反'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DataMatchingRegisterMatchResponse）
+  /data-matching/sessions/{sessionId}/mark-unregistered:
+    post:
+      tags:
+        - データ突合
+      operationId: postDataMatchingSessionsBySessionIdMarkUnregistered
+      summary: 未登録確定
+      description: 現有品側にのみ存在する統合リスト行を、選択中台帳リストに対して 未登録 として確定する。統合リスト行自体は維持したまま、現在リストに対する判定完了状態へ更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: データ突合セッションID
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 更新系 API の冪等性キー。同一 sessionId + 実行ユーザー + API パスで一意に扱う
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDataMatchingSessionsBySessionIdMarkUnregisteredRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataMatchingMarkUnregisteredResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象セッション、対象統合リスト、対象行が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: セッション競合、現在処理対象リスト以外の指定、または既に判定済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DataMatchingMarkUnregisteredResponse）
+  /data-matching/sessions/{sessionId}/mark-unconfirmed:
+    post:
+      tags:
+        - データ突合
+      operationId: postDataMatchingSessionsBySessionIdMarkUnconfirmed
+      summary: 未確認確定
+      description: 台帳側にのみ存在する行を 未確認 として確定する。取込突き合わせで確定済みかつ有効なSHIP資産マスタへ紐付く台帳行だけを対象とし、選択済みの分類ID、選択マスタ由来の品目名、取込行固有のメーカー名・型式を引き継いで新しい統合リスト行を作成する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: データ突合セッションID
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 更新系 API の冪等性キー。同一 sessionId + 実行ユーザー + API パスで一意に扱う
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDataMatchingSessionsBySessionIdMarkUnconfirmedRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataMatchingMarkUnconfirmedResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象セッション、対象統合リスト、対象台帳行が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: セッション競合、現在処理対象リスト以外の指定、既に判定済み、または台帳行の未確定・資産マスタ未設定・無効・分類ID不整合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DataMatchingMarkUnconfirmedResponse）
+  /data-matching/sessions/{sessionId}/revert-decision:
+    post:
+      tags:
+        - データ突合
+      operationId: postDataMatchingSessionsBySessionIdRevertDecision
+      summary: 判定差し戻し
+      description: 現在リストに対する有効判定を差し戻し、必要に応じて論理統合された統合リスト行を復元する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: データ突合セッションID
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 更新系 API の冪等性キー。同一 sessionId + 実行ユーザー + API パスで一意に扱う
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDataMatchingSessionsBySessionIdRevertDecisionRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 差し戻し成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataMatchingRevertDecisionResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象セッション、対象統合対象リスト、または有効判定結果が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: セッション競合、後続リスト依存が残る状態、または差し戻し不可状態
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DataMatchingRevertDecisionResponse）
+  /data-matching/sessions/{sessionId}/complete:
+    post:
+      tags:
+        - データ突合
+      operationId: postDataMatchingSessionsBySessionIdComplete
+      summary: 突合完了 / 原本確定
+      description: >-
+        現在リストとの突合完了、または現在の統合リストを原本リストとして確定する。早期確定時は残りリストを SKIPPED として扱い、asset_ledgers を生成し、現有品調査写真を資産写真として引き継ぎ、必要な
+        qr_codes.asset_ledger_id を確定する。原本確定では全行に有効なSHIP資産マスタ紐付けとマスタ由来IDの整合を必須とする。品目名は紐付け先資産マスタ由来とし、メーカー名・型式は資産固有の表示値としてマスタ名称と異なる値を許可し、空の場合はマスタ名称へフォールバックする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: データ突合セッションID
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 更新系 API の冪等性キー。同一 sessionId + 実行ユーザー + API パスで一意に扱う
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDataMatchingSessionsBySessionIdCompleteRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataMatchingCompleteResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象セッションまたは対象統合リストが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: セッション競合、現在処理対象リスト以外の完了要求、未判定行残存、SHIP資産マスタ未設定・無効、マスタ由来ID不整合、原本直前スナップショット不足、QR紐付け競合、または途中確定条件未達
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DataMatchingCompleteResponse）
+      x-word-response-subtable-titles:
+        - skippedLists要素（SkippedListSummary）
+      x-word-response-subtables:
+        - Title: skippedLists要素（SkippedListSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - sessionListId
+              - int64
+              - ✓
+              - 統合対象リストID
+            - - sourceLabel
+              - string
+              - ✓
+              - 画面表示用リスト名
+            - - sourceOrder
+              - int32
+              - ✓
+              - 統合順
+            - - mergeStatus
+              - string
+              - ✓
+              - 常に SKIPPED
+  /data-matching/sessions/{sessionId}/result:
+    get:
+      tags:
+        - データ突合
+      operationId: getDataMatchingSessionsBySessionIdResult
+      summary: 統合結果一覧取得
+      description: 原本リストモーダル用の統合結果一覧を取得する。現在の統合リストをページ単位で返却し、原本確定前のレビューと確定後の参照の両方に利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_ledger_matching
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          description: データ突合セッションID
+          schema:
+            type: integer
+            format: int64
+        - name: lockVersion
+          in: query
+          required: false
+          description: 一覧取得中の snapshot 固定に用いる session lock version。初回要求では省略可
+          schema:
+            type: integer
+            format: int64
+        - name: cursor
+          in: query
+          required: false
+          description: 既定ソート順の続き位置を表す continuation token
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          required: false
+          description: 取得件数。1-500、既定値 100
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataMatchingResultResponse'
+        '400':
+          description: cursor / pageSize 不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_ledger_matching なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象セッションが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 一覧 snapshot の lockVersion が失効した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DataMatchingResultResponse）
+      x-word-response-subtable-titles:
+        - skippedLists要素（SkippedListSummary）
+        - items要素（OriginalLedgerCandidate）
+        - sourceDetails要素（SourceDetail）
+        - listResults要素（ListResultSummary）
+      x-word-response-subtables:
+        - Title: skippedLists要素（SkippedListSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - sessionListId
+              - int64
+              - ✓
+              - 統合対象リストID
+            - - sourceLabel
+              - string
+              - ✓
+              - 画面表示用リスト名
+            - - sourceOrder
+              - int32
+              - ✓
+              - 統合順
+            - - mergeStatus
+              - string
+              - ✓
+              - 常に SKIPPED
+        - Title: items要素（OriginalLedgerCandidate）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetDataMatchingItemId
+              - int64
+              - ✓
+              - 統合リスト行ID
+            - - assetLedgerId
+              - int64|null
+              - ✓
+              - 原本確定後に作成された asset_ledgers.asset_ledger_id。未確定セッションでは null
+            - - matchingStatus
+              - string|null
+              - ✓
+              - 原本直前スナップショット上の最新確定判定結果
+            - - representativeImportRowId
+              - int64|null
+              - ✓
+              - 現在代表台帳行として採用されている資産インポート行ID
+            - - surveySourceRecordIds
+              - int64[]
+              - ✓
+              - 現在統合済みの現有品調査レコードID一覧
+            - - qrIdentifier
+              - string
+              - '-'
+              - 現有品調査由来の採用済み QR 識別子。qrResolutionStatus='RESOLVED' の場合のみ設定
+            - - qrResolutionStatus
+              - string
+              - ✓
+              - QR 採否状態。NONE / RESOLVED / CONFLICT
+            - - qrBindingCheckStatus
+              - string
+              - ✓
+              - >-
+                原本確定時の QR 紐付け可否。NO_QR / READY_TO_BIND / UNRESOLVED / DUPLICATED_IN_SESSION / NOT_ISSUED / DELETED /
+                BOUND_OTHER_ASSET / FACILITY_MISMATCH
+            - - assetNo
+              - string
+              - '-'
+              - 資産番号
+            - - equipmentNo
+              - string
+              - '-'
+              - ME番号
+            - - facilityLocationId
+              - int64|null
+              - ✓
+              - 原本生成に用いる施設ロケーションID
+            - - assetName
+              - string|null
+              - ✓
+              - 原本生成に用いる資産名
+            - - departmentName
+              - string
+              - ✓
+              - 共通部門名
+            - - sectionName
+              - string
+              - ✓
+              - 共通部署名
+            - - roomName
+              - string
+              - '-'
+              - 室名
+            - - categoryName
+              - string
+              - '-'
+              - カテゴリ名
+            - - largeClassName
+              - string
+              - '-'
+              - 大分類名
+            - - mediumClassName
+              - string
+              - '-'
+              - 中分類名
+            - - assetItemName
+              - string
+              - '-'
+              - 紐付け先SHIP資産マスタ由来の品目名
+            - - manufacturerName
+              - string
+              - '-'
+              - 原本生成に用いる資産固有の有効メーカー表示値。空の場合は紐付け先SHIP資産マスタのメーカー名へフォールバックする
+            - - modelName
+              - string
+              - '-'
+              - 原本生成に用いる資産固有の有効型式表示値。空の場合は紐付け先SHIP資産マスタの型式へフォールバックする
+            - - serialNo
+              - string
+              - '-'
+              - シリアル番号
+            - - detailType
+              - string|null
+              - ✓
+              - 原本生成に用いる明細区分。MAIN / DETAIL / ACCESSORY
+            - - parentAssetDataMatchingItemId
+              - int64|null
+              - ✓
+              - 親統合リスト行ID
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - unit
+              - string|null
+              - ✓
+              - 数量単位
+            - - purchasedOn
+              - date
+              - '-'
+              - 購入日
+            - - sourceSummary
+              - string
+              - '-'
+              - 統合元サマリ
+            - - sourcePhotoCount
+              - int32
+              - ✓
+              - 現在の SURVEY_RECORD 元レコードに紐づく非削除調査写真件数。未確定時は原本確定時の写真引継ぎ候補件数
+            - - assetPhotoCount
+              - int32
+              - ✓
+              - 原本確定後に当該 assetLedgerId へ作成された資産写真件数。未確定時は 0
+            - - primaryAssetPhotoDocumentId
+              - int64|null
+              - ✓
+              - 原本確定後に代表資産写真となった application_documents.application_document_id。未確定または写真なしの場合は null
+            - - sourceDetails
+              - SourceDetail[]
+              - ✓
+              - 現在代表元の詳細一覧
+            - - listResults
+              - ListResultSummary[]
+              - ✓
+              - 対象リストごとの判定履歴一覧
+            - - blockingReasons
+              - string[]
+              - ✓
+              - '原本確定を阻害している理由コード一覧。例: MISSING_SHIP_ASSET_MASTER_ID、INVALID_SHIP_ASSET_MASTER_ID、MISSING_CATEGORY_ID、QR_UNRESOLVED、QR_NOT_ISSUED'
+            - - isOriginalReady
+              - boolean
+              - ✓
+              - 有効なSHIP資産マスタ紐付け、マスタ由来IDの整合、原本確定必須項目、QR 解決・紐付け可否をすべて満たす場合は true
+            - - missingRequiredFields
+              - string[]
+              - ✓
+              - 不足している原本確定必須項目名一覧。資産マスタ未設定時は shipAssetMasterId を含む
+        - Title: sourceDetails要素（SourceDetail）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - sourceType
+              - string
+              - ✓
+              - 元種別。SURVEY_RECORD / IMPORT_ROW
+            - - sourceLabel
+              - string
+              - ✓
+              - 画面表示用元リスト名
+            - - sourceRelationType
+              - string
+              - ✓
+              - '元反映区分。例: MATCHED / UNREGISTERED / UNCONFIRMED'
+            - - assetSurveyRecordId
+              - int64|null
+              - ✓
+              - sourceType='SURVEY_RECORD' の場合の調査レコードID
+            - - assetImportRowId
+              - int64|null
+              - ✓
+              - sourceType='IMPORT_ROW' の場合の資産インポート行ID
+            - - qrIdentifier
+              - string|null
+              - ✓
+              - sourceType='SURVEY_RECORD' の場合は当該調査レコードの QR 識別子、IMPORT_ROW の場合は null
+            - - sourcePhotoDocumentIds
+              - int64[]
+              - ✓
+              - sourceType='SURVEY_RECORD' の場合は当該調査レコードに紐づく非削除調査写真の application_document_id 一覧、IMPORT_ROW の場合は空配列
+            - - sourcePrimaryPhotoDocumentId
+              - int64|null
+              - ✓
+              - sourceType='SURVEY_RECORD' の場合は当該調査レコードの代表調査写真ID。写真なしまたは IMPORT_ROW の場合は null
+        - Title: listResults要素（ListResultSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - sessionListId
+              - int64
+              - ✓
+              - 統合対象リストID
+            - - sourceLabel
+              - string
+              - ✓
+              - 画面表示用リスト名
+            - - sourceOrder
+              - int32
+              - ✓
+              - 統合順
+            - - mergeStatus
+              - string
+              - ✓
+              - 対象リスト状態。PENDING / COMPLETED / SKIPPED
+            - - resultStatus
+              - string
+              - ✓
+              - 判定履歴状態。ACTIVE / REVERTED
+            - - matchingStatus
+              - string
+              - ✓
+              - 判定結果
+            - - consumedAssetImportRowId
+              - int64|null
+              - ✓
+              - 判定時に消費した資産インポート行ID
+            - - decisionNote
+              - string
+              - '-'
+              - 判定メモ。更新系 API の decisionNote 保存先
+            - - decidedByUserId
+              - int64
+              - ✓
+              - 判定実行ユーザーID
+            - - decidedAt
+              - datetime
+              - ✓
+              - 判定実行日時
+            - - revertedByUserId
+              - int64|null
+              - ✓
+              - 差し戻し実行ユーザーID
+            - - revertedAt
+              - datetime|null
+              - ✓
+              - 差し戻し実行日時
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    DataMatchingContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - selectedFacility
+        - surveyBase
+        - activeSession
+        - currentMergedSummary
+        - targetLists
+        - filterOptions
+        - canStartSession
+        - canConfirmOriginal
+      properties:
+        selectedFacility:
+          $ref: '#/components/schemas/FacilitySummary'
+          description: 対象施設
+          x-word-subtable-title: selectedFacility（FacilitySummary）
+        surveyBase:
+          type: string
+          description: 基底となる現有品調査セッション要約。見つからない場合は null
+        activeSession:
+          type: string
+          description: 進行中セッション。存在しない場合は null
+        currentMergedSummary:
+          type: string
+          description: 現在の統合リスト件数サマリ。進行中セッションがない場合は null
+        targetLists:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataMatchingTargetList'
+          description: 統合対象一覧。進行中セッションがある場合はその session list、ない場合は新規開始候補
+          x-word-subtable-title: targetLists要素（DataMatchingTargetList）
+        filterOptions:
+          $ref: '#/components/schemas/DataMatchingFilterOptions'
+          description: 共通フィルタ候補
+          x-word-subtable-title: filterOptions（DataMatchingFilterOptions）
+        canStartSession:
+          type: boolean
+          description: 新規セッション開始可能な場合は true
+        canConfirmOriginal:
+          type: boolean
+          description: 原本直前スナップショット全件が有効なSHIP資産マスタ紐付け、マスタ由来IDの整合、原本確定必須項目、QR 解決・紐付け可否を満たす場合は true
+        assetSurveySessionId:
+          type: integer
+          format: int64
+          description: 基底に採用する現有品調査セッションID
+          x-word-omit-row: true
+          x-required-when: surveyBase（SurveyBaseSummary）
+          x-word-required-label: ✓
+        sourceLabel:
+          type: string
+          description: '画面表示用ラベル。例: 現有品調査リスト_2026-04-20'
+          x-word-omit-row: true
+          x-required-when: surveyBase（SurveyBaseSummary）
+          x-word-required-label: ✓
+        recordCount:
+          type: integer
+          format: int32
+          description: 基底調査レコード件数
+          x-word-omit-row: true
+          x-required-when: surveyBase（SurveyBaseSummary）
+          x-word-required-label: ✓
+        createdAt:
+          type: string
+          format: date-time
+          description: 調査セッション作成日時
+          x-word-omit-row: true
+          x-required-when: surveyBase（SurveyBaseSummary）
+          x-word-required-label: ✓
+        sessionId:
+          type: integer
+          format: int64
+          description: データ突合セッションID
+          x-word-omit-row: true
+          x-required-when: activeSession（DataMatchingSessionSummary）
+          x-word-required-label: ✓
+        sessionStatus:
+          type: string
+          description: セッション状態。IN_PROGRESS / CONFIRMED
+          x-word-omit-row: true
+          x-required-when: activeSession（DataMatchingSessionSummary）
+          x-word-required-label: ✓
+        lockVersion:
+          type: integer
+          format: int64
+          description: 更新競合検知と一覧 snapshot 固定に用いる asset_data_matching_sessions.lock_version
+          x-word-omit-row: true
+          x-required-when: activeSession（DataMatchingSessionSummary）
+          x-word-required-label: ✓
+        sessionUpdatedAt:
+          type: string
+          format: date-time
+          description: セッション最終更新日時
+          x-word-omit-row: true
+          x-required-when: activeSession（DataMatchingSessionSummary）
+          x-word-required-label: ✓
+        createdByUserId:
+          type: integer
+          format: int64
+          description: セッション作成者ユーザーID
+          x-word-omit-row: true
+          x-required-when: activeSession（DataMatchingSessionSummary）
+          x-word-required-label: ✓
+        confirmedAt:
+          type: string
+          format: date-time
+          description: 原本確定日時。CONFIRMED 時のみ設定
+          x-word-omit-row: true
+          x-required-when: activeSession（DataMatchingSessionSummary）
+        pendingListCount:
+          type: integer
+          format: int32
+          description: 未完了の統合対象リスト件数
+          x-word-omit-row: true
+          x-required-when: activeSession（DataMatchingSessionSummary）
+          x-word-required-label: ✓
+        completedListCount:
+          type: integer
+          format: int32
+          description: 完了済み統合対象リスト件数
+          x-word-omit-row: true
+          x-required-when: activeSession（DataMatchingSessionSummary）
+          x-word-required-label: ✓
+        mergedItemCount:
+          type: integer
+          format: int32
+          description: merged_into_item_id IS NULL AND item_status='ACTIVE' の現在有効な統合リスト行数
+          x-word-omit-row: true
+          x-required-when: currentMergedSummary（DataMatchingMergedSummary）
+          x-word-required-label: ✓
+        sourceListLabels:
+          type: array
+          items:
+            type: string
+          description: すでに統合済みのリスト表示名
+          x-word-omit-row: true
+          x-required-when: currentMergedSummary（DataMatchingMergedSummary）
+          x-word-required-label: ✓
+        remainingListCount:
+          type: integer
+          format: int32
+          description: 未完了リスト件数
+          x-word-omit-row: true
+          x-required-when: currentMergedSummary（DataMatchingMergedSummary）
+          x-word-required-label: ✓
+        unreadyItemCount:
+          type: integer
+          format: int32
+          description: 原本確定を阻害している統合リスト行件数（資産マスタ未設定・無効、マスタ由来ID不整合、必須項目不足、または QR 阻害）
+          x-word-omit-row: true
+          x-required-when: currentMergedSummary（DataMatchingMergedSummary）
+          x-word-required-label: ✓
+        qrBlockingItemCount:
+          type: integer
+          format: int32
+          description: QR 解決または QR 紐付け可否が原因で原本確定を阻害している統合リスト行件数
+          x-word-omit-row: true
+          x-required-when: currentMergedSummary（DataMatchingMergedSummary）
+          x-word-required-label: ✓
+        id:
+          type: integer
+          format: int64
+          description: マスタID
+          x-word-omit-row: true
+          x-required-when: categories / largeClasses / mediumClasses / assetItems / manufacturers / models 要素（MasterOption）
+          x-word-required-label: ✓
+        label:
+          type: string
+          description: 画面表示用名称
+          x-word-omit-row: true
+          x-required-when: categories / largeClasses / mediumClasses / assetItems / manufacturers / models 要素（MasterOption）
+          x-word-required-label: ✓
+    FacilitySummary:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        facilityName:
+          type: string
+          description: 施設名
+    SurveyBaseSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - assetSurveySessionId
+        - sourceLabel
+        - recordCount
+        - createdAt
+      properties:
+        assetSurveySessionId:
+          type: integer
+          format: int64
+          description: 基底に採用する現有品調査セッションID
+        sourceLabel:
+          type: string
+          description: '画面表示用ラベル。例: 現有品調査リスト_2026-04-20'
+        recordCount:
+          type: integer
+          format: int32
+          description: 基底調査レコード件数
+        createdAt:
+          type: string
+          format: date-time
+          description: 調査セッション作成日時
+    DataMatchingSessionSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - sessionStatus
+        - lockVersion
+        - sessionUpdatedAt
+        - createdByUserId
+        - createdAt
+        - pendingListCount
+        - completedListCount
+      properties:
+        sessionId:
+          type: integer
+          format: int64
+          description: データ突合セッションID
+        sessionStatus:
+          type: string
+          description: セッション状態。IN_PROGRESS / CONFIRMED
+        lockVersion:
+          type: integer
+          format: int64
+          description: 更新競合検知と一覧 snapshot 固定に用いる asset_data_matching_sessions.lock_version
+        sessionUpdatedAt:
+          type: string
+          format: date-time
+          description: セッション最終更新日時
+        createdByUserId:
+          type: integer
+          format: int64
+          description: セッション作成者ユーザーID
+        createdAt:
+          type: string
+          format: date-time
+          description: セッション作成日時
+        confirmedAt:
+          type: string
+          format: date-time
+          description: 原本確定日時。CONFIRMED 時のみ設定
+        pendingListCount:
+          type: integer
+          format: int32
+          description: 未完了の統合対象リスト件数
+        completedListCount:
+          type: integer
+          format: int32
+          description: 完了済み統合対象リスト件数
+    DataMatchingMergedSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - mergedItemCount
+        - sourceListLabels
+        - remainingListCount
+        - unreadyItemCount
+        - qrBlockingItemCount
+      properties:
+        mergedItemCount:
+          type: integer
+          format: int32
+          description: merged_into_item_id IS NULL AND item_status='ACTIVE' の現在有効な統合リスト行数
+        sourceListLabels:
+          type: array
+          items:
+            type: string
+          description: すでに統合済みのリスト表示名
+        remainingListCount:
+          type: integer
+          format: int32
+          description: 未完了リスト件数
+        unreadyItemCount:
+          type: integer
+          format: int32
+          description: 原本確定を阻害している統合リスト行件数（資産マスタ未設定・無効、マスタ由来ID不整合、必須項目不足、または QR 阻害）
+        qrBlockingItemCount:
+          type: integer
+          format: int32
+          description: QR 解決または QR 紐付け可否が原因で原本確定を阻害している統合リスト行件数
+    DataMatchingTargetList:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionListId
+        - listType
+        - assetImportJobId
+        - sourceLabel
+        - recordCount
+        - sourceOrder
+        - mergeStatus
+      properties:
+        sessionListId:
+          type: integer
+          format: int64
+          description: 統合対象リストID
+        listType:
+          type: string
+          description: 論理リスト種別。SURVEY_BASE / FIXED_ASSET / ME_LEDGER / OTHER_LEDGER
+        assetImportJobId:
+          type: string
+          description: 対応する資産インポートジョブID
+        sourceLabel:
+          type: string
+          description: 画面表示用リスト名
+        recordCount:
+          type: integer
+          format: int32
+          description: 対象件数
+        sourceOrder:
+          type: integer
+          format: int32
+          description: 統合順
+        mergeStatus:
+          type: string
+          description: リスト状態
+    DataMatchingFilterOptions:
+      type: object
+      additionalProperties: false
+      required:
+        - departmentNames
+        - sectionNames
+        - categories
+        - largeClasses
+        - mediumClasses
+        - assetItems
+        - manufacturers
+        - models
+      properties:
+        departmentNames:
+          type: array
+          items:
+            type: string
+          description: 共通部門候補
+        sectionNames:
+          type: array
+          items:
+            type: string
+          description: 共通部署候補
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterOption'
+          description: カテゴリ候補
+          x-word-subtable-title: categories / largeClasses / mediumClasses / assetItems / manufacturers / models 要素（MasterOption）
+        largeClasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterOption'
+          description: 大分類候補
+          x-word-omit-subtable: true
+        mediumClasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterOption'
+          description: 中分類候補
+          x-word-omit-subtable: true
+        assetItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterOption'
+          description: 品目候補
+          x-word-omit-subtable: true
+        manufacturers:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterOption'
+          description: メーカー候補
+          x-word-omit-subtable: true
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterOption'
+          description: 型式候補
+          x-word-omit-subtable: true
+    MasterOption:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: マスタID
+        label:
+          type: string
+          description: 画面表示用名称
+    PostDataMatchingSessionsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID。Bearer トークンから作業対象施設を導出できる場合は省略可能
+          x-word-required-label: 条件付き
+    DataMatchingSessionStartResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - createdNew
+        - sessionStatus
+        - lockVersion
+        - sessionUpdatedAt
+        - mergedItemCount
+        - sourceListLabels
+        - targetLists
+        - canConfirmOriginal
+      properties:
+        sessionId:
+          type: integer
+          format: int64
+          description: データ突合セッションID
+        createdNew:
+          type: boolean
+          description: 新規作成時は true、既存再開時は false
+        sessionStatus:
+          type: string
+          description: セッション状態。通常は IN_PROGRESS
+        lockVersion:
+          type: integer
+          format: int64
+          description: 更新競合検知と一覧 snapshot 固定に用いる asset_data_matching_sessions.lock_version
+        sessionUpdatedAt:
+          type: string
+          format: date-time
+          description: セッション最終更新日時
+        mergedItemCount:
+          type: integer
+          format: int32
+          description: merged_into_item_id IS NULL AND item_status='ACTIVE' の現在有効な統合リスト件数
+        sourceListLabels:
+          type: array
+          items:
+            type: string
+          description: 統合済みリスト表示名
+        targetLists:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataMatchingTargetList'
+          description: 確定した統合対象一覧
+          x-word-subtable-title: targetLists要素（DataMatchingTargetList）
+        canConfirmOriginal:
+          type: boolean
+          description: 原本直前スナップショット全件が有効なSHIP資産マスタ紐付け、マスタ由来IDの整合、原本確定必須項目、QR 解決・紐付け可否を満たす場合は true
+    DataMatchingMergedItemListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - lockVersion
+        - sessionUpdatedAt
+        - currentList
+        - progress
+        - totalCount
+        - returnedCount
+        - nextCursor
+        - hasMore
+        - items
+      properties:
+        sessionId:
+          type: integer
+          format: int64
+          description: データ突合セッションID
+        lockVersion:
+          type: integer
+          format: int64
+          description: 今回返却した一覧 snapshot の asset_data_matching_sessions.lock_version
+        sessionUpdatedAt:
+          type: string
+          format: date-time
+          description: セッション最終更新日時
+        currentList:
+          $ref: '#/components/schemas/CurrentListSummary'
+          description: 現在突合中リストの要約
+          x-word-subtable-title: currentList（CurrentListSummary）
+        progress:
+          $ref: '#/components/schemas/MatchingProgressSummary'
+          description: 進捗件数 / 進捗率
+          x-word-subtable-title: progress（MatchingProgressSummary）
+        totalCount:
+          type: integer
+          format: int32
+          description: 条件一致した有効統合リスト総件数
+        returnedCount:
+          type: integer
+          format: int32
+          description: 今回返却した items 件数
+        nextCursor:
+          type: string
+          description: 次ページ取得用 continuation token。末尾まで取得済みの場合は null
+        hasMore:
+          type: boolean
+          description: 続きが存在する場合は true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MergedItemSummary'
+          description: 統合リスト一覧
+          x-word-subtable-title: items要素（MergedItemSummary）
+    CurrentListSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionListId
+        - listType
+        - sourceLabel
+        - mergeStatus
+      properties:
+        sessionListId:
+          type: integer
+          format: int64
+          description: 統合対象リストID
+        listType:
+          type: string
+          description: 論理リスト種別
+        sourceLabel:
+          type: string
+          description: 画面表示用リスト名
+        mergeStatus:
+          type: string
+          description: リスト状態
+    MatchingProgressSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - totalItems
+        - completedItems
+        - pendingItems
+        - progressPercent
+      properties:
+        totalItems:
+          type: integer
+          format: int32
+          description: 現在リストに対して判定対象となる統合リスト総件数
+        completedItems:
+          type: integer
+          format: int32
+          description: 現在リストに対して判定済みの統合リスト件数
+        pendingItems:
+          type: integer
+          format: int32
+          description: 現在リストに対して未判定の統合リスト件数
+        progressPercent:
+          type: integer
+          format: int32
+          description: 進捗率（0-100）
+    MergedItemSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - assetDataMatchingItemId
+        - matchingStatus
+        - creationType
+        - departmentName
+        - sectionName
+        - detailType
+        - parentAssetDataMatchingItemId
+        - quantity
+        - completedForCurrentList
+      properties:
+        assetDataMatchingItemId:
+          type: integer
+          format: int64
+          description: 統合リスト行ID
+        matchingStatus:
+          type: string
+          description: 選択中リストに対する突合状況。FULL_MATCH / PARTIAL_MATCH / QUANTITY_MISMATCH / RECHECK / UNCONFIRMED / UNREGISTERED
+        creationType:
+          type: string
+          description: 行生成起点。SURVEY_BASE / UNCONFIRMED_IMPORT
+        qrIdentifier:
+          type: string
+          description: QR識別子
+        assetNo:
+          type: string
+          description: 資産番号
+        equipmentNo:
+          type: string
+          description: ME番号
+        departmentName:
+          type: string
+          description: 共通部門名
+        sectionName:
+          type: string
+          description: 共通部署名
+        roomName:
+          type: string
+          description: 室名
+        categoryName:
+          type: string
+          description: カテゴリ名
+        largeClassName:
+          type: string
+          description: 大分類名
+        mediumClassName:
+          type: string
+          description: 中分類名
+        assetItemName:
+          type: string
+          description: 紐付け先SHIP資産マスタ由来の品目名
+        manufacturerName:
+          type: string
+          description: 資産固有の有効メーカー表示値。空の場合は紐付け先SHIP資産マスタのメーカー名へフォールバックする
+        modelName:
+          type: string
+          description: 資産固有の有効型式表示値。空の場合は紐付け先SHIP資産マスタの型式へフォールバックする
+        detailType:
+          type: string
+          description: 明細区分。MAIN / DETAIL / ACCESSORY
+        parentAssetDataMatchingItemId:
+          type: string
+          description: 親統合リスト行ID
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+        purchasedOn:
+          type: string
+          format: date
+          description: 購入日
+        sourceSummary:
+          type: string
+          description: 統合元サマリ
+        decisionNote:
+          type: string
+          description: 選択中リストに対する有効判定メモ
+        completedForCurrentList:
+          type: boolean
+          description: 現在リストに対して判定済みなら true
+    FixedAssetLedgerItemListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - sessionListId
+        - lockVersion
+        - sessionUpdatedAt
+        - totalCount
+        - pendingCount
+        - matchedCount
+        - returnedCount
+        - nextCursor
+        - hasMore
+        - items
+      properties:
+        sessionId:
+          type: integer
+          format: int64
+          description: データ突合セッションID
+        sessionListId:
+          type: integer
+          format: int64
+          description: 統合対象リストID
+        lockVersion:
+          type: integer
+          format: int64
+          description: 今回返却した一覧 snapshot の asset_data_matching_sessions.lock_version
+        sessionUpdatedAt:
+          type: string
+          format: date-time
+          description: セッション最終更新日時
+        totalCount:
+          type: integer
+          format: int32
+          description: 対象リスト総件数
+        pendingCount:
+          type: integer
+          format: int32
+          description: 対応中件数
+        matchedCount:
+          type: integer
+          format: int32
+          description: 突合済件数
+        returnedCount:
+          type: integer
+          format: int32
+          description: 今回返却した items 件数
+        nextCursor:
+          type: string
+          description: 次ページ取得用 continuation token。末尾まで取得済みの場合は null
+        hasMore:
+          type: boolean
+          description: 続きが存在する場合は true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FixedAssetLedgerItemSummary'
+          description: 対応中一覧
+          x-word-subtable-title: items要素（FixedAssetLedgerItemSummary）
+    FixedAssetLedgerItemSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportRowId
+        - matchingStatus
+        - qrIdentifier
+        - quantity
+      properties:
+        assetImportRowId:
+          type: integer
+          format: int64
+          description: 資産インポート行ID
+        matchingStatus:
+          type: string
+          description: 当該リストに対する突合状況。未処理の場合は null
+        qrIdentifier:
+          type: string
+          description: QRコード表示列。対応中の未処理行では null
+        assetNo:
+          type: string
+          description: 資産番号
+        managementNo:
+          type: string
+          description: ME管理機器番号
+        departmentName:
+          type: string
+          description: 共通部門名
+        sectionName:
+          type: string
+          description: 共通部署名
+        roomName:
+          type: string
+          description: 室名
+        categoryName:
+          type: string
+          description: カテゴリ名
+        largeClassName:
+          type: string
+          description: 大分類名
+        mediumClassName:
+          type: string
+          description: 中分類名
+        assetItemName:
+          type: string
+          description: 選択SHIP資産マスタ由来の品目名
+        manufacturerName:
+          type: string
+          description: 取込行固有の有効メーカー表示値。空の場合は選択SHIP資産マスタのメーカー名へフォールバックする
+        modelName:
+          type: string
+          description: 取込行固有の有効型式表示値。空の場合は選択SHIP資産マスタの型式へフォールバックする
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+        purchasedOn:
+          type: string
+          format: date
+          description: 購入日
+    MELedgerItemListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - sessionListId
+        - lockVersion
+        - sessionUpdatedAt
+        - totalCount
+        - pendingCount
+        - matchedCount
+        - returnedCount
+        - nextCursor
+        - hasMore
+        - items
+      properties:
+        sessionId:
+          type: integer
+          format: int64
+          description: データ突合セッションID
+        sessionListId:
+          type: integer
+          format: int64
+          description: 統合対象リストID
+        lockVersion:
+          type: integer
+          format: int64
+          description: 今回返却した一覧 snapshot の asset_data_matching_sessions.lock_version
+        sessionUpdatedAt:
+          type: string
+          format: date-time
+          description: セッション最終更新日時
+        totalCount:
+          type: integer
+          format: int32
+          description: 対象リスト総件数
+        pendingCount:
+          type: integer
+          format: int32
+          description: 対応中件数
+        matchedCount:
+          type: integer
+          format: int32
+          description: 突合済件数
+        returnedCount:
+          type: integer
+          format: int32
+          description: 今回返却した items 件数
+        nextCursor:
+          type: string
+          description: 次ページ取得用 continuation token。末尾まで取得済みの場合は null
+        hasMore:
+          type: boolean
+          description: 続きが存在する場合は true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MELedgerItemSummary'
+          description: 対応中一覧
+          x-word-subtable-title: items要素（MELedgerItemSummary）
+    MELedgerItemSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - assetImportRowId
+        - matchingStatus
+        - qrIdentifier
+        - quantity
+      properties:
+        assetImportRowId:
+          type: integer
+          format: int64
+          description: 資産インポート行ID
+        matchingStatus:
+          type: string
+          description: 当該リストに対する突合状況。未処理の場合は null
+        qrIdentifier:
+          type: string
+          description: QRコード表示列。対応中の未処理行では null
+        managementNo:
+          type: string
+          description: ME管理機器番号
+        assetNo:
+          type: string
+          description: 資産番号
+        departmentName:
+          type: string
+          description: 共通部門名
+        sectionName:
+          type: string
+          description: 共通部署名
+        roomName:
+          type: string
+          description: 室名
+        categoryName:
+          type: string
+          description: カテゴリ名
+        largeClassName:
+          type: string
+          description: 大分類名
+        mediumClassName:
+          type: string
+          description: 中分類名
+        assetItemName:
+          type: string
+          description: 選択SHIP資産マスタ由来の品目名
+        manufacturerName:
+          type: string
+          description: 取込行固有の有効メーカー表示値。空の場合は選択SHIP資産マスタのメーカー名へフォールバックする
+        modelName:
+          type: string
+          description: 取込行固有の有効型式表示値。空の場合は選択SHIP資産マスタの型式へフォールバックする
+        serialNo:
+          type: string
+          description: シリアル番号
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+        purchasedOn:
+          type: string
+          format: date
+          description: 購入日。取得元は要件保留中のため現時点では null
+        inspectionDate:
+          type: string
+          format: date
+          description: 検収日。互換・補助情報であり本画面の一覧表示には使用しない
+    PostDataMatchingSessionsBySessionIdMatchesRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockVersion
+        - sessionListId
+        - mergedItemIds
+        - representativeItemId
+        - ledgerItemId
+        - matchingStatus
+      properties:
+        lockVersion:
+          type: integer
+          format: int64
+          description: 取得時点の asset_data_matching_sessions.lock_version。競合検知に用いる
+        sessionListId:
+          type: integer
+          format: int64
+          description: 現在突合中の統合対象リストID
+        mergedItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 統合対象とする上パネル行ID一覧。1件以上
+        representativeItemId:
+          type: integer
+          format: int64
+          description: mergedItemIds に含まれる代表統合リスト行ID
+        ledgerItemId:
+          type: integer
+          format: int64
+          description: 対応づける下パネルの資産インポート行ID。ちょうど1件
+        matchingStatus:
+          type: string
+          description: 登録する突合状況。FULL_MATCH / PARTIAL_MATCH / QUANTITY_MISMATCH / RECHECK
+        decisionNote:
+          type: string
+          description: 当該リスト判定メモ
+    DataMatchingRegisterMatchResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - assetDataMatchingItemId
+        - logicallyMergedItemIds
+        - representativeImportRowId
+        - matchingStatus
+        - lockVersion
+        - sessionUpdatedAt
+        - completedAt
+      properties:
+        assetDataMatchingItemId:
+          type: integer
+          format: int64
+          description: 更新後の代表統合リスト行ID
+        logicallyMergedItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 論理統合状態へ更新した統合リスト行ID一覧
+        representativeImportRowId:
+          type: integer
+          format: int64
+          description: 現在代表台帳行として紐づけた資産インポート行ID
+        matchingStatus:
+          type: string
+          description: 登録後の突合状況
+        sourceSummary:
+          type: string
+          description: 更新後の統合元サマリ
+        lockVersion:
+          type: integer
+          format: int64
+          description: 更新後の asset_data_matching_sessions.lock_version
+        sessionUpdatedAt:
+          type: string
+          format: date-time
+          description: 更新後のセッション最終更新日時
+        completedAt:
+          type: string
+          format: date-time
+          description: 登録日時
+    PostDataMatchingSessionsBySessionIdMarkUnregisteredRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockVersion
+        - sessionListId
+        - mergedItemIds
+      properties:
+        lockVersion:
+          type: integer
+          format: int64
+          description: 取得時点の asset_data_matching_sessions.lock_version。競合検知に用いる
+        sessionListId:
+          type: integer
+          format: int64
+          description: 現在突合中の統合対象リストID
+        mergedItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 未登録として確定する統合リスト行ID一覧
+        decisionNote:
+          type: string
+          description: 当該リスト判定メモ
+    DataMatchingMarkUnregisteredResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - updatedItemIds
+        - matchingStatus
+        - lockVersion
+        - sessionUpdatedAt
+        - completedAt
+      properties:
+        updatedItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 更新した統合リスト行ID一覧
+        matchingStatus:
+          type: string
+          description: 登録後の突合状況。常に UNREGISTERED
+        lockVersion:
+          type: integer
+          format: int64
+          description: 更新後の asset_data_matching_sessions.lock_version
+        sessionUpdatedAt:
+          type: string
+          format: date-time
+          description: 更新後のセッション最終更新日時
+        completedAt:
+          type: string
+          format: date-time
+          description: 登録日時
+    PostDataMatchingSessionsBySessionIdMarkUnconfirmedRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockVersion
+        - sessionListId
+        - ledgerItemIds
+      properties:
+        lockVersion:
+          type: integer
+          format: int64
+          description: 取得時点の asset_data_matching_sessions.lock_version。競合検知に用いる
+        sessionListId:
+          type: integer
+          format: int64
+          description: 現在突合中の統合対象リストID
+        ledgerItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 未確認として確定する資産インポート行ID一覧
+        decisionNote:
+          type: string
+          description: 当該リスト判定メモ
+    DataMatchingMarkUnconfirmedResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - createdItemIds
+        - matchingStatus
+        - createdCount
+        - lockVersion
+        - sessionUpdatedAt
+        - completedAt
+      properties:
+        createdItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 新規作成した統合リスト行ID一覧
+        matchingStatus:
+          type: string
+          description: 登録後の突合状況。常に UNCONFIRMED
+        createdCount:
+          type: integer
+          format: int32
+          description: 作成件数
+        lockVersion:
+          type: integer
+          format: int64
+          description: 更新後の asset_data_matching_sessions.lock_version
+        sessionUpdatedAt:
+          type: string
+          format: date-time
+          description: 更新後のセッション最終更新日時
+        completedAt:
+          type: string
+          format: date-time
+          description: 登録日時
+    PostDataMatchingSessionsBySessionIdRevertDecisionRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockVersion
+        - sessionListId
+        - assetDataMatchingItemIds
+      properties:
+        lockVersion:
+          type: integer
+          format: int64
+          description: 取得時点の asset_data_matching_sessions.lock_version。競合検知に用いる
+        sessionListId:
+          type: integer
+          format: int64
+          description: 差し戻し対象の統合対象リストID
+        assetDataMatchingItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 差し戻す代表統合リスト行ID一覧。1件以上
+        revertNote:
+          type: string
+          description: 差し戻し理由メモ
+    DataMatchingRevertDecisionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionListId
+        - revertedItemIds
+        - restoredMergedItemIds
+        - releasedLedgerItemIds
+        - reopenedList
+        - lockVersion
+        - sessionUpdatedAt
+        - completedAt
+      properties:
+        sessionListId:
+          type: integer
+          format: int64
+          description: 差し戻し対象の統合対象リストID
+        revertedItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 差し戻した代表統合リスト行ID一覧
+        restoredMergedItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 論理統合状態から復元した統合リスト行ID一覧
+        releasedLedgerItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 未消費状態へ戻した資産インポート行ID一覧
+        reopenedList:
+          type: boolean
+          description: 対象リストを PENDING へ再オープンした場合は true
+        lockVersion:
+          type: integer
+          format: int64
+          description: 更新後の asset_data_matching_sessions.lock_version
+        sessionUpdatedAt:
+          type: string
+          format: date-time
+          description: 更新後のセッション最終更新日時
+        completedAt:
+          type: string
+          format: date-time
+          description: 差し戻し日時
+    PostDataMatchingSessionsBySessionIdCompleteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - lockVersion
+        - completionType
+      properties:
+        lockVersion:
+          type: integer
+          format: int64
+          description: 取得時点の asset_data_matching_sessions.lock_version。競合検知に用いる
+        completionType:
+          type: string
+          description: 実行種別。COMPLETE_LIST / CONFIRM_ORIGINAL
+        sessionListId:
+          type: integer
+          format: int64
+          description: COMPLETE_LIST 時に必須。完了対象の統合対象リストID
+          x-word-required-label: 条件付き
+        skipRemaining:
+          type: boolean
+          description: CONFIRM_ORIGINAL 時に、未完了リストを SKIPPED として途中確定する場合は true
+    DataMatchingCompleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - sessionStatus
+        - lockVersion
+        - sessionUpdatedAt
+        - completedSessionListId
+        - nextPendingSessionListId
+        - createdLedgerCount
+        - linkedQrCount
+        - createdPhotoCount
+        - skippedListCount
+        - skippedLists
+      properties:
+        sessionId:
+          type: integer
+          format: int64
+          description: データ突合セッションID
+        sessionStatus:
+          type: string
+          description: 更新後セッション状態。IN_PROGRESS / CONFIRMED
+        lockVersion:
+          type: integer
+          format: int64
+          description: 更新後の asset_data_matching_sessions.lock_version
+        sessionUpdatedAt:
+          type: string
+          format: date-time
+          description: 更新後のセッション最終更新日時
+        completedSessionListId:
+          type: string
+          description: COMPLETE_LIST 時に完了した統合対象リストID
+        nextPendingSessionListId:
+          type: string
+          description: 次に選択可能な未完了リストID。存在しない場合は null
+        createdLedgerCount:
+          type: integer
+          format: int32
+          description: 原本確定時に生成した asset_ledgers 件数
+        linkedQrCount:
+          type: integer
+          format: int32
+          description: 原本確定時に qr_codes.asset_ledger_id を設定した件数
+        createdPhotoCount:
+          type: integer
+          format: int32
+          description: 原本確定時に application_documents.owner_type='ASSET_LEDGER' として作成した資産写真件数
+        skippedListCount:
+          type: integer
+          format: int32
+          description: 途中確定により SKIPPED へ更新したリスト件数
+        skippedLists:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkippedListSummary'
+          description: 途中確定で SKIPPED としたリスト一覧
+          x-word-subtable-title: skippedLists要素（SkippedListSummary）
+        confirmedAt:
+          type: string
+          format: date-time
+          description: 原本確定日時
+    SkippedListSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionListId
+        - sourceLabel
+        - sourceOrder
+        - mergeStatus
+      properties:
+        sessionListId:
+          type: integer
+          format: int64
+          description: 統合対象リストID
+        sourceLabel:
+          type: string
+          description: 画面表示用リスト名
+        sourceOrder:
+          type: integer
+          format: int32
+          description: 統合順
+        mergeStatus:
+          type: string
+          description: 常に SKIPPED
+    DataMatchingResultResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - sessionStatus
+        - lockVersion
+        - sessionUpdatedAt
+        - mergedItemCount
+        - remainingListCount
+        - skippedLists
+        - canConfirmOriginal
+        - unreadyItemCount
+        - qrBlockingItemCount
+        - returnedCount
+        - nextCursor
+        - hasMore
+        - items
+      properties:
+        sessionId:
+          type: integer
+          format: int64
+          description: データ突合セッションID
+        sessionStatus:
+          type: string
+          description: セッション状態
+        lockVersion:
+          type: integer
+          format: int64
+          description: 今回返却した一覧 snapshot の asset_data_matching_sessions.lock_version
+        sessionUpdatedAt:
+          type: string
+          format: date-time
+          description: セッション最終更新日時
+        mergedItemCount:
+          type: integer
+          format: int32
+          description: merged_into_item_id IS NULL AND item_status='ACTIVE' の統合結果件数
+        remainingListCount:
+          type: integer
+          format: int32
+          description: 未完了リスト件数
+        skippedLists:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkippedListSummary'
+          description: 途中確定で SKIPPED としたリスト一覧
+          x-word-subtable-title: skippedLists要素（SkippedListSummary）
+        canConfirmOriginal:
+          type: boolean
+          description: 原本直前スナップショット全件が有効なSHIP資産マスタ紐付け、マスタ由来IDの整合、原本確定必須項目、QR 解決・紐付け可否を満たす場合は true
+        unreadyItemCount:
+          type: integer
+          format: int32
+          description: 原本確定を阻害している統合リスト行件数（資産マスタ未設定・無効、マスタ由来ID不整合、必須項目不足、または QR 阻害）
+        qrBlockingItemCount:
+          type: integer
+          format: int32
+          description: QR 解決または QR 紐付け可否が原因で原本確定を阻害している統合リスト行件数
+        returnedCount:
+          type: integer
+          format: int32
+          description: 今回返却した items 件数
+        nextCursor:
+          type: string
+          description: 次ページ取得用 continuation token。末尾まで取得済みの場合は null
+        hasMore:
+          type: boolean
+          description: 続きが存在する場合は true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OriginalLedgerCandidate'
+          description: 統合結果一覧
+          x-word-subtable-title: items要素（OriginalLedgerCandidate）
+        sourceType:
+          type: string
+          description: 元種別。SURVEY_RECORD / IMPORT_ROW
+          x-word-omit-row: true
+          x-required-when: sourceDetails要素（SourceDetail）
+          x-word-required-label: ✓
+        sourceLabel:
+          type: string
+          description: 画面表示用元リスト名
+          x-word-omit-row: true
+          x-required-when: sourceDetails要素（SourceDetail）
+          x-word-required-label: ✓
+        sourceRelationType:
+          type: string
+          description: '元反映区分。例: MATCHED / UNREGISTERED / UNCONFIRMED'
+          x-word-omit-row: true
+          x-required-when: sourceDetails要素（SourceDetail）
+          x-word-required-label: ✓
+        assetSurveyRecordId:
+          type: string
+          description: sourceType='SURVEY_RECORD' の場合の調査レコードID
+          x-word-omit-row: true
+          x-required-when: sourceDetails要素（SourceDetail）
+          x-word-required-label: ✓
+        assetImportRowId:
+          type: string
+          description: sourceType='IMPORT_ROW' の場合の資産インポート行ID
+          x-word-omit-row: true
+          x-required-when: sourceDetails要素（SourceDetail）
+          x-word-required-label: ✓
+        qrIdentifier:
+          type: string
+          description: sourceType='SURVEY_RECORD' の場合は当該調査レコードの QR 識別子、IMPORT_ROW の場合は null
+          x-word-omit-row: true
+          x-required-when: sourceDetails要素（SourceDetail）
+          x-word-required-label: ✓
+        sourcePhotoDocumentIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: sourceType='SURVEY_RECORD' の場合は当該調査レコードに紐づく非削除調査写真の application_document_id 一覧、IMPORT_ROW の場合は空配列
+          x-word-omit-row: true
+          x-required-when: sourceDetails要素（SourceDetail）
+          x-word-required-label: ✓
+        sourcePrimaryPhotoDocumentId:
+          type: string
+          description: sourceType='SURVEY_RECORD' の場合は当該調査レコードの代表調査写真ID。写真なしまたは IMPORT_ROW の場合は null
+          x-word-omit-row: true
+          x-required-when: sourceDetails要素（SourceDetail）
+          x-word-required-label: ✓
+        sessionListId:
+          type: integer
+          format: int64
+          description: 統合対象リストID
+          x-word-omit-row: true
+          x-required-when: listResults要素（ListResultSummary）
+          x-word-required-label: ✓
+        sourceOrder:
+          type: integer
+          format: int32
+          description: 統合順
+          x-word-omit-row: true
+          x-required-when: listResults要素（ListResultSummary）
+          x-word-required-label: ✓
+        mergeStatus:
+          type: string
+          description: 対象リスト状態。PENDING / COMPLETED / SKIPPED
+          x-word-omit-row: true
+          x-required-when: listResults要素（ListResultSummary）
+          x-word-required-label: ✓
+        resultStatus:
+          type: string
+          description: 判定履歴状態。ACTIVE / REVERTED
+          x-word-omit-row: true
+          x-required-when: listResults要素（ListResultSummary）
+          x-word-required-label: ✓
+        matchingStatus:
+          type: string
+          description: 判定結果
+          x-word-omit-row: true
+          x-required-when: listResults要素（ListResultSummary）
+          x-word-required-label: ✓
+        consumedAssetImportRowId:
+          type: string
+          description: 判定時に消費した資産インポート行ID
+          x-word-omit-row: true
+          x-required-when: listResults要素（ListResultSummary）
+          x-word-required-label: ✓
+        decisionNote:
+          type: string
+          description: 判定メモ。更新系 API の decisionNote 保存先
+          x-word-omit-row: true
+          x-required-when: listResults要素（ListResultSummary）
+        decidedByUserId:
+          type: integer
+          format: int64
+          description: 判定実行ユーザーID
+          x-word-omit-row: true
+          x-required-when: listResults要素（ListResultSummary）
+          x-word-required-label: ✓
+        decidedAt:
+          type: string
+          format: date-time
+          description: 判定実行日時
+          x-word-omit-row: true
+          x-required-when: listResults要素（ListResultSummary）
+          x-word-required-label: ✓
+        revertedByUserId:
+          type: string
+          description: 差し戻し実行ユーザーID
+          x-word-omit-row: true
+          x-required-when: listResults要素（ListResultSummary）
+          x-word-required-label: ✓
+        revertedAt:
+          type: string
+          description: 差し戻し実行日時
+          x-word-omit-row: true
+          x-required-when: listResults要素（ListResultSummary）
+          x-word-required-label: ✓
+    OriginalLedgerCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - assetDataMatchingItemId
+        - assetLedgerId
+        - matchingStatus
+        - representativeImportRowId
+        - surveySourceRecordIds
+        - qrResolutionStatus
+        - qrBindingCheckStatus
+        - facilityLocationId
+        - assetName
+        - departmentName
+        - sectionName
+        - detailType
+        - parentAssetDataMatchingItemId
+        - quantity
+        - unit
+        - sourcePhotoCount
+        - assetPhotoCount
+        - primaryAssetPhotoDocumentId
+        - sourceDetails
+        - listResults
+        - blockingReasons
+        - isOriginalReady
+        - missingRequiredFields
+      properties:
+        assetDataMatchingItemId:
+          type: integer
+          format: int64
+          description: 統合リスト行ID
+        assetLedgerId:
+          type: string
+          description: 原本確定後に作成された asset_ledgers.asset_ledger_id。未確定セッションでは null
+        matchingStatus:
+          type: string
+          description: 原本直前スナップショット上の最新確定判定結果
+        representativeImportRowId:
+          type: string
+          description: 現在代表台帳行として採用されている資産インポート行ID
+        surveySourceRecordIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 現在統合済みの現有品調査レコードID一覧
+        qrIdentifier:
+          type: string
+          description: 現有品調査由来の採用済み QR 識別子。qrResolutionStatus='RESOLVED' の場合のみ設定
+        qrResolutionStatus:
+          type: string
+          description: QR 採否状態。NONE / RESOLVED / CONFLICT
+        qrBindingCheckStatus:
+          type: string
+          description: >-
+            原本確定時の QR 紐付け可否。NO_QR / READY_TO_BIND / UNRESOLVED / DUPLICATED_IN_SESSION / NOT_ISSUED / DELETED /
+            BOUND_OTHER_ASSET / FACILITY_MISMATCH
+        assetNo:
+          type: string
+          description: 資産番号
+        equipmentNo:
+          type: string
+          description: ME番号
+        facilityLocationId:
+          type: string
+          description: 原本生成に用いる施設ロケーションID
+        assetName:
+          type: string
+          description: 原本生成に用いる資産名
+        departmentName:
+          type: string
+          description: 共通部門名
+        sectionName:
+          type: string
+          description: 共通部署名
+        roomName:
+          type: string
+          description: 室名
+        categoryName:
+          type: string
+          description: カテゴリ名
+        largeClassName:
+          type: string
+          description: 大分類名
+        mediumClassName:
+          type: string
+          description: 中分類名
+        assetItemName:
+          type: string
+          description: 紐付け先SHIP資産マスタ由来の品目名
+        manufacturerName:
+          type: string
+          description: 原本生成に用いる資産固有の有効メーカー表示値。空の場合は紐付け先SHIP資産マスタのメーカー名へフォールバックする
+        modelName:
+          type: string
+          description: 原本生成に用いる資産固有の有効型式表示値。空の場合は紐付け先SHIP資産マスタの型式へフォールバックする
+        serialNo:
+          type: string
+          description: シリアル番号
+        detailType:
+          type: string
+          description: 原本生成に用いる明細区分。MAIN / DETAIL / ACCESSORY
+        parentAssetDataMatchingItemId:
+          type: string
+          description: 親統合リスト行ID
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+        unit:
+          type: string
+          description: 数量単位
+        purchasedOn:
+          type: string
+          format: date
+          description: 購入日
+        sourceSummary:
+          type: string
+          description: 統合元サマリ
+        sourcePhotoCount:
+          type: integer
+          format: int32
+          description: 現在の SURVEY_RECORD 元レコードに紐づく非削除調査写真件数。未確定時は原本確定時の写真引継ぎ候補件数
+        assetPhotoCount:
+          type: integer
+          format: int32
+          description: 原本確定後に当該 assetLedgerId へ作成された資産写真件数。未確定時は 0
+        primaryAssetPhotoDocumentId:
+          type: string
+          description: 原本確定後に代表資産写真となった application_documents.application_document_id。未確定または写真なしの場合は null
+        sourceDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceDetail'
+          description: 現在代表元の詳細一覧
+          x-word-subtable-title: sourceDetails要素（SourceDetail）
+        listResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListResultSummary'
+          description: 対象リストごとの判定履歴一覧
+          x-word-subtable-title: listResults要素（ListResultSummary）
+        blockingReasons:
+          type: array
+          items:
+            type: string
+          description: '原本確定を阻害している理由コード一覧。例: MISSING_SHIP_ASSET_MASTER_ID、INVALID_SHIP_ASSET_MASTER_ID、MISSING_CATEGORY_ID、QR_UNRESOLVED、QR_NOT_ISSUED'
+        isOriginalReady:
+          type: boolean
+          description: 有効なSHIP資産マスタ紐付け、マスタ由来IDの整合、原本確定必須項目、QR 解決・紐付け可否をすべて満たす場合は true
+        missingRequiredFields:
+          type: array
+          items:
+            type: string
+          description: 不足している原本確定必須項目名一覧。資産マスタ未設定時は shipAssetMasterId を含む
+    SourceDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - sourceType
+        - sourceLabel
+        - sourceRelationType
+        - assetSurveyRecordId
+        - assetImportRowId
+        - qrIdentifier
+        - sourcePhotoDocumentIds
+        - sourcePrimaryPhotoDocumentId
+      properties:
+        sourceType:
+          type: string
+          description: 元種別。SURVEY_RECORD / IMPORT_ROW
+        sourceLabel:
+          type: string
+          description: 画面表示用元リスト名
+        sourceRelationType:
+          type: string
+          description: '元反映区分。例: MATCHED / UNREGISTERED / UNCONFIRMED'
+        assetSurveyRecordId:
+          type: string
+          description: sourceType='SURVEY_RECORD' の場合の調査レコードID
+        assetImportRowId:
+          type: string
+          description: sourceType='IMPORT_ROW' の場合の資産インポート行ID
+        qrIdentifier:
+          type: string
+          description: sourceType='SURVEY_RECORD' の場合は当該調査レコードの QR 識別子、IMPORT_ROW の場合は null
+        sourcePhotoDocumentIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: sourceType='SURVEY_RECORD' の場合は当該調査レコードに紐づく非削除調査写真の application_document_id 一覧、IMPORT_ROW の場合は空配列
+        sourcePrimaryPhotoDocumentId:
+          type: string
+          description: sourceType='SURVEY_RECORD' の場合は当該調査レコードの代表調査写真ID。写真なしまたは IMPORT_ROW の場合は null
+    ListResultSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionListId
+        - sourceLabel
+        - sourceOrder
+        - mergeStatus
+        - resultStatus
+        - matchingStatus
+        - consumedAssetImportRowId
+        - decidedByUserId
+        - decidedAt
+        - revertedByUserId
+        - revertedAt
+      properties:
+        sessionListId:
+          type: integer
+          format: int64
+          description: 統合対象リストID
+        sourceLabel:
+          type: string
+          description: 画面表示用リスト名
+        sourceOrder:
+          type: integer
+          format: int32
+          description: 統合順
+        mergeStatus:
+          type: string
+          description: 対象リスト状態。PENDING / COMPLETED / SKIPPED
+        resultStatus:
+          type: string
+          description: 判定履歴状態。ACTIVE / REVERTED
+        matchingStatus:
+          type: string
+          description: 判定結果
+        consumedAssetImportRowId:
+          type: string
+          description: 判定時に消費した資産インポート行ID
+        decisionNote:
+          type: string
+          description: 判定メモ。更新系 API の decisionNote 保存先
+        decidedByUserId:
+          type: integer
+          format: int64
+          description: 判定実行ユーザーID
+        decidedAt:
+          type: string
+          format: date-time
+          description: 判定実行日時
+        revertedByUserId:
+          type: string
+          description: 差し戻し実行ユーザーID
+        revertedAt:
+          type: string
+          description: 差し戻し実行日時
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

@@ -1,0 +1,4 @@
+type: http
+scheme: bearer
+description: ログイン認証で取得したBearerトークンを使用する。
+

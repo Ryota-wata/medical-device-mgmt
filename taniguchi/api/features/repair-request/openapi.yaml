@@ -1,0 +1,407 @@
+openapi: 3.0.4
+info:
+  title: 修理申請 API API
+  version: '1.1'
+  description: 修理申請で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 修理申請
+    description: 修理申請 APIのAPI
+paths:
+  /repair-request/context:
+    get:
+      tags:
+        - 修理申請
+      operationId: getRepairRequestContext
+      summary: 修理依頼画面コンテキスト取得
+      description: 修理依頼画面の初期表示に必要なログインユーザー由来の申請者情報、修理依頼No.採番候補、点検結果連携の初期値を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: repair_request_create
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: inspectionResultId
+          in: query
+          required: false
+          description: 点検結果から修理申請へ遷移した場合の連携元点検結果ID
+          schema:
+            type: integer
+            format: int64
+        - name: assetLedgerId
+          in: query
+          required: false
+          description: 登録済み資産を初期選択する場合の資産台帳ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepairRequestContextResponse'
+        '400':
+          description: パラメータ不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 repair_request_create なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 指定した点検結果または資産が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RepairRequestContextResponse）
+  /repair-request/assets/by-qr/{qrCode}:
+    get:
+      tags:
+        - 修理申請
+      operationId: getRepairRequestAssetsByQrByQrCode
+      summary: QR指定資産取得
+      description: QRラベルから登録済み資産を解決し、修理依頼画面の機器情報へ表示するスナップショットを取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: repair_request_create
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: qrCode
+          in: path
+          required: true
+          description: QRラベルまたはQR識別子
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepairAssetSnapshot'
+        '400':
+          description: QRコード形式不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 repair_request_create なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: QRに紐づく登録済み資産が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RepairAssetSnapshot）
+  /repair-request/requests:
+    post:
+      tags:
+        - 修理申請
+      operationId: postRepairRequestRequests
+      summary: 修理依頼起票
+      description: 現場担当者が入力した修理依頼を起票する。登録済み資産と未登録資産の両方を受け付ける。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: repair_request_create
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostRepairRequestRequestsRequest'
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      responses:
+        '201':
+          description: 起票成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepairRequestCreatedResponse'
+        '400':
+          description: 必須不足、登録済/未登録資産条件不正、症状未入力
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 repair_request_create なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 指定した登録済み資産または点検結果が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 採番競合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 への機器写真・添付保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：RepairRequestCreatedResponse）
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    RepairRequestContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - requestedByUserId
+        - requestedByName
+      properties:
+        provisionalApplicationNo:
+          type: string
+          description: 画面表示用の採番候補。確定値ではない
+        requestedByUserId:
+          type: integer
+          format: int64
+          description: ログインユーザーID
+        requestedByName:
+          type: string
+          description: ログインユーザー表示名
+        requestedByDepartmentName:
+          type: string
+          description: ログインユーザー所属
+        requestedByContact:
+          type: string
+          description: ログインユーザー連絡先
+        seed:
+          $ref: '#/components/schemas/RepairRequestSeed'
+          description: 点検結果または資産指定からの初期値
+          x-word-subtable-title: seed要素（RepairRequestSeed）
+    RepairRequestSeed:
+      type: object
+      additionalProperties: false
+      properties:
+        inspectionResultId:
+          type: integer
+          format: int64
+          description: 連携元点検結果ID
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 登録済み資産ID
+        qrCodeValue:
+          type: string
+          description: QRラベル
+        symptomText:
+          type: string
+          description: 点検結果から引き継ぐ症状初期値
+        assetSnapshot:
+          $ref: '#/components/schemas/RepairAssetSnapshot'
+          description: 登録済み資産の初期表示値
+          x-word-omit-subtable: true
+    RepairAssetSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - assetLedgerId
+        - qrCodeValue
+        - itemName
+      properties:
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳ID
+        qrCodeValue:
+          type: string
+          description: QRラベル
+        managementNo:
+          type: string
+          description: 管理番号
+        itemName:
+          type: string
+          description: 品目名
+        makerName:
+          type: string
+          description: メーカー名
+        modelName:
+          type: string
+          description: 型式
+        serialNo:
+          type: string
+          description: シリアルNo.
+        departmentName:
+          type: string
+          description: 設置部署
+        roomName:
+          type: string
+          description: 室名
+        photoDocumentId:
+          type: integer
+          format: int64
+          description: 代表写真のドキュメントID
+    PostRepairRequestRequestsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload.isRegisteredAsset
+        - payload.symptomText
+      properties:
+        payload.isRegisteredAsset:
+          type: boolean
+          description: 登録済み資産の場合 true
+        payload.assetLedgerId:
+          type: integer
+          format: int64
+          description: 登録済み資産の場合必須
+        payload.qrCodeValue:
+          type: string
+          description: 登録済み資産のQRラベル
+        payload.manualItemName:
+          type: string
+          description: 未登録資産の場合必須
+        payload.manualMakerName:
+          type: string
+          description: 未登録資産のメーカー名
+        payload.manualModelName:
+          type: string
+          description: 未登録資産の型式
+        payload.manualSerialNo:
+          type: string
+          description: 未登録資産のシリアルNo.
+        payload.manualDepartmentName:
+          type: string
+          description: 未登録資産の設置部署
+        payload.manualRoomName:
+          type: string
+          description: 未登録資産の室名
+        payload.symptomText:
+          type: string
+          description: 症状詳細
+        payload.alternativeDeviceStatus:
+          type: string
+          description: 申請時の代替機選択。NEEDED / NOT_NEEDED / REQUESTED
+        payload.freeComment:
+          type: string
+          description: フリーコメント
+        payload.inspectionResultId:
+          type: integer
+          format: int64
+          description: 点検結果から遷移した場合の連携元点検結果ID
+        payload.photoDocuments:
+          type: array
+          items:
+            type: string
+          description: 修理依頼時の機器写真メタデータ。各要素の filePartName で対応するファイルパートを指定する
+        payload.attachmentDocuments:
+          type: array
+          items:
+            type: string
+          description: 修理依頼時の補足添付メタデータ。各要素の filePartName で対応するファイルパートを指定する
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: payload.photoDocuments[].filePartName / payload.attachmentDocuments[].filePartName で参照されるファイル本体
+    RepairRequestCreatedResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - repairRequestId
+        - applicationNo
+        - status
+        - createdAt
+      properties:
+        repairRequestId:
+          type: integer
+          format: int64
+          description: 作成した修理申請ID。applications.application_id
+        applicationNo:
+          type: string
+          description: 確定した修理依頼No.
+        status:
+          type: string
+          description: 新規申請
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

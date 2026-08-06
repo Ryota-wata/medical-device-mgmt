@@ -1,0 +1,2249 @@
+openapi: 3.0.4
+info:
+  title: 現有品調査 API
+  version: '1.1'
+  description: 現有品調査で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 現有品調査
+    description: 現有品調査のAPI
+paths:
+  /offline-prep/master/download:
+    get:
+      tags:
+        - 現有品調査
+      operationId: getOfflinePrepMasterDownload
+      summary: マスタパッケージ取得
+      description: オフライン調査で利用する施設・ロケーション・分類マスタ一式を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: existing_survey
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: facilityId
+          in: query
+          required: true
+          description: マスタ取得対象の施設ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfflinePrepMasterDownloadResponse'
+        '400':
+          description: 不正な施設指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 existing_survey なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：OfflinePrepMasterDownloadResponse）
+      x-word-response-subtable-titles:
+        - facility要素（OfflinePrepFacility）
+        - facilityLocations要素（OfflinePrepFacilityLocation）
+        - assetCategories要素（AssetCategoryOption）
+        - assetLargeClasses要素（AssetLargeClassOption）
+        - assetMediumClasses要素（AssetMediumClassOption）
+        - assetItems要素（AssetItemOption）
+        - manufacturers要素（ManufacturerOption）
+        - models要素（ModelOption）
+      x-word-response-subtables:
+        - Title: facility要素（OfflinePrepFacility）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+        - Title: facilityLocations要素（OfflinePrepFacilityLocation）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityLocationId
+              - int64
+              - ✓
+              - 施設ロケーションID
+            - - building
+              - string
+              - '-'
+              - 棟
+            - - floor
+              - string
+              - '-'
+              - 階
+            - - departmentName
+              - string
+              - '-'
+              - 部門名
+            - - sectionName
+              - string
+              - '-'
+              - 部署名
+            - - roomName
+              - string
+              - '-'
+              - 室名称
+        - Title: assetCategories要素（AssetCategoryOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - categoryId
+              - int64
+              - ✓
+              - Category ID
+            - - categoryName
+              - string
+              - ✓
+              - Category名
+            - - sortOrder
+              - int32
+              - ✓
+              - 並び順
+        - Title: assetLargeClasses要素（AssetLargeClassOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - largeClassId
+              - int64
+              - ✓
+              - 大分類ID
+            - - categoryId
+              - int64
+              - ✓
+              - 親Category ID
+            - - largeClassName
+              - string
+              - ✓
+              - 大分類名
+            - - sortOrder
+              - int32
+              - ✓
+              - 並び順
+        - Title: assetMediumClasses要素（AssetMediumClassOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - mediumClassId
+              - int64
+              - ✓
+              - 中分類ID
+            - - largeClassId
+              - int64
+              - ✓
+              - 親大分類ID
+            - - mediumClassName
+              - string
+              - ✓
+              - 中分類名
+            - - sortOrder
+              - int32
+              - ✓
+              - 並び順
+        - Title: assetItems要素（AssetItemOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetItemId
+              - int64
+              - ✓
+              - 品目ID
+            - - mediumClassId
+              - int64
+              - ✓
+              - 親中分類ID
+            - - assetItemName
+              - string
+              - ✓
+              - 品目名
+        - Title: manufacturers要素（ManufacturerOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - manufacturerId
+              - int64
+              - ✓
+              - メーカーID
+            - - assetItemId
+              - int64
+              - ✓
+              - 親品目ID
+            - - manufacturerName
+              - string
+              - ✓
+              - メーカー名
+        - Title: models要素（ModelOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - modelId
+              - int64
+              - ✓
+              - 型式ID
+            - - manufacturerId
+              - int64
+              - ✓
+              - 親メーカーID
+            - - modelName
+              - string
+              - ✓
+              - 型式名
+  /offline-prep/survey/upload:
+    post:
+      tags:
+        - 現有品調査
+      operationId: postOfflinePrepSurveyUpload
+      summary: 調査結果アップロード
+      description: オフラインで収集した調査データ一式を1セッションとしてアップロードする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: existing_survey
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '422'
+        - '502'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfflineSurveyUploadRequest'
+      x-word-request-title: リクエスト（OfflineSurveyUploadRequest）
+      x-word-request-subtable-titles:
+        - records要素（OfflineSurveyRecordInput）
+        - photos要素（OfflineSurveyPhotoInput）
+      x-word-request-subtables:
+        - Title: records要素（OfflineSurveyRecordInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityLocationId
+              - int64
+              - '-'
+              - 既存ロケーションへ解決できた場合の施設ロケーションID
+            - - surveyDate
+              - date
+              - '-'
+              - 調査日
+            - - building
+              - string
+              - '-'
+              - 棟の表示値スナップショット
+            - - floor
+              - string
+              - '-'
+              - 階の表示値スナップショット
+            - - departmentName
+              - string
+              - '-'
+              - 部門名の表示値スナップショット
+            - - sectionName
+              - string
+              - '-'
+              - 部署名の表示値スナップショット
+            - - roomName
+              - string
+              - '-'
+              - 室名称
+            - - qrIdentifier
+              - string
+              - '-'
+              - 読取QR識別子
+            - - categoryId
+              - int64
+              - '-'
+              - Category ID
+            - - largeClassId
+              - int64
+              - '-'
+              - 大分類ID
+            - - mediumClassId
+              - int64
+              - '-'
+              - 中分類ID
+            - - assetItemId
+              - int64
+              - '-'
+              - 品目ID
+            - - manufacturerId
+              - int64
+              - '-'
+              - メーカーID
+            - - modelId
+              - int64
+              - '-'
+              - 型式ID
+            - - categoryName
+              - string
+              - '-'
+              - Category表示値
+            - - largeClassName
+              - string
+              - '-'
+              - 大分類表示値
+            - - mediumClassName
+              - string
+              - '-'
+              - 中分類表示値
+            - - assetItemName
+              - string
+              - '-'
+              - 品目表示値
+            - - manufacturerName
+              - string
+              - '-'
+              - メーカー表示値
+            - - modelName
+              - string
+              - '-'
+              - 型式表示値
+            - - assetNo
+              - string
+              - '-'
+              - 資産番号
+            - - equipmentNo
+              - string
+              - '-'
+              - ME番号
+            - - serialNo
+              - string
+              - '-'
+              - シリアル番号
+            - - purchasedOn
+              - date
+              - '-'
+              - 購入日
+            - - widthMm
+              - string
+              - '-'
+              - 幅
+            - - depthMm
+              - string
+              - '-'
+              - 奥行
+            - - heightMm
+              - string
+              - '-'
+              - 高さ
+            - - remarks
+              - string
+              - '-'
+              - 備考
+            - - registeredAt
+              - datetime
+              - '-'
+              - 端末上の登録日時
+            - - photos
+              - OfflineSurveyPhotoInput[]
+              - '-'
+              - 当該レコードの写真一覧
+        - Title: photos要素（OfflineSurveyPhotoInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - localPhotoUuid
+              - string
+              - ✓
+              - 端末で採番した写真UUID
+            - - fileName
+              - string
+              - '-'
+              - 端末保持時の表示名。application_documents.file_name には保存せず、サーバー側でシステム生成名を採番する
+            - - contentType
+              - string
+              - ✓
+              - MIME Type
+            - - fileBodyBase64
+              - string
+              - ✓
+              - 写真本文の base64
+            - - takenAt
+              - datetime
+              - '-'
+              - 撮影日時
+            - - isPrimary
+              - boolean
+              - '-'
+              - 代表写真フラグ
+      responses:
+        '201':
+          description: アップロード成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfflineSurveyUploadResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 existing_survey なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 施設または参照マスタが存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 親子紐づけや分類階層の整合が取れない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 への写真保存、またはロールバック時の保存済み S3 オブジェクト破棄に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：OfflineSurveyUploadResponse）
+      x-word-response-subtable-titles: []
+      x-word-response-subtables: []
+  /registration-edit/records:
+    get:
+      tags:
+        - 現有品調査
+      operationId: getRegistrationEditRecords
+      summary: 調査レコード一覧取得
+      description: 未確定状態の調査レコード一覧を、フィルタ条件付きで取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_data_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      parameters:
+        - name: facilityId
+          in: query
+          required: true
+          description: 対象施設ID
+          schema:
+            type: integer
+            format: int64
+        - name: building
+          in: query
+          required: false
+          description: 棟フィルタ
+          schema:
+            type: string
+        - name: floor
+          in: query
+          required: false
+          description: 階フィルタ
+          schema:
+            type: string
+        - name: departmentName
+          in: query
+          required: false
+          description: 部門フィルタ
+          schema:
+            type: string
+        - name: sectionName
+          in: query
+          required: false
+          description: 部署フィルタ
+          schema:
+            type: string
+        - name: surveyorUserId
+          in: query
+          required: false
+          description: 調査担当者フィルタ
+          schema:
+            type: integer
+            format: int64
+        - name: categoryId
+          in: query
+          required: false
+          description: Categoryフィルタ
+          schema:
+            type: integer
+            format: int64
+        - name: largeClassId
+          in: query
+          required: false
+          description: 大分類フィルタ
+          schema:
+            type: integer
+            format: int64
+        - name: mediumClassId
+          in: query
+          required: false
+          description: 中分類フィルタ
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationEditRecordListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_data_edit なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RegistrationEditRecordListResponse）
+      x-word-response-subtable-titles:
+        - items要素（RegistrationEditRecordSummary）
+      x-word-response-subtables:
+        - Title: items要素（RegistrationEditRecordSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetSurveyRecordId
+              - int64
+              - ✓
+              - 調査レコードID
+            - - facilityLocationId
+              - int64
+              - '-'
+              - 施設ロケーションID。自由記述で未解決の場合は null
+            - - shipAssetMasterId
+              - int64
+              - '-'
+              - 紐付け先SHIP資産マスタID。未選択の下書きでは null。メーカー名・型式の表示値編集後も保持する
+            - - qrIdentifier
+              - string
+              - '-'
+              - QR識別子
+            - - building
+              - string
+              - '-'
+              - 棟
+            - - floor
+              - string
+              - '-'
+              - 階
+            - - departmentName
+              - string
+              - '-'
+              - 部門名
+            - - sectionName
+              - string
+              - '-'
+              - 部署名
+            - - roomName
+              - string
+              - '-'
+              - 室名称
+            - - categoryId
+              - int64
+              - '-'
+              - Category ID
+            - - largeClassId
+              - int64
+              - '-'
+              - 大分類ID
+            - - mediumClassId
+              - int64
+              - '-'
+              - 中分類ID
+            - - assetItemId
+              - int64
+              - '-'
+              - 品目ID
+            - - manufacturerId
+              - int64
+              - '-'
+              - メーカーID
+            - - modelId
+              - int64
+              - '-'
+              - 型式ID
+            - - categoryName
+              - string
+              - '-'
+              - Category表示値
+            - - largeClassName
+              - string
+              - '-'
+              - 大分類表示値
+            - - mediumClassName
+              - string
+              - '-'
+              - 中分類表示値
+            - - assetItemName
+              - string
+              - '-'
+              - 紐付け先SHIP資産マスタ由来の品目表示値。資産マスタを保持した個別上書きは不可
+            - - manufacturerName
+              - string
+              - '-'
+              - 資産固有のメーカー表示値。空の場合はSHIP資産マスタのメーカー名へフォールバックし、マスタ名称と異なる場合がある
+            - - modelName
+              - string
+              - '-'
+              - 資産固有の型式表示値。空の場合はSHIP資産マスタの型式へフォールバックし、資産マスタ選択後も個別値へ上書きできる
+            - - widthMm
+              - string
+              - '-'
+              - W
+            - - depthMm
+              - string
+              - '-'
+              - D
+            - - heightMm
+              - string
+              - '-'
+              - H
+            - - assetNo
+              - string
+              - '-'
+              - 資産番号
+            - - equipmentNo
+              - string
+              - '-'
+              - ME番号
+            - - serialNo
+              - string
+              - '-'
+              - シリアル番号
+            - - purchasedOn
+              - date
+              - '-'
+              - 購入年月日
+            - - remarks
+              - string
+              - '-'
+              - 備考
+            - - surveyDate
+              - date
+              - '-'
+              - 調査日
+            - - surveyorUserId
+              - int64
+              - ✓
+              - 調査担当者ユーザーID
+            - - surveyorName
+              - string
+              - ✓
+              - 調査担当者表示名
+            - - photoCount
+              - int32
+              - ✓
+              - 写真枚数
+            - - detailType
+              - string
+              - '-'
+              - MAIN / DETAIL。未設定時は null
+            - - parentAssetSurveyRecordId
+              - int64
+              - '-'
+              - 親調査レコードID。detailType='DETAIL' の場合のみ設定
+            - - parentQrIdentifier
+              - string
+              - '-'
+              - '親本体のQR識別子。明細行の操作列で「親: {QRコード}」を表示するために返す'
+  /registration-edit/records/{recordId}/photos:
+    get:
+      tags:
+        - 現有品調査
+      operationId: getRegistrationEditRecordsByRecordIdPhotos
+      summary: 調査写真一覧取得
+      description: 写真モーダル表示用に、対象レコードの写真一覧を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_data_edit
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '502'
+        - '500'
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          description: 調査レコードID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationEditPhotoListResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_data_edit なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象レコードが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 表示URLの発行に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RegistrationEditPhotoListResponse）
+      x-word-response-subtable-titles:
+        - items要素（RegistrationEditPhoto）
+      x-word-response-subtables:
+        - Title: items要素（RegistrationEditPhoto）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetSurveyPhotoId
+              - int64
+              - ✓
+              - 調査写真ID
+            - - fileName
+              - string
+              - ✓
+              - ファイル名
+            - - fileUrl
+              - string
+              - ✓
+              - 認可済み表示URL。S3 オブジェクトキーは返却しない
+            - - takenAt
+              - datetime
+              - '-'
+              - 撮影日時
+            - - takenByUserId
+              - int64
+              - '-'
+              - 撮影者ユーザーID
+            - - isPrimary
+              - boolean
+              - ✓
+              - 代表写真フラグ
+  /registration-edit/records/{recordId}:
+    put:
+      tags:
+        - 現有品調査
+      operationId: putRegistrationEditRecordsByRecordId
+      summary: 調査レコード更新
+      description: >-
+        調査登録内容修正画面のインライン編集内容を保存する。SHIP資産マスタ選択時は分類IDと初期表示値を反映し、選択後のメーカー名・型式は
+        資産固有の表示値として上書きできる。この表示値編集だけではSHIP資産マスタIDおよびマスタ由来の分類IDを解除しない。品目名は紐付け先資産マスタ由来の値とする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_data_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '422'
+        - '500'
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          description: 更新対象の調査レコードID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationEditRecordUpdateRequest'
+      x-word-request-title: リクエスト（RegistrationEditRecordUpdateRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationEditRecordResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_data_edit なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象レコードが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 既に確定済みのため更新不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 施設ロケーション、SHIP資産マスタ、分類階層、または資産マスタIDと分類IDの組み合わせの整合が取れない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RegistrationEditRecordResponse）
+      x-word-response-subtable-titles: []
+      x-word-response-subtables: []
+  /registration-edit/records/{recordId}/set-main:
+    post:
+      tags:
+        - 現有品調査
+      operationId: postRegistrationEditRecordsByRecordIdSetMain
+      summary: 調査レコード本体設定
+      description: 明細区分が未設定または明細の調査レコードを本体として設定する。明細から本体へ変更する場合は旧親との紐付けを解除する。通常のインライン編集保存とは独立し、操作押下時点で永続化する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_data_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '409'
+        - '500'
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          description: 本体に設定する調査レコードID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 本体設定成功、明細から本体への変更成功、または既に本体のため冪等成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationEditRecordResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_data_edit なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象レコードが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'REG_EDIT_409_ALREADY_CONFIRMED: 対象レコードまたは旧親が確定済みのため更新できない'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RegistrationEditRecordResponse）
+      x-word-response-subtable-titles: []
+      x-word-response-subtables: []
+  /registration-edit/records/{recordId}/unset-main:
+    post:
+      tags:
+        - 現有品調査
+      operationId: postRegistrationEditRecordsByRecordIdUnsetMain
+      summary: 調査レコード本体解除
+      description: 子明細を持たない本体調査レコードを明細区分未設定へ戻す。通常のインライン編集保存とは独立し、操作押下時点で永続化する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_data_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '409'
+        - '500'
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          description: 未設定に戻す本体調査レコードID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 本体解除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationEditRecordResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_data_edit なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象レコードが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'REG_EDIT_409_ALREADY_CONFIRMED: 対象レコードが確定済みのため更新できない'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RegistrationEditRecordResponse）
+      x-word-response-subtable-titles: []
+      x-word-response-subtables: []
+  /registration-edit/records/{parentRecordId}/details/link:
+    post:
+      tags:
+        - 現有品調査
+      operationId: postRegistrationEditRecordsByParentRecordIdDetailsLink
+      summary: 調査レコード明細紐付け
+      description: 紐付け登録モードで選択した未設定または子明細を持たない本体の既存調査レコードを、指定した本体レコードの明細として一括紐付けする。新規調査レコードは作成しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_data_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '409'
+        - '500'
+      parameters:
+        - name: parentRecordId
+          in: path
+          required: true
+          description: 親本体となる調査レコードID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationEditDetailLinkRequest'
+      x-word-request-title: リクエスト（RegistrationEditDetailLinkRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 明細紐付け成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationEditDetailLinkResponse'
+        '400':
+          description: 入力不正、childRecordIds が空、または重複している
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_data_edit なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 親本体または子レコードが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'REG_EDIT_409_ALREADY_CONFIRMED: 親または子候補が確定済みのため紐付けできない'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RegistrationEditDetailLinkResponse）
+      x-word-response-subtable-titles: []
+      x-word-response-subtables: []
+  /registration-edit/records/{recordId}/details/unlink:
+    post:
+      tags:
+        - 現有品調査
+      operationId: postRegistrationEditRecordsByRecordIdDetailsUnlink
+      summary: 調査レコード明細紐付け解除
+      description: 明細行の親子紐付けを解除し、明細区分未設定の調査レコードへ戻す。通常のインライン編集保存とは独立し、操作押下時点で永続化する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_data_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '409'
+        - '500'
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          description: 紐付け解除対象の明細調査レコードID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 紐付け解除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationEditRecordResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_data_edit なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象レコードが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 'REG_EDIT_409_ALREADY_CONFIRMED: 対象レコードが確定済みのため更新できない'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RegistrationEditRecordResponse）
+      x-word-response-subtable-titles: []
+      x-word-response-subtables: []
+  /registration-edit/records/{recordId}/photos/{photoId}:
+    delete:
+      tags:
+        - 現有品調査
+      operationId: deleteRegistrationEditRecordsByRecordIdPhotosByPhotoId
+      summary: 調査写真削除
+      description: 対象レコードの調査写真を削除し、必要に応じて代表写真を付け替える。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_data_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '500'
+      parameters:
+        - name: recordId
+          in: path
+          required: true
+          description: 調査レコードID
+          schema:
+            type: integer
+            format: int64
+        - name: photoId
+          in: path
+          required: true
+          description: 調査写真ID
+          schema:
+            type: integer
+            format: int64
+        - name: nextPrimaryPhotoId
+          in: query
+          required: false
+          description: 代表写真削除後も他の写真が残る場合のみ必須。フロントエンドが選択した次代表写真ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationEditPhotoDeleteResponse'
+        '400':
+          description: 代表写真削除時の nextPrimaryPhotoId が未指定または不正、もしくは不要な場合に指定されている
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_data_edit なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象写真が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象調査レコードが確定済みのため削除不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 の調査写真削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RegistrationEditPhotoDeleteResponse）
+      x-word-response-subtable-titles: []
+      x-word-response-subtables: []
+  /registration-edit/records/confirm:
+    post:
+      tags:
+        - 現有品調査
+      operationId: postRegistrationEditRecordsConfirm
+      summary: 調査レコード確定
+      description: >-
+        選択した調査レコードを確定し、一覧から除外する。確定には有効なSHIP資産マスタIDと必須分類IDが必要で、メーカー名・型式は
+        紐付け先マスタと異なる資産固有の表示値でもよい。空の場合は紐付け先資産マスタのメーカー名・型式を有効表示値とする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: survey_data_edit
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationEditConfirmRequest'
+      x-word-request-title: リクエスト（RegistrationEditConfirmRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 確定成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationEditConfirmResponse'
+        '400':
+          description: recordIds が空、重複、または入力形式が不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 survey_data_edit なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 有効なSHIP資産マスタIDまたは必須分類IDがない、資産マスタとの参照整合が取れない、あるいは確定済みのレコードが含まれる
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RegistrationEditConfirmResponse）
+      x-word-response-subtable-titles: []
+      x-word-response-subtables: []
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    OfflinePrepMasterDownloadResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - downloadedAt
+        - facility
+        - facilityLocations
+        - assetCategories
+        - assetLargeClasses
+        - assetMediumClasses
+        - assetItems
+        - manufacturers
+        - models
+      properties:
+        downloadedAt:
+          type: string
+          format: date-time
+          description: サーバーがマスタパッケージを生成した日時
+        facility:
+          $ref: '#/components/schemas/OfflinePrepFacility'
+          description: 対象施設の基本情報
+          x-word-subtable-title: facility要素（OfflinePrepFacility）
+        facilityLocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfflinePrepFacilityLocation'
+          description: 対象施設のロケーション候補
+          x-word-subtable-title: facilityLocations要素（OfflinePrepFacilityLocation）
+        assetCategories:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetCategoryOption'
+          description: Category候補
+          x-word-subtable-title: assetCategories要素（AssetCategoryOption）
+        assetLargeClasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetLargeClassOption'
+          description: 大分類候補
+          x-word-subtable-title: assetLargeClasses要素（AssetLargeClassOption）
+        assetMediumClasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetMediumClassOption'
+          description: 中分類候補
+          x-word-subtable-title: assetMediumClasses要素（AssetMediumClassOption）
+        assetItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetItemOption'
+          description: 品目候補
+          x-word-subtable-title: assetItems要素（AssetItemOption）
+        manufacturers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ManufacturerOption'
+          description: メーカー候補
+          x-word-subtable-title: manufacturers要素（ManufacturerOption）
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelOption'
+          description: 型式候補
+          x-word-subtable-title: models要素（ModelOption）
+    OfflinePrepFacility:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID
+        facilityName:
+          type: string
+          description: 施設名
+    OfflinePrepFacilityLocation:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityLocationId
+      properties:
+        facilityLocationId:
+          type: integer
+          format: int64
+          description: 施設ロケーションID
+        building:
+          type: string
+          description: 棟
+        floor:
+          type: string
+          description: 階
+        departmentName:
+          type: string
+          description: 部門名
+        sectionName:
+          type: string
+          description: 部署名
+        roomName:
+          type: string
+          description: 室名称
+    AssetCategoryOption:
+      type: object
+      additionalProperties: false
+      required:
+        - categoryId
+        - categoryName
+        - sortOrder
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+          description: Category ID
+        categoryName:
+          type: string
+          description: Category名
+        sortOrder:
+          type: integer
+          format: int32
+          description: 並び順
+    AssetLargeClassOption:
+      type: object
+      additionalProperties: false
+      required:
+        - largeClassId
+        - categoryId
+        - largeClassName
+        - sortOrder
+      properties:
+        largeClassId:
+          type: integer
+          format: int64
+          description: 大分類ID
+        categoryId:
+          type: integer
+          format: int64
+          description: 親Category ID
+        largeClassName:
+          type: string
+          description: 大分類名
+        sortOrder:
+          type: integer
+          format: int32
+          description: 並び順
+    AssetMediumClassOption:
+      type: object
+      additionalProperties: false
+      required:
+        - mediumClassId
+        - largeClassId
+        - mediumClassName
+        - sortOrder
+      properties:
+        mediumClassId:
+          type: integer
+          format: int64
+          description: 中分類ID
+        largeClassId:
+          type: integer
+          format: int64
+          description: 親大分類ID
+        mediumClassName:
+          type: string
+          description: 中分類名
+        sortOrder:
+          type: integer
+          format: int32
+          description: 並び順
+    AssetItemOption:
+      type: object
+      additionalProperties: false
+      required:
+        - assetItemId
+        - mediumClassId
+        - assetItemName
+      properties:
+        assetItemId:
+          type: integer
+          format: int64
+          description: 品目ID
+        mediumClassId:
+          type: integer
+          format: int64
+          description: 親中分類ID
+        assetItemName:
+          type: string
+          description: 品目名
+    ManufacturerOption:
+      type: object
+      additionalProperties: false
+      required:
+        - manufacturerId
+        - assetItemId
+        - manufacturerName
+      properties:
+        manufacturerId:
+          type: integer
+          format: int64
+          description: メーカーID
+        assetItemId:
+          type: integer
+          format: int64
+          description: 親品目ID
+        manufacturerName:
+          type: string
+          description: メーカー名
+    ModelOption:
+      type: object
+      additionalProperties: false
+      required:
+        - modelId
+        - manufacturerId
+        - modelName
+      properties:
+        modelId:
+          type: integer
+          format: int64
+          description: 型式ID
+        manufacturerId:
+          type: integer
+          format: int64
+          description: 親メーカーID
+        modelName:
+          type: string
+          description: 型式名
+    OfflineSurveyUploadRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - records
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 調査対象施設ID
+        startedAt:
+          type: string
+          format: date-time
+          description: 端末上の調査開始日時
+        endedAt:
+          type: string
+          format: date-time
+          description: 端末上の調査終了日時
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfflineSurveyRecordInput'
+          description: アップロード対象の調査レコード一覧。1件以上必須
+          x-word-subtable-title: records要素（OfflineSurveyRecordInput）
+        localPhotoUuid:
+          type: string
+          description: 端末で採番した写真UUID
+          x-word-omit-row: true
+          x-required-when: photos要素（OfflineSurveyPhotoInput）
+          x-word-required-label: ✓
+        fileName:
+          type: string
+          description: 端末保持時の表示名。application_documents.file_name には保存せず、サーバー側でシステム生成名を採番する
+          x-word-omit-row: true
+          x-required-when: photos要素（OfflineSurveyPhotoInput）
+        contentType:
+          type: string
+          description: MIME Type
+          x-word-omit-row: true
+          x-required-when: photos要素（OfflineSurveyPhotoInput）
+          x-word-required-label: ✓
+        fileBodyBase64:
+          type: string
+          description: 写真本文の base64
+          x-word-omit-row: true
+          x-required-when: photos要素（OfflineSurveyPhotoInput）
+          x-word-required-label: ✓
+        takenAt:
+          type: string
+          format: date-time
+          description: 撮影日時
+          x-word-omit-row: true
+          x-required-when: photos要素（OfflineSurveyPhotoInput）
+        isPrimary:
+          type: boolean
+          description: 代表写真フラグ
+          x-word-omit-row: true
+          x-required-when: photos要素（OfflineSurveyPhotoInput）
+    OfflineSurveyUploadResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - assetSurveySessionId
+        - uploadedRecordCount
+        - uploadedPhotoCount
+        - status
+      properties:
+        assetSurveySessionId:
+          type: integer
+          format: int64
+          description: 作成した調査セッションID
+        uploadedRecordCount:
+          type: integer
+          format: int32
+          description: 登録した調査レコード件数
+        uploadedPhotoCount:
+          type: integer
+          format: int32
+          description: 登録した写真件数
+        status:
+          type: string
+          description: セッション最終ステータス
+    OfflineSurveyRecordInput:
+      type: object
+      additionalProperties: false
+      properties:
+        facilityLocationId:
+          type: integer
+          format: int64
+          description: 既存ロケーションへ解決できた場合の施設ロケーションID
+        surveyDate:
+          type: string
+          format: date
+          description: 調査日
+        building:
+          type: string
+          description: 棟の表示値スナップショット
+        floor:
+          type: string
+          description: 階の表示値スナップショット
+        departmentName:
+          type: string
+          description: 部門名の表示値スナップショット
+        sectionName:
+          type: string
+          description: 部署名の表示値スナップショット
+        roomName:
+          type: string
+          description: 室名称
+        qrIdentifier:
+          type: string
+          description: 読取QR識別子
+        categoryId:
+          type: integer
+          format: int64
+          description: Category ID
+        largeClassId:
+          type: integer
+          format: int64
+          description: 大分類ID
+        mediumClassId:
+          type: integer
+          format: int64
+          description: 中分類ID
+        assetItemId:
+          type: integer
+          format: int64
+          description: 品目ID
+        manufacturerId:
+          type: integer
+          format: int64
+          description: メーカーID
+        modelId:
+          type: integer
+          format: int64
+          description: 型式ID
+        categoryName:
+          type: string
+          description: Category表示値
+        largeClassName:
+          type: string
+          description: 大分類表示値
+        mediumClassName:
+          type: string
+          description: 中分類表示値
+        assetItemName:
+          type: string
+          description: 品目表示値
+        manufacturerName:
+          type: string
+          description: メーカー表示値
+        modelName:
+          type: string
+          description: 型式表示値
+        assetNo:
+          type: string
+          description: 資産番号
+        equipmentNo:
+          type: string
+          description: ME番号
+        serialNo:
+          type: string
+          description: シリアル番号
+        purchasedOn:
+          type: string
+          format: date
+          description: 購入日
+        widthMm:
+          type: string
+          description: 幅
+        depthMm:
+          type: string
+          description: 奥行
+        heightMm:
+          type: string
+          description: 高さ
+        remarks:
+          type: string
+          description: 備考
+        registeredAt:
+          type: string
+          format: date-time
+          description: 端末上の登録日時
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfflineSurveyPhotoInput'
+          description: 当該レコードの写真一覧
+          x-word-subtable-title: photos要素（OfflineSurveyPhotoInput）
+    OfflineSurveyPhotoInput:
+      type: object
+      additionalProperties: false
+      required:
+        - localPhotoUuid
+        - contentType
+        - fileBodyBase64
+      properties:
+        localPhotoUuid:
+          type: string
+          description: 端末で採番した写真UUID
+        fileName:
+          type: string
+          description: 端末保持時の表示名。application_documents.file_name には保存せず、サーバー側でシステム生成名を採番する
+        contentType:
+          type: string
+          description: MIME Type
+        fileBodyBase64:
+          type: string
+          description: 写真本文の base64
+        takenAt:
+          type: string
+          format: date-time
+          description: 撮影日時
+        isPrimary:
+          type: boolean
+          description: 代表写真フラグ
+    RegistrationEditRecordListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 絞り込み後件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistrationEditRecordSummary'
+          description: 調査レコード一覧
+          x-word-subtable-title: items要素（RegistrationEditRecordSummary）
+    RegistrationEditRecordSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - assetSurveyRecordId
+        - surveyorUserId
+        - surveyorName
+        - photoCount
+      properties:
+        assetSurveyRecordId:
+          type: integer
+          format: int64
+          description: 調査レコードID
+        facilityLocationId:
+          type: integer
+          format: int64
+          description: 施設ロケーションID。自由記述で未解決の場合は null
+        shipAssetMasterId:
+          type: integer
+          format: int64
+          description: 紐付け先SHIP資産マスタID。未選択の下書きでは null。メーカー名・型式の表示値編集後も保持する
+        qrIdentifier:
+          type: string
+          description: QR識別子
+        building:
+          type: string
+          description: 棟
+        floor:
+          type: string
+          description: 階
+        departmentName:
+          type: string
+          description: 部門名
+        sectionName:
+          type: string
+          description: 部署名
+        roomName:
+          type: string
+          description: 室名称
+        categoryId:
+          type: integer
+          format: int64
+          description: Category ID
+        largeClassId:
+          type: integer
+          format: int64
+          description: 大分類ID
+        mediumClassId:
+          type: integer
+          format: int64
+          description: 中分類ID
+        assetItemId:
+          type: integer
+          format: int64
+          description: 品目ID
+        manufacturerId:
+          type: integer
+          format: int64
+          description: メーカーID
+        modelId:
+          type: integer
+          format: int64
+          description: 型式ID
+        categoryName:
+          type: string
+          description: Category表示値
+        largeClassName:
+          type: string
+          description: 大分類表示値
+        mediumClassName:
+          type: string
+          description: 中分類表示値
+        assetItemName:
+          type: string
+          description: 紐付け先SHIP資産マスタ由来の品目表示値。資産マスタを保持した個別上書きは不可
+        manufacturerName:
+          type: string
+          description: 資産固有のメーカー表示値。空の場合はSHIP資産マスタのメーカー名へフォールバックし、マスタ名称と異なる場合がある
+        modelName:
+          type: string
+          description: 資産固有の型式表示値。空の場合はSHIP資産マスタの型式へフォールバックする
+        widthMm:
+          type: string
+          description: W
+        depthMm:
+          type: string
+          description: D
+        heightMm:
+          type: string
+          description: H
+        assetNo:
+          type: string
+          description: 資産番号
+        equipmentNo:
+          type: string
+          description: ME番号
+        serialNo:
+          type: string
+          description: シリアル番号
+        purchasedOn:
+          type: string
+          format: date
+          description: 購入年月日
+        remarks:
+          type: string
+          description: 備考
+        surveyDate:
+          type: string
+          format: date
+          description: 調査日
+        surveyorUserId:
+          type: integer
+          format: int64
+          description: 調査担当者ユーザーID
+        surveyorName:
+          type: string
+          description: 調査担当者表示名
+        photoCount:
+          type: integer
+          format: int32
+          description: 写真枚数
+        detailType:
+          type: string
+          description: MAIN / DETAIL。未設定時は null
+        parentAssetSurveyRecordId:
+          type: integer
+          format: int64
+          description: 親調査レコードID。detailType='DETAIL' の場合のみ設定
+        parentQrIdentifier:
+          type: string
+          description: '親本体のQR識別子。明細行の操作列で「親: {QRコード}」を表示するために返す'
+    RegistrationEditPhotoListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistrationEditPhoto'
+          description: 写真一覧
+          x-word-subtable-title: items要素（RegistrationEditPhoto）
+    RegistrationEditPhoto:
+      type: object
+      additionalProperties: false
+      required:
+        - assetSurveyPhotoId
+        - fileName
+        - fileUrl
+        - isPrimary
+      properties:
+        assetSurveyPhotoId:
+          type: integer
+          format: int64
+          description: 調査写真ID
+        fileName:
+          type: string
+          description: ファイル名
+        fileUrl:
+          type: string
+          description: 認可済み表示URL。S3 オブジェクトキーは返却しない
+        takenAt:
+          type: string
+          format: date-time
+          description: 撮影日時
+        takenByUserId:
+          type: integer
+          format: int64
+          description: 撮影者ユーザーID
+        isPrimary:
+          type: boolean
+          description: 代表写真フラグ
+    RegistrationEditRecordUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        facilityLocationId:
+          type: integer
+          format: int64
+          description: 施設ロケーションID
+        shipAssetMasterId:
+          type: integer
+          format: int64
+          nullable: true
+          description: >-
+            紐付け先SHIP資産マスタID。非null指定時は分類ID・初期表示値をサーバーで解決する。未送信時は現在の紐付けを維持し、
+            メーカー名・型式だけの編集では解除しない。明示nullは下書き状態での紐付け解除を表す
+        building:
+          type: string
+          description: 棟の表示値
+        floor:
+          type: string
+          description: 階の表示値
+        departmentName:
+          type: string
+          description: 部門名の表示値
+        sectionName:
+          type: string
+          description: 部署名の表示値
+        roomName:
+          type: string
+          description: 室名称
+        categoryId:
+          type: integer
+          format: int64
+          description: Category ID
+        largeClassId:
+          type: integer
+          format: int64
+          description: 大分類ID
+        mediumClassId:
+          type: integer
+          format: int64
+          description: 中分類ID
+        assetItemId:
+          type: integer
+          format: int64
+          description: 品目ID
+        manufacturerId:
+          type: integer
+          format: int64
+          description: メーカーID
+        modelId:
+          type: integer
+          format: int64
+          description: 型式ID
+        categoryName:
+          type: string
+          description: Category表示値
+        largeClassName:
+          type: string
+          description: 大分類表示値
+        mediumClassName:
+          type: string
+          description: 中分類表示値
+        assetItemName:
+          type: string
+          description: 紐付け先SHIP資産マスタ由来の品目表示値。資産マスタ紐付け中は同じ値のみ指定でき、個別上書きは不可
+        manufacturerName:
+          type: string
+          nullable: true
+          description: 資産固有のメーカー表示値。資産マスタ選択後も上書きでき、shipAssetMasterIdとmanufacturerIdは保持する。nullまたは空白のみは個別値のクリアを表す
+        modelName:
+          type: string
+          nullable: true
+          description: 資産固有の型式表示値。資産マスタ選択後も上書きでき、shipAssetMasterIdとmodelIdは保持する。nullまたは空白のみは個別値のクリアを表す
+        assetNo:
+          type: string
+          description: 資産番号
+        equipmentNo:
+          type: string
+          description: ME番号
+        serialNo:
+          type: string
+          description: シリアル番号
+        purchasedOn:
+          type: string
+          format: date
+          description: 購入年月日
+        widthMm:
+          type: string
+          description: W
+        depthMm:
+          type: string
+          description: D
+        heightMm:
+          type: string
+          description: H
+        remarks:
+          type: string
+          description: 備考
+    RegistrationEditRecordResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/RegistrationEditRecordSummary'
+          description: 紐付け解除後の調査レコード
+          x-word-omit-subtable: true
+    RegistrationEditDetailLinkRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - childRecordIds
+      properties:
+        childRecordIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 明細として紐付ける未設定または子明細を持たない本体の調査レコードID一覧。1件以上必須
+    RegistrationEditDetailLinkResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - parent
+        - linkedItems
+        - linkedCount
+      properties:
+        parent:
+          $ref: '#/components/schemas/RegistrationEditRecordSummary'
+          description: 親本体レコード
+          x-word-omit-subtable: true
+        linkedItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistrationEditRecordSummary'
+          description: 紐付け後の明細レコード一覧
+          x-word-omit-subtable: true
+        linkedCount:
+          type: integer
+          format: int32
+          description: 紐付け件数
+    RegistrationEditPhotoDeleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - remainingPhotoCount
+      properties:
+        remainingPhotoCount:
+          type: integer
+          format: int32
+          description: 削除後の残写真件数
+        newPrimaryPhotoId:
+          type: integer
+          format: int64
+          description: 新たに代表写真となった写真ID
+    RegistrationEditConfirmRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - recordIds
+      properties:
+        recordIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 確定対象の調査レコードID一覧。1件以上必須、重複不可
+    RegistrationEditConfirmResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - confirmedCount
+      properties:
+        confirmedCount:
+          type: integer
+          format: int32
+          description: 確定した件数
+        failedRecordIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 本 API は部分成功を許可しないため、成功時は空配列または未返却。条件未達が含まれる場合は 409 を返す
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

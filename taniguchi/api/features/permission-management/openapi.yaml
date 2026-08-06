@@ -1,0 +1,923 @@
+openapi: 3.0.4
+info:
+  title: 権限管理 API
+  version: '1.1'
+  description: 権限管理で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 権限管理
+    description: 権限管理のAPI
+paths:
+  /permission-management/context:
+    get:
+      tags:
+        - 権限管理
+      operationId: getPermissionManagementContext
+      summary: 権限管理コンテキスト取得
+      description: 権限管理画面の初期表示に必要な対象施設候補、施設提供機能候補、施設提供カラム候補を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-admin
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '500'
+      x-word-parameters-title: リクエストパラメータ
+      x-word-parameters:
+        - - '-'
+          - '-'
+          - '-'
+          - '-'
+          - なし
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionManagementContextResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 共有システム管理者アカウントではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：PermissionManagementContextResponse）
+      x-word-response-subtable-titles:
+        - facilities要素（PermissionTargetFacility）
+        - featureCatalogs要素（PermissionFeatureCatalogItem）
+        - columnCatalogs要素（PermissionColumnCatalogItem）
+      x-word-response-subtables:
+        - Title: facilities要素（PermissionTargetFacility）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityId
+              - int64
+              - ✓
+              - 施設ID（facilities.facility_id）
+            - - facilityCode
+              - string
+              - '-'
+              - 施設コード
+            - - facilityName
+              - string
+              - ✓
+              - 施設名
+            - - prefecture
+              - string
+              - '-'
+              - 都道府県
+            - - systemContractStatus
+              - string
+              - '-'
+              - システム契約状態
+        - Title: featureCatalogs要素（PermissionFeatureCatalogItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - featureCode
+              - string
+              - ✓
+              - feature_catalogs.feature_code
+            - - featureName
+              - string
+              - ✓
+              - 機能表示名
+            - - categoryCode
+              - string
+              - ✓
+              - カテゴリコード
+            - - menuGroupCode
+              - string
+              - '-'
+              - メニューグループコード
+            - - featureKind
+              - string
+              - '-'
+              - 機能種別
+            - - usageContext
+              - string
+              - '-'
+              - 利用文脈
+            - - configScope
+              - string
+              - ✓
+              - FACILITY または FACILITY_USER
+            - - sortOrder
+              - int32
+              - ✓
+              - 表示順
+            - - switchContent
+              - string
+              - ✓
+              - ON の場合に利用可能になる画面・ボタン・カラム・モーダルの説明
+        - Title: columnCatalogs要素（PermissionColumnCatalogItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - columnCode
+              - string
+              - ✓
+              - column_catalogs.column_code
+            - - columnName
+              - string
+              - ✓
+              - カラム表示名
+            - - relatedFeatureCode
+              - string
+              - ✓
+              - 関連する feature_code
+            - - columnGroupCode
+              - string
+              - '-'
+              - カラム分類コード
+            - - usageContext
+              - string
+              - '-'
+              - 利用文脈
+            - - sortOrder
+              - int32
+              - ✓
+              - 表示順
+            - - switchContent
+              - string
+              - ✓
+              - ON の場合に利用可能になるカラム表示の説明
+  /permission-management/facilities/{facilityId}/settings:
+    get:
+      tags:
+        - 権限管理
+      operationId: getPermissionManagementFacilitiesByFacilityIdSettings
+      summary: 施設提供設定取得
+      description: 対象施設で提供する機能およびカラムの現在設定を取得する。対象施設選択時および保存後の再表示に利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-admin
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: facilityId
+          in: path
+          required: true
+          description: 設定取得対象の施設ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPermissionManagementFacilitiesByFacilityIdSettingsResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 共有システム管理者アカウントではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象施設が存在しない、または論理削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': PermissionFacilitySettingsResponse
+      x-word-response-title: レスポンス（200：PermissionFacilitySettingsResponse）
+      x-word-response-subtable-titles:
+        - featureSettings要素（PermissionFeatureSettingItem）
+        - columnSettings要素（PermissionColumnSettingItem）
+      x-word-response-subtables:
+        - Title: featureSettings要素（PermissionFeatureSettingItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - featureCode
+              - string
+              - ✓
+              - feature_catalogs.feature_code
+            - - featureName
+              - string
+              - ✓
+              - 機能表示名
+            - - categoryCode
+              - string
+              - ✓
+              - カテゴリコード
+            - - menuGroupCode
+              - string
+              - '-'
+              - メニューグループコード
+            - - featureKind
+              - string
+              - '-'
+              - 機能種別
+            - - usageContext
+              - string
+              - '-'
+              - 利用文脈
+            - - configScope
+              - string
+              - ✓
+              - FACILITY または FACILITY_USER
+            - - sortOrder
+              - int32
+              - ✓
+              - 表示順
+            - - switchContent
+              - string
+              - ✓
+              - ON の場合に利用可能になる画面・ボタン・カラム・モーダルの説明
+            - - isEnabled
+              - boolean
+              - ✓
+              - 対象施設で提供するかどうか
+            - - isSelectable
+              - boolean
+              - ✓
+              - 親機能制約などにより ON/OFF 操作できるかどうか
+            - - disabledReason
+              - string
+              - '-'
+              - 操作不可理由。操作可能な場合は null
+        - Title: columnSettings要素（PermissionColumnSettingItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - columnCode
+              - string
+              - ✓
+              - column_catalogs.column_code
+            - - columnName
+              - string
+              - ✓
+              - カラム表示名
+            - - relatedFeatureCode
+              - string
+              - ✓
+              - 関連する feature_code
+            - - columnGroupCode
+              - string
+              - '-'
+              - カラム分類コード
+            - - usageContext
+              - string
+              - '-'
+              - 利用文脈
+            - - sortOrder
+              - int32
+              - ✓
+              - 表示順
+            - - switchContent
+              - string
+              - ✓
+              - ON の場合に利用可能になるカラム表示の説明
+            - - isEnabled
+              - boolean
+              - ✓
+              - 対象施設で提供するかどうか
+            - - isSelectable
+              - boolean
+              - ✓
+              - 関連 feature_code が施設提供機能として有効で、ON にできるかどうか
+            - - disabledReason
+              - string
+              - '-'
+              - 操作不可理由。操作可能な場合は null
+    put:
+      tags:
+        - 権限管理
+      operationId: putPermissionManagementFacilitiesByFacilityIdSettings
+      summary: 施設提供設定保存
+      description: 対象施設で提供する機能およびカラムの設定を保存する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-admin
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: facilityId
+          in: path
+          required: true
+          description: 設定保存対象の施設ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionFacilitySettingsUpdateRequest'
+      x-word-request-title: リクエスト（PermissionFacilitySettingsUpdateRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutPermissionManagementFacilitiesByFacilityIdSettingsResponse'
+        '400':
+          description: 未知のコード、固定導線コード、旧 facility_feature_edit、親 feature 不足、または関連 feature が無効な column_code 指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 共有システム管理者アカウントではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象施設が存在しない、または論理削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: lending_in_use_used を OFF にできない未返却の使用中/使用済データが存在する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': PermissionFacilitySettingsResponse
+      x-word-response-title: レスポンス（200：PermissionFacilitySettingsResponse）
+  /permission-management/facilities/{facilityId}/copy-settings:
+    post:
+      tags:
+        - 権限管理
+      operationId: postPermissionManagementFacilitiesByFacilityIdCopySettings
+      summary: 施設提供設定コピー
+      description: コピー元施設の施設提供機能・施設提供カラム設定を、対象施設へ置き換える。施設設定コピー確認モーダルの確定操作で利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-admin
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: facilityId
+          in: path
+          required: true
+          description: コピー先となる対象施設ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionFacilitySettingsCopyRequest'
+      x-word-request-title: リクエスト（PermissionFacilitySettingsCopyRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: コピー成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostPermissionManagementFacilitiesByFacilityIdCopySettingsResponse'
+        '400':
+          description: コピー元施設が未指定、同一施設指定、またはコピー後設定が業務制約に違反
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 共有システム管理者アカウントではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: コピー元施設またはコピー先施設が存在しない、または論理削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: lending_in_use_used を OFF にできない未返却の使用中/使用済データが存在する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': PermissionFacilitySettingsResponse
+      x-word-response-title: レスポンス（200：PermissionFacilitySettingsResponse）
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    PermissionManagementContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - facilities
+        - featureCatalogs
+        - columnCatalogs
+      properties:
+        defaultFacilityId:
+          type: integer
+          format: int64
+          description: 初期選択する施設ID。対象施設候補がない場合は null
+        facilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionTargetFacility'
+          description: 対象施設候補
+          x-word-subtable-title: facilities要素（PermissionTargetFacility）
+        featureCatalogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionFeatureCatalogItem'
+          description: 施設提供機能候補
+          x-word-subtable-title: featureCatalogs要素（PermissionFeatureCatalogItem）
+        columnCatalogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionColumnCatalogItem'
+          description: 施設提供カラム候補
+          x-word-subtable-title: columnCatalogs要素（PermissionColumnCatalogItem）
+        currentSettings:
+          $ref: '#/components/schemas/PermissionFacilitySettingsResponse'
+          description: 初期選択施設の現在設定。対象施設候補がない場合は null
+          x-word-omit-subtable: true
+    PermissionTargetFacility:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 施設ID（facilities.facility_id）
+        facilityCode:
+          type: string
+          description: 施設コード
+        facilityName:
+          type: string
+          description: 施設名
+        prefecture:
+          type: string
+          description: 都道府県
+        systemContractStatus:
+          type: string
+          description: システム契約状態
+    PermissionFeatureCatalogItem:
+      type: object
+      additionalProperties: false
+      required:
+        - featureCode
+        - featureName
+        - categoryCode
+        - configScope
+        - sortOrder
+        - switchContent
+      properties:
+        featureCode:
+          type: string
+          description: feature_catalogs.feature_code
+        featureName:
+          type: string
+          description: 機能表示名
+        categoryCode:
+          type: string
+          description: カテゴリコード
+        menuGroupCode:
+          type: string
+          description: メニューグループコード
+        featureKind:
+          type: string
+          description: 機能種別
+        usageContext:
+          type: string
+          description: 利用文脈
+        configScope:
+          type: string
+          description: FACILITY または FACILITY_USER
+        sortOrder:
+          type: integer
+          format: int32
+          description: 表示順
+        switchContent:
+          type: string
+          description: ON の場合に利用可能になる画面・ボタン・カラム・モーダルの説明
+    PermissionColumnCatalogItem:
+      type: object
+      additionalProperties: false
+      required:
+        - columnCode
+        - columnName
+        - relatedFeatureCode
+        - sortOrder
+        - switchContent
+      properties:
+        columnCode:
+          type: string
+          description: column_catalogs.column_code
+        columnName:
+          type: string
+          description: カラム表示名
+        relatedFeatureCode:
+          type: string
+          description: 関連する feature_code
+        columnGroupCode:
+          type: string
+          description: カラム分類コード
+        usageContext:
+          type: string
+          description: 利用文脈
+        sortOrder:
+          type: integer
+          format: int32
+          description: 表示順
+        switchContent:
+          type: string
+          description: ON の場合に利用可能になるカラム表示の説明
+    GetPermissionManagementFacilitiesByFacilityIdSettingsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+        - permissionUnitCount
+        - featureSettings
+        - columnSettings
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 設定対象施設ID
+        facilityCode:
+          type: string
+          description: 施設コード
+        facilityName:
+          type: string
+          description: 施設名
+        permissionUnitCount:
+          type: integer
+          format: int32
+          description: 権限管理単位数。施設提供機能候補数と施設提供カラム候補数の合計
+        updatedAt:
+          type: string
+          format: date-time
+          description: 施設提供設定の最終更新日時。未設定の場合は null
+        featureSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionFeatureSettingItem'
+          description: 施設提供機能候補と現在値
+          x-word-subtable-title: featureSettings要素（PermissionFeatureSettingItem）
+        columnSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionColumnSettingItem'
+          description: 施設提供カラム候補と現在値
+          x-word-subtable-title: columnSettings要素（PermissionColumnSettingItem）
+    PermissionFeatureSettingItem:
+      type: object
+      additionalProperties: false
+      required:
+        - featureCode
+        - featureName
+        - categoryCode
+        - configScope
+        - sortOrder
+        - switchContent
+        - isEnabled
+        - isSelectable
+      properties:
+        featureCode:
+          type: string
+          description: feature_catalogs.feature_code
+        featureName:
+          type: string
+          description: 機能表示名
+        categoryCode:
+          type: string
+          description: カテゴリコード
+        menuGroupCode:
+          type: string
+          description: メニューグループコード
+        featureKind:
+          type: string
+          description: 機能種別
+        usageContext:
+          type: string
+          description: 利用文脈
+        configScope:
+          type: string
+          description: FACILITY または FACILITY_USER
+        sortOrder:
+          type: integer
+          format: int32
+          description: 表示順
+        switchContent:
+          type: string
+          description: ON の場合に利用可能になる画面・ボタン・カラム・モーダルの説明。taniguchi/docs/ロール整理.xlsx の 権限管理単位一覧 シートから導出する
+        isEnabled:
+          type: boolean
+          description: 対象施設で提供するかどうか
+        isSelectable:
+          type: boolean
+          description: 親機能制約などにより ON/OFF 操作できるかどうか
+        disabledReason:
+          type: string
+          description: 操作不可理由。操作可能な場合は null
+    PermissionColumnSettingItem:
+      type: object
+      additionalProperties: false
+      required:
+        - columnCode
+        - columnName
+        - relatedFeatureCode
+        - sortOrder
+        - switchContent
+        - isEnabled
+        - isSelectable
+      properties:
+        columnCode:
+          type: string
+          description: column_catalogs.column_code
+        columnName:
+          type: string
+          description: カラム表示名
+        relatedFeatureCode:
+          type: string
+          description: 関連する feature_code
+        columnGroupCode:
+          type: string
+          description: カラム分類コード
+        usageContext:
+          type: string
+          description: 利用文脈
+        sortOrder:
+          type: integer
+          format: int32
+          description: 表示順
+        switchContent:
+          type: string
+          description: ON の場合に利用可能になるカラム表示の説明。taniguchi/docs/ロール整理.xlsx の 権限管理単位一覧 シートから導出する
+        isEnabled:
+          type: boolean
+          description: 対象施設で提供するかどうか
+        isSelectable:
+          type: boolean
+          description: 関連 feature_code が施設提供機能として有効で、ON にできるかどうか
+        disabledReason:
+          type: string
+          description: 操作不可理由。操作可能な場合は null
+    PermissionFacilitySettingsUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - enabledFeatureCodes
+        - enabledColumnCodes
+      properties:
+        enabledFeatureCodes:
+          type: array
+          items:
+            type: string
+          description: 対象施設で提供する feature_code 一覧
+        enabledColumnCodes:
+          type: array
+          items:
+            type: string
+          description: 対象施設で提供する column_code 一覧
+    PutPermissionManagementFacilitiesByFacilityIdSettingsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+        - permissionUnitCount
+        - updatedAt
+        - featureSettings
+        - columnSettings
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 設定対象施設ID
+        facilityCode:
+          type: string
+          description: 施設コード
+        facilityName:
+          type: string
+          description: 施設名
+        permissionUnitCount:
+          type: integer
+          format: int32
+          description: 権限管理単位数。施設提供機能候補数と施設提供カラム候補数の合計
+        updatedAt:
+          type: string
+          format: date-time
+          description: 保存後の施設提供設定の最終更新日時
+        featureSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionFeatureSettingItem'
+          description: 保存後の施設提供機能候補と現在値
+          x-word-omit-subtable: true
+        columnSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionColumnSettingItem'
+          description: 保存後の施設提供カラム候補と現在値
+          x-word-omit-subtable: true
+    PermissionFacilitySettingsCopyRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - sourceFacilityId
+      properties:
+        sourceFacilityId:
+          type: integer
+          format: int64
+          description: コピー元施設ID
+    PostPermissionManagementFacilitiesByFacilityIdCopySettingsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+        - permissionUnitCount
+        - sourceFacilityId
+        - sourceFacilityName
+        - updatedAt
+        - featureSettings
+        - columnSettings
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: コピー先施設ID
+        facilityCode:
+          type: string
+          description: コピー先施設コード
+        facilityName:
+          type: string
+          description: コピー先施設名
+        permissionUnitCount:
+          type: integer
+          format: int32
+          description: 権限管理単位数。施設提供機能候補数と施設提供カラム候補数の合計
+        sourceFacilityId:
+          type: integer
+          format: int64
+          description: コピー元施設ID
+        sourceFacilityName:
+          type: string
+          description: コピー元施設名
+        updatedAt:
+          type: string
+          format: date-time
+          description: コピー後の施設提供設定の最終更新日時
+        featureSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionFeatureSettingItem'
+          description: コピー後の施設提供機能候補と現在値
+          x-word-omit-subtable: true
+        columnSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionColumnSettingItem'
+          description: コピー後の施設提供カラム候補と現在値
+          x-word-omit-subtable: true
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml
+    PermissionFacilitySettingsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+        - permissionUnitCount
+        - featureSettings
+        - columnSettings
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 設定対象施設ID
+        facilityCode:
+          type: string
+          description: 施設コード
+        facilityName:
+          type: string
+          description: 施設名
+        permissionUnitCount:
+          type: integer
+          format: int32
+          description: 権限管理単位数。施設提供機能候補数と施設提供カラム候補数の合計
+        updatedAt:
+          type: string
+          format: date-time
+          description: 施設提供設定の最終更新日時。未設定の場合は null
+        featureSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionFeatureSettingItem'
+          description: 施設提供機能候補と現在値
+          x-word-omit-subtable: true
+        columnSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionColumnSettingItem'
+          description: 施設提供カラム候補と現在値
+          x-word-omit-subtable: true

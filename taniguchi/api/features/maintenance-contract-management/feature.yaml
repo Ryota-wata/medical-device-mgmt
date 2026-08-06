@@ -1,0 +1,62 @@
+$schema: ../../feature.schema.json
+id: API-029
+slug: maintenance-contract-management
+title: 保守契約管理
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /asset-search-result
+  - /quotation-data-box/maintenance-contracts
+  - /maintenance-quote-registration
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/maintenance-contract-management.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_保守契約管理.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-006
+  - API-007
+  - API-013
+  - API-014
+  - API-030
+
+dbTables:
+  - asset_ledgers
+  - qr_codes
+  - maintenance_contracts
+  - maintenance_contract_assets
+  - maintenance_contract_status_definitions
+  - maintenance_contract_status_transitions
+  - maintenance_contract_reviews
+  - maintenance_contract_review_assets
+  - rfqs
+  - rfq_vendors
+  - quotations
+  - application_documents
+  - inspection_tasks
+  - inspection_task_status_definitions
+  - inspection_task_status_transitions
+  - vendors
+  - users
+  - facilities
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+
+permissionCodes:
+  - maintenance_contract

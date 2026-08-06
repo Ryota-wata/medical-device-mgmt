@@ -1,0 +1,926 @@
+openapi: 3.0.4
+info:
+  title: QR発行・ラベル印刷 API
+  version: '1.1'
+  description: QR発行・ラベル印刷で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: QR発行・ラベル印刷
+    description: QR発行・ラベル印刷のAPI
+paths:
+  /qr-issue/preview:
+    post:
+      tags:
+        - QR発行・ラベル印刷
+      operationId: postQrIssuePreview
+      summary: QR発行プレビュー生成
+      description: 新規発行または再発行の入力条件を検証し、印刷画面へ渡すプレビュー情報を生成する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: qr_issue
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QrIssuePreviewRequest'
+      x-word-request-title: リクエスト（QrIssuePreviewRequest）
+      x-word-request-subtable-titles:
+        - new発行時の追加項目
+        - reissue発行時の追加項目
+      x-word-request-subtables:
+        - Title: new発行時の追加項目
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - codePrefix
+              - string
+              - ✓
+              - アルファベット1文字
+            - - codeBranch
+              - string
+              - ✓
+              - 2桁番号
+            - - startSerial
+              - int32
+              - '-'
+              - 5桁開始番号。未入力時はサーバー側で max+1 を候補算出
+        - Title: reissue発行時の追加項目
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - reissueStartQrIdentifier
+              - string
+              - ✓
+              - 再発行起点の既存QR識別子
+      responses:
+        '200':
+          description: 生成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QrIssuePreviewResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対する実効 qr_issue なし、または共有システム管理者で対象施設が削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 施設または再発行起点QRが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 再発行対象に欠番がある
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：QrIssuePreviewResponse）
+      x-word-response-subtable-titles:
+        - items要素（QrIssuePreviewItem）
+      x-word-response-subtables:
+        - Title: items要素（QrIssuePreviewItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - printOrder
+              - int32
+              - ✓
+              - 表示順
+            - - qrIdentifier
+              - string
+              - ✓
+              - QR識別子候補
+            - - previewImageBase64
+              - string
+              - '-'
+              - ラベルプレビュー画像
+            - - existingQrCodeId
+              - int64
+              - '-'
+              - 再発行時の既存QRコードID
+  /qr-print/jobs:
+    post:
+      tags:
+        - QR発行・ラベル印刷
+      operationId: postQrPrintJobs
+      summary: 印刷ジョブ開始受付
+      description: 印刷開始を受け付け、印刷ジョブ、印刷対象明細、QR正本データを確定する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: qr_issue
+      x-word-status-order:
+        - '201'
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QrPrintJobCreateRequest'
+      x-word-request-title: リクエスト（QrPrintJobCreateRequest）
+      x-word-request-subtable-titles:
+        - items要素（QrPrintJobCreateItem）
+      x-word-request-subtables:
+        - Title: items要素（QrPrintJobCreateItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - printOrder
+              - int32
+              - ✓
+              - 印刷順
+            - - qrIdentifier
+              - string
+              - ✓
+              - プレビュー時点のQR識別子候補または再発行対象QR識別子
+            - - existingQrCodeId
+              - int64
+              - '-'
+              - 再発行時の既存QRコードID
+      responses:
+        '200':
+          description: 同一 clientRequestId の再送を既存ジョブで受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QrPrintJobCreateResponse'
+        '201':
+          description: 開始受付成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QrPrintJobCreateResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象施設に対する実効 qr_issue なし、または共有システム管理者で対象施設が削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ジョブ対象一覧の整合不正、採番競合、または同一 clientRequestId の内容競合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：QrPrintJobCreateResponse）
+      x-word-response-subtable-titles:
+        - items要素（QrPrintJobCreateResponseItem）
+      x-word-response-subtables:
+        - Title: items要素（QrPrintJobCreateResponseItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - qrPrintJobItemId
+              - int64
+              - ✓
+              - 印刷ジョブ明細ID
+            - - qrCodeId
+              - int64
+              - ✓
+              - 印刷対象QRコードID
+            - - printOrder
+              - int32
+              - ✓
+              - 印刷順
+            - - qrIdentifier
+              - string
+              - ✓
+              - サーバーで確定したQR識別子
+            - - qrContentUrl
+              - string
+              - ✓
+              - QRシンボルへ埋め込む遷移用URL
+  /qr-print/jobs/{qrPrintJobId}:
+    get:
+      tags:
+        - QR発行・ラベル印刷
+      operationId: getQrPrintJobsByQrPrintJobId
+      summary: 印刷ジョブ取得
+      description: 印刷開始受付後のジョブ詳細と明細結果を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: qr_issue
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: qrPrintJobId
+          in: path
+          required: true
+          description: 印刷ジョブID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QrPrintJobResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象ジョブ施設に対する実効 qr_issue なし、または共有システム管理者で対象ジョブ施設が削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ジョブが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：QrPrintJobResponse）
+      x-word-response-subtable-titles:
+        - items要素（QrPrintJobItemResponse）
+      x-word-response-subtables:
+        - Title: items要素（QrPrintJobItemResponse）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - qrPrintJobItemId
+              - int64
+              - ✓
+              - 印刷ジョブ明細ID
+            - - qrCodeId
+              - int64
+              - ✓
+              - QRコードID
+            - - printOrder
+              - int32
+              - ✓
+              - 印刷順
+            - - qrIdentifier
+              - string
+              - ✓
+              - QR識別子
+            - - qrContentUrl
+              - string
+              - ✓
+              - QRシンボルへ埋め込む遷移用URL
+            - - status
+              - string
+              - ✓
+              - WAITING / PRINTED / FAILED / CANCELED
+            - - printedAt
+              - datetime
+              - '-'
+              - 印刷日時
+            - - errorMessage
+              - string
+              - '-'
+              - 失敗時エラーメッセージ
+  /qr-print/jobs/{qrPrintJobId}/result:
+    post:
+      tags:
+        - QR発行・ラベル印刷
+      operationId: postQrPrintJobsByQrPrintJobIdResult
+      summary: 印刷結果反映
+      description: ローカル印刷モジュールの実行結果を印刷ジョブへ反映する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: qr_issue
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: qrPrintJobId
+          in: path
+          required: true
+          description: 印刷ジョブID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QrPrintResultRequest'
+      x-word-request-title: リクエスト（QrPrintResultRequest）
+      x-word-request-subtable-titles:
+        - resultItems要素（QrPrintResultItem）
+        - status別入力規則
+      x-word-request-subtables:
+        - Title: resultItems要素（QrPrintResultItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - qrPrintJobItemId
+              - int64
+              - ✓
+              - 印刷ジョブ明細ID
+            - - status
+              - string
+              - ✓
+              - PRINTED / FAILED / CANCELED
+            - - errorMessage
+              - string
+              - '-'
+              - FAILED 時は必須。CANCELED 時は任意。PRINTED 時は未指定
+            - - printedAt
+              - datetime
+              - '-'
+              - PRINTED 時は必須。FAILED / CANCELED 時は未指定
+        - Title: status別入力規則
+          Headers:
+            - 明細status
+            - printedAt
+            - errorMessage
+            - 説明
+          Rows:
+            - - PRINTED
+              - 必須
+              - 未指定
+              - 実際に印刷完了した明細
+            - - FAILED
+              - 未指定
+              - 必須
+              - 印刷失敗した明細
+            - - CANCELED
+              - 未指定
+              - 任意
+              - 利用者取消または端末都合で未印刷終了した明細
+      responses:
+        '200':
+          description: 結果反映完了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QrPrintResultResponse'
+        '400':
+          description: 入力不正または結果件数不一致
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで対象ジョブ施設に対する実効 qr_issue なし、または共有システム管理者で対象ジョブ施設が削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象ジョブが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 結果反映競合、再発行対象不整合、または終端後の矛盾更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：QrPrintResultResponse）
+      x-word-response-subtable-titles: []
+      x-word-response-subtables: []
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    QrIssuePreviewRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - issueMode
+        - templateKey
+        - issueCount
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID
+        issueMode:
+          type: string
+          description: NEW / REISSUE
+        templateKey:
+          type: string
+          description: アプリ内固定テンプレート識別子
+        freeEntryText:
+          type: string
+          description: ラベルに印字するフリー記入項目
+        issueCount:
+          type: integer
+          format: int32
+          description: 発行枚数。再発行時は既存QRを連番で対象にする件数
+        codePrefix:
+          type: string
+          description: アルファベット1文字
+          x-word-omit-row: true
+          x-required-when: new発行時の追加項目
+          x-word-required-label: ✓
+        codeBranch:
+          type: string
+          description: 2桁番号
+          x-word-omit-row: true
+          x-required-when: new発行時の追加項目
+          x-word-required-label: ✓
+        startSerial:
+          type: integer
+          format: int32
+          description: 5桁開始番号。未入力時はサーバー側で max+1 を候補算出
+          x-word-omit-row: true
+          x-required-when: new発行時の追加項目
+        reissueStartQrIdentifier:
+          type: string
+          description: 再発行起点の既存QR識別子
+          x-word-omit-row: true
+          x-required-when: reissue発行時の追加項目
+          x-word-required-label: ✓
+    QrIssuePreviewResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - issueMode
+        - templateKey
+        - templateDisplayName
+        - sealSizeLabel
+        - count
+        - rangeStartQrIdentifier
+        - rangeEndQrIdentifier
+        - items
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID
+        issueMode:
+          type: string
+          description: NEW / REISSUE
+        templateKey:
+          type: string
+          description: テンプレート識別子
+        templateDisplayName:
+          type: string
+          description: テンプレート表示名
+        sealSizeLabel:
+          type: string
+          description: シールサイズ表示
+        freeEntryText:
+          type: string
+          description: フリー記入項目
+        count:
+          type: integer
+          format: int32
+          description: 対象件数
+        rangeStartQrIdentifier:
+          type: string
+          description: 先頭QR識別子
+        rangeEndQrIdentifier:
+          type: string
+          description: 末尾QR識別子
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QrIssuePreviewItem'
+          description: 印刷対象プレビュー一覧
+          x-word-subtable-title: items要素（QrIssuePreviewItem）
+    QrIssuePreviewItem:
+      type: object
+      additionalProperties: false
+      required:
+        - printOrder
+        - qrIdentifier
+      properties:
+        printOrder:
+          type: integer
+          format: int32
+          description: 表示順
+        qrIdentifier:
+          type: string
+          description: QR識別子候補
+        previewImageBase64:
+          type: string
+          description: ラベルプレビュー画像
+        existingQrCodeId:
+          type: integer
+          format: int64
+          description: 再発行時の既存QRコードID
+    QrPrintJobCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - issueMode
+        - templateKey
+        - printerName
+        - clientRequestId
+        - items
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID
+        issueMode:
+          type: string
+          description: NEW / REISSUE
+        templateKey:
+          type: string
+          description: テンプレート識別子
+        printerName:
+          type: string
+          description: 選択したプリンタ名
+        clientRequestId:
+          type: string
+          description: 同一印刷開始操作を識別する冪等キー
+        freeEntryText:
+          type: string
+          description: フリー記入項目
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QrPrintJobCreateItem'
+          description: 印刷対象一覧
+          x-word-subtable-title: items要素（QrPrintJobCreateItem）
+    QrPrintJobCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - qrPrintJobId
+        - status
+        - requestedItemCount
+        - clientRequestId
+        - startedAt
+        - items
+      properties:
+        qrPrintJobId:
+          type: integer
+          format: int64
+          description: 作成した印刷ジョブID
+        status:
+          type: string
+          description: ジョブステータス（初期値 IN_PROGRESS）
+        requestedItemCount:
+          type: integer
+          format: int32
+          description: 印刷対象として受け付けた件数
+        clientRequestId:
+          type: string
+          description: 受理した冪等キー
+        startedAt:
+          type: string
+          format: date-time
+          description: 印刷開始受付日時
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QrPrintJobCreateResponseItem'
+          description: 印刷用の最終確定対象一覧
+          x-word-subtable-title: items要素（QrPrintJobCreateResponseItem）
+    QrPrintJobCreateItem:
+      type: object
+      additionalProperties: false
+      required:
+        - printOrder
+        - qrIdentifier
+      properties:
+        printOrder:
+          type: integer
+          format: int32
+          description: 印刷順
+        qrIdentifier:
+          type: string
+          description: プレビュー時点のQR識別子候補または再発行対象QR識別子
+        existingQrCodeId:
+          type: integer
+          format: int64
+          description: 再発行時の既存QRコードID
+    QrPrintJobCreateResponseItem:
+      type: object
+      additionalProperties: false
+      required:
+        - qrPrintJobItemId
+        - qrCodeId
+        - printOrder
+        - qrIdentifier
+        - qrContentUrl
+      properties:
+        qrPrintJobItemId:
+          type: integer
+          format: int64
+          description: 印刷ジョブ明細ID
+        qrCodeId:
+          type: integer
+          format: int64
+          description: 印刷対象QRコードID
+        printOrder:
+          type: integer
+          format: int32
+          description: 印刷順
+        qrIdentifier:
+          type: string
+          description: サーバーで確定したQR識別子
+        qrContentUrl:
+          type: string
+          description: QRシンボルへ埋め込む遷移用URL
+    QrPrintJobResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - qrPrintJobId
+        - facilityId
+        - templateKey
+        - templateDisplayName
+        - sealSizeLabel
+        - printerName
+        - clientRequestId
+        - status
+        - requestedAt
+        - startedAt
+        - successCount
+        - failureCount
+        - items
+      properties:
+        qrPrintJobId:
+          type: integer
+          format: int64
+          description: 印刷ジョブID
+        facilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID
+        templateKey:
+          type: string
+          description: テンプレート識別子
+        templateDisplayName:
+          type: string
+          description: テンプレート表示名
+        sealSizeLabel:
+          type: string
+          description: シールサイズ表示
+        printerName:
+          type: string
+          description: プリンタ名
+        clientRequestId:
+          type: string
+          description: 冪等キー
+        status:
+          type: string
+          description: ジョブステータス
+        freeEntryText:
+          type: string
+          description: フリー記入項目
+        requestedAt:
+          type: string
+          format: date-time
+          description: ジョブ依頼日時
+        startedAt:
+          type: string
+          format: date-time
+          description: ジョブ開始受付日時
+        finishedAt:
+          type: string
+          format: date-time
+          description: ジョブ終了日時
+        successCount:
+          type: integer
+          format: int32
+          description: 成功件数
+        failureCount:
+          type: integer
+          format: int32
+          description: 失敗件数
+        errorStage:
+          type: string
+          description: 失敗段階
+        errorSummary:
+          type: string
+          description: ジョブ全体のエラー概要
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QrPrintJobItemResponse'
+          description: 印刷対象一覧
+          x-word-subtable-title: items要素（QrPrintJobItemResponse）
+    QrPrintJobItemResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - qrPrintJobItemId
+        - qrCodeId
+        - printOrder
+        - qrIdentifier
+        - qrContentUrl
+        - status
+      properties:
+        qrPrintJobItemId:
+          type: integer
+          format: int64
+          description: 印刷ジョブ明細ID
+        qrCodeId:
+          type: integer
+          format: int64
+          description: QRコードID
+        printOrder:
+          type: integer
+          format: int32
+          description: 印刷順
+        qrIdentifier:
+          type: string
+          description: QR識別子
+        qrContentUrl:
+          type: string
+          description: QRシンボルへ埋め込む遷移用URL
+        status:
+          type: string
+          description: WAITING / PRINTED / FAILED / CANCELED
+        printedAt:
+          type: string
+          format: date-time
+          description: 印刷日時
+        errorMessage:
+          type: string
+          description: 失敗時エラーメッセージ
+    QrPrintResultRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - resultItems
+      properties:
+        jobErrorStage:
+          type: string
+          description: 'ジョブ全体の失敗段階。値: LOCAL_MODULE_INIT / PRINTER_INIT / PRINT_REQUEST / PRINT_EXECUTION'
+        jobErrorSummary:
+          type: string
+          description: ジョブ全体の失敗概要
+        resultItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/QrPrintResultItem'
+          description: ローカル印刷モジュールから受け取った実行結果
+          x-word-subtable-title: resultItems要素（QrPrintResultItem）
+    QrPrintResultResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - qrPrintJobId
+        - status
+        - successCount
+        - failureCount
+        - finishedAt
+      properties:
+        qrPrintJobId:
+          type: integer
+          format: int64
+          description: 印刷ジョブID
+        status:
+          type: string
+          description: COMPLETED / PARTIAL_FAILED / FAILED / CANCELED
+        successCount:
+          type: integer
+          format: int32
+          description: 成功件数
+        failureCount:
+          type: integer
+          format: int32
+          description: 失敗件数
+        errorStage:
+          type: string
+          description: 失敗段階
+        errorSummary:
+          type: string
+          description: ジョブ全体のエラー概要
+        finishedAt:
+          type: string
+          format: date-time
+          description: ジョブ終了日時
+    QrPrintResultItem:
+      type: object
+      additionalProperties: false
+      required:
+        - qrPrintJobItemId
+        - status
+      properties:
+        qrPrintJobItemId:
+          type: integer
+          format: int64
+          description: 印刷ジョブ明細ID
+        status:
+          type: string
+          description: PRINTED / FAILED / CANCELED
+        errorMessage:
+          type: string
+          description: FAILED 時は必須。CANCELED 時は任意。PRINTED 時は未指定
+        printedAt:
+          type: string
+          format: date-time
+          description: PRINTED 時は必須。FAILED / CANCELED 時は未指定
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

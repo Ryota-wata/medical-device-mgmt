@@ -1,0 +1,2907 @@
+openapi: 3.0.4
+info:
+  title: 保守契約管理 API API
+  version: '1.1'
+  description: 保守契約管理で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 保守契約管理
+    description: 保守契約管理 APIのAPI
+paths:
+  /quotation-data-box/maintenance-contracts/tasks:
+    get:
+      tags:
+        - 保守契約管理
+      operationId: getQuotationDataBoxMaintenanceContractsTasks
+      summary: 保守契約タスク一覧取得
+      description: 保守契約管理タブの一覧に表示する保守契約タスクを取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: ページ番号。未指定時 1
+          schema:
+            type: integer
+            format: int32
+        - name: pageSize
+          in: query
+          required: false
+          description: 1ページ件数。未指定時 50
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceContractTaskListResponse'
+        '400':
+          description: ページ指定が不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：MaintenanceContractTaskListResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/maintenance-contracts:
+    post:
+      tags:
+        - 保守契約管理
+      operationId: postQuotationDataBoxMaintenanceContracts
+      summary: 保守契約グループ作成
+      description: 資産一覧または保守契約管理タブから保守契約グループを作成し、初期ステータス 見積依頼 で登録する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-code: maintenance_contract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxMaintenanceContractsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceContractCreateResponse'
+        '400':
+          description: 必須不足、契約種別不正、対象資産未指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象資産が存在しない、または施設外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象資産重複
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：MaintenanceContractCreateResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/maintenance-contracts/{maintenanceContractId}/quote-request:
+    post:
+      tags:
+        - 保守契約管理
+      operationId: postQuotationDataBoxMaintenanceContractsByMaintenanceContractIdQuoteRequest
+      summary: 見積依頼先登録
+      description: STEP①で保守契約RFQを作成または取得し、依頼先業者と依頼事項を保存する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxMaintenanceContractsByMaintenanceContractIdQuoteRequestRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - vendors要素（QuoteRequestVendorInput）
+      x-word-request-subtables:
+        - Title: vendors要素（QuoteRequestVendorInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - rfqVendorId
+              - int64
+              - '-'
+              - 既存行更新時に指定
+            - - vendorId
+              - int64
+              - '-'
+              - 業者マスタID
+            - - vendorName
+              - string
+              - ✓
+              - 業者名
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - email
+              - string
+              - '-'
+              - メールアドレス
+            - - phone
+              - string
+              - '-'
+              - 連絡先
+      responses:
+        '200':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteRequestResponse'
+        '400':
+          description: 依頼先未指定、メール形式不正、文字数超過
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約または業者が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象契約が見積依頼以外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：QuoteRequestResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/maintenance-contracts/{maintenanceContractId}/quote-request/vendors/{rfqVendorId}/send:
+    post:
+      tags:
+        - 保守契約管理
+      operationId: postQuotationDataBoxMaintenanceContractsByMaintenanceContractIdQuoteRequestVendorsByRfqVendorIdSend
+      summary: 見積依頼送信
+      description: 依頼先業者1社に対して見積依頼を送信済みにし、送信日時と送信者を保持する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+        - name: rfqVendorId
+          in: path
+          required: true
+          description: 見積依頼先ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      x-word-request-title: リクエストボディ
+      x-word-request-rows:
+        - - '-'
+          - '-'
+          - '-'
+          - >-
+            リクエストボディなし。見積依頼書PDFの表示・印刷は POST
+            /maintenance-quote-registration/contracts/{maintenanceContractId}/quote-request/preview で都度生成する
+      responses:
+        '200':
+          description: 送信状態更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RfqVendorSendResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約または依頼先が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象契約ステータスまたは依頼先状態が不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：RfqVendorSendResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/maintenance-contracts/{maintenanceContractId}/quote-request/complete:
+    post:
+      tags:
+        - 保守契約管理
+      operationId: postQuotationDataBoxMaintenanceContractsByMaintenanceContractIdQuoteRequestComplete
+      summary: 見積依頼完了
+      description: 少なくとも1社に見積依頼を送信済みであることを確認し、契約ステータスを 見積依頼済 へ進める。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      responses:
+        '200':
+          description: 遷移成功
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/PostQuotationDataBoxMaintenanceContractsByMaintenanceContractIdQuoteRequestCompleteResponse
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 送信済み依頼先が0件、またはステータス不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': StatusChangeResponse
+      x-word-response-title: レスポンス（200：StatusChangeResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/maintenance-contracts/{maintenanceContractId}/cancel:
+    post:
+      tags:
+        - 保守契約管理
+      operationId: postQuotationDataBoxMaintenanceContractsByMaintenanceContractIdCancel
+      summary: 申請見送り
+      description: STEP①で保守契約タスクを申請見送りにし、通常一覧から除外する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      x-word-request-title: リクエストボディ
+      x-word-request-rows:
+        - - '-'
+          - '-'
+          - '-'
+          - リクエストボディなし
+      responses:
+        '200':
+          description: 申請見送り成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxMaintenanceContractsByMaintenanceContractIdCancelResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象契約が見積依頼以外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': StatusChangeResponse
+      x-word-response-title: レスポンス（200：StatusChangeResponse）
+      x-word-response-subtable-titles: []
+  /maintenance-quote-registration/contracts/{maintenanceContractId}:
+    get:
+      tags:
+        - 保守契約管理
+      operationId: getMaintenanceQuoteRegistrationContractsByMaintenanceContractId
+      summary: 保守契約詳細取得
+      description: 保守契約見積登録画面の3ステップ表示に必要な契約ヘッダー、対象資産、RFQ、見積、文書を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceContractDetailResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：MaintenanceContractDetailResponse）
+      x-word-response-subtable-titles: []
+  /maintenance-quote-registration/contracts/{maintenanceContractId}/quote-request/preview:
+    post:
+      tags:
+        - 保守契約管理
+      operationId: postMaintenanceQuoteRegistrationContractsByMaintenanceContractIdQuoteRequestPreview
+      summary: 見積依頼書PDFプレビュー生成
+      description: STEP①右ペインの見積依頼書プレビューおよび印刷用に、画面入力内容と対象資産情報からPDFを都度生成する。生成したPDFは保存しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: >-
+                #/components/schemas/PostMaintenanceQuoteRegistrationContractsByMaintenanceContractIdQuoteRequestPreviewRequest
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - vendors要素（QuoteRequestVendorInput）
+      x-word-request-subtables:
+        - Title: vendors要素（QuoteRequestVendorInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - rfqVendorId
+              - int64
+              - '-'
+              - 既存行更新時に指定
+            - - vendorId
+              - int64
+              - '-'
+              - 業者マスタID
+            - - vendorName
+              - string
+              - ✓
+              - 業者名
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - email
+              - string
+              - '-'
+              - メールアドレス
+            - - phone
+              - string
+              - '-'
+              - 連絡先
+      responses:
+        '200':
+          description: PDF生成成功
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': application/pdf
+        '400': ErrorResponse
+        '401': ErrorResponse
+        '403': ErrorResponse
+        '404': ErrorResponse
+      x-word-response-title: レスポンス（200：application/pdf）
+      x-word-response-subtable-titles: []
+      x-word-response-rows:
+        - - body
+          - binary
+          - ✓
+          - 見積依頼書PDFバイナリ。Content-Type は application/pdf
+  /maintenance-quote-registration/contracts/{maintenanceContractId}/assets:
+    put:
+      tags:
+        - 保守契約管理
+      operationId: putMaintenanceQuoteRegistrationContractsByMaintenanceContractIdAssets
+      summary: 契約対象資産明細登録
+      description: STEP③の明細登録として、対象資産別のメーカー保守情報、契約単価を保存し、必要に応じて契約対象資産を追加する。保証期間は扱わない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutMaintenanceQuoteRegistrationContractsByMaintenanceContractIdAssetsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - assets要素（MaintenanceContractAssetSaveInput）
+      x-word-request-subtables:
+        - Title: assets要素（MaintenanceContractAssetSaveInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - maintenanceContractAssetId
+              - int64
+              - '-'
+              - 既存明細更新時に指定。新規追加時は null
+            - - assetLedgerId
+              - int64
+              - ✓
+              - 契約対象資産ID。新規追加時も必須
+            - - inspectionGroupName
+              - string
+              - '-'
+              - 点検グループ名
+            - - inspectionType
+              - string
+              - '-'
+              - メーカー保守。未設定可。院内定期点検・院内スポット点検・日常点検は保守契約管理では扱わない
+            - - inspectionCycleMonths
+              - int32
+              - '-'
+              - メーカー保守の点検周期（月）
+            - - inspectionCountPerYear
+              - int32
+              - '-'
+              - 年間点検回数
+            - - partsExemptionFlag
+              - boolean
+              - '-'
+              - 部品免責有無。未指定時 false
+            - - partsExemptionText
+              - string
+              - '-'
+              - 部品免責条件
+            - - exemptionAmount
+              - decimal
+              - '-'
+              - 免責金額
+            - - onCallSupport
+              - boolean
+              - '-'
+              - オンコール対応。未指定時 false
+            - - remoteMaintenanceAvailable
+              - boolean
+              - '-'
+              - リモート対応。未指定時 false
+            - - legalInspectionFlag
+              - boolean
+              - '-'
+              - 法定点検フラグ。未指定時 false
+            - - legalInspectionBasis
+              - string
+              - '-'
+              - 法定点検根拠
+            - - contractUnitPriceExclTax
+              - decimal
+              - '-'
+              - 契約単価。個別入力は任意
+            - - remarks
+              - string
+              - '-'
+              - 備考
+      responses:
+        '200':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceContractAssetsSaveResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約または資産が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ステータス不正、または資産重複
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：MaintenanceContractAssetsSaveResponse）
+      x-word-response-subtable-titles: []
+  /maintenance-quote-registration/contracts/{maintenanceContractId}/quotations:
+    post:
+      tags:
+        - 保守契約管理
+      operationId: postMaintenanceQuoteRegistrationContractsByMaintenanceContractIdQuotations
+      summary: 見積登録
+      description: STEP②で発注登録用見積または参考見積のPDFを登録する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostMaintenanceQuoteRegistrationContractsByMaintenanceContractIdQuotationsRequest'
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - payload.document要素（DocumentInput）
+      x-word-request-subtables:
+        - Title: payload.document要素（DocumentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentCategory
+              - string
+              - ✓
+              - QUOTATION 固定
+            - - documentType
+              - string
+              - ✓
+              - 見積書 固定
+            - - fileName
+              - string
+              - ✓
+              - ファイル名
+            - - contentType
+              - string
+              - '-'
+              - application/pdf 固定。application_documents.mime_type に保存するMIMEタイプ
+            - - fileSize
+              - int64
+              - '-'
+              - application_documents.file_size_bytes に保存するファイルサイズ
+            - - filePartName
+              - string
+              - ✓
+              - multipart/form-data 内のファイルパート名。ファイル実体とメタデータを対応付ける
+            - - contentHash
+              - string
+              - '-'
+              - 改ざん検知・重複確認用ハッシュ。指定時はアップロード実体と照合し application_documents.content_hash に保存する
+            - - title
+              - string
+              - '-'
+              - 文書タイトル
+            - - documentDate
+              - date
+              - '-'
+              - 文書日付
+            - - accountType
+              - string
+              - '-'
+              - 会計区分
+            - - accountOtherText
+              - string
+              - '-'
+              - 会計区分その他
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceQuotationCreateResponse'
+        '400':
+          description: 見積フェーズ、金額、PDFメタデータまたはファイル本体が不正。PDF以外または50MB超過を含む
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約または業者が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ステータス不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: S3保存または保存後ロールバック失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：MaintenanceQuotationCreateResponse）
+      x-word-response-subtable-titles: []
+  /maintenance-quote-registration/contracts/{maintenanceContractId}/quotations/{quotationId}/preview-url:
+    get:
+      tags:
+        - 保守契約管理
+      operationId: getMaintenanceQuoteRegistrationContractsByMaintenanceContractIdQuotationsByQuotationIdPreviewUrl
+      summary: 見積PDFプレビューURL取得
+      description: STEP②右ペインで登録済み見積一覧から選択された見積PDFを表示するため、認可済みプレビューURLを払い出す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+        - name: quotationId
+          in: path
+          required: true
+          description: 見積ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      responses:
+        '200':
+          description: プレビューURL払い出し成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PdfPreviewUrlResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約、見積、またはPDFが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：PdfPreviewUrlResponse）
+      x-word-response-subtable-titles: []
+  /maintenance-quote-registration/contracts/{maintenanceContractId}/quotations/complete:
+    post:
+      tags:
+        - 保守契約管理
+      operationId: postMaintenanceQuoteRegistrationContractsByMaintenanceContractIdQuotationsComplete
+      summary: 見積登録完了
+      description: 発注登録用見積が1件以上あることを確認し、契約ステータスを 見積登録済 へ進める。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      responses:
+        '200':
+          description: 遷移成功
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/PostMaintenanceQuoteRegistrationContractsByMaintenanceContractIdQuotationsCompleteResponse
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 発注登録用見積が0件、またはステータス不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': StatusChangeResponse
+      x-word-response-title: レスポンス（200：StatusChangeResponse）
+      x-word-response-subtable-titles: []
+  /maintenance-quote-registration/contracts/{maintenanceContractId}/quotations/{quotationId}:
+    delete:
+      tags:
+        - 保守契約管理
+      operationId: deleteMaintenanceQuoteRegistrationContractsByMaintenanceContractIdQuotationsByQuotationId
+      summary: 見積削除
+      description: 保守登録前の見積を論理削除する。採用済み見積または完了後の見積は削除できない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+        - name: quotationId
+          in: path
+          required: true
+          description: 見積ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      responses:
+        '204':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/-'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約または見積が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 採用済み、完了済み、またはステータス不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：なし）
+      x-word-response-subtable-titles: []
+  /maintenance-quote-registration/contracts/{maintenanceContractId}/contract-registration:
+    put:
+      tags:
+        - 保守契約管理
+      operationId: putMaintenanceQuoteRegistrationContractsByMaintenanceContractIdContractRegistration
+      summary: 契約登録保存
+      description: STEP③で決済No.、契約期間、採用見積などの契約情報を保存する。保存のみでは 完了 へ進めない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: >-
+                #/components/schemas/PutMaintenanceQuoteRegistrationContractsByMaintenanceContractIdContractRegistrationRequest
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceContractHeaderResponse'
+        '400':
+          description: 日付前後関係不正、必須不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約または採用見積が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ステータス不正、または参考見積指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：MaintenanceContractHeaderResponse）
+      x-word-response-subtable-titles: []
+  /maintenance-quote-registration/contracts/{maintenanceContractId}/documents:
+    post:
+      tags:
+        - 保守契約管理
+      operationId: postMaintenanceQuoteRegistrationContractsByMaintenanceContractIdDocuments
+      summary: 契約ドキュメント登録
+      description: STEP③で契約書、その他契約補助資料などの契約関連PDFドキュメントを登録する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostMaintenanceQuoteRegistrationContractsByMaintenanceContractIdDocumentsRequest'
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - payload.documents要素（ContractDocumentInput）
+      x-word-request-subtables:
+        - Title: payload.documents要素（ContractDocumentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentCategory
+              - string
+              - ✓
+              - CONTRACT 固定
+            - - documentType
+              - string
+              - ✓
+              - 契約書 / その他。画面の「その他（免責部品一覧など）」は その他 として送信する
+            - - fileName
+              - string
+              - ✓
+              - ファイル名
+            - - contentType
+              - string
+              - '-'
+              - application/pdf 固定。application_documents.mime_type に保存するMIMEタイプ
+            - - fileSize
+              - int64
+              - '-'
+              - application_documents.file_size_bytes に保存するファイルサイズ
+            - - filePartName
+              - string
+              - ✓
+              - multipart/form-data 内のファイルパート名。ファイル実体とメタデータを対応付ける
+            - - contentHash
+              - string
+              - '-'
+              - 改ざん検知・重複確認用ハッシュ。指定時はアップロード実体と照合し application_documents.content_hash に保存する
+            - - title
+              - string
+              - '-'
+              - 文書タイトル
+            - - documentDate
+              - date
+              - '-'
+              - 文書日付
+            - - storageFormat
+              - string
+              - '-'
+              - 電子取引 / スキャナ保存 / 未指定。保存先ではなく電帳法等の保存形式区分を表す
+            - - accountType
+              - string
+              - '-'
+              - 会計区分
+            - - accountOtherText
+              - string
+              - '-'
+              - 会計区分その他
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentCreateResponse'
+        '400':
+          description: 文書メタデータまたはPDFファイル本体が不正。PDF以外、50MB超過、documentCategory が CONTRACT 以外、または documentType が 契約書 / その他 以外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ステータス不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: S3保存または保存後ロールバック失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：DocumentCreateResponse）
+      x-word-response-subtable-titles: []
+  /maintenance-quote-registration/contracts/{maintenanceContractId}/documents/{documentId}/preview-url:
+    get:
+      tags:
+        - 保守契約管理
+      operationId: getMaintenanceQuoteRegistrationContractsByMaintenanceContractIdDocumentsByDocumentIdPreviewUrl
+      summary: 契約ドキュメントPDFプレビューURL取得
+      description: STEP③右ペインで登録済みドキュメント一覧から選択された契約書/その他PDFを表示するため、認可済みプレビューURLを払い出す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+        - name: documentId
+          in: path
+          required: true
+          description: ドキュメントID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      responses:
+        '200':
+          description: プレビューURL払い出し成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PdfPreviewUrlResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約またはPDFドキュメントが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：PdfPreviewUrlResponse）
+      x-word-response-subtable-titles: []
+  /maintenance-quote-registration/contracts/{maintenanceContractId}/documents/{documentId}:
+    delete:
+      tags:
+        - 保守契約管理
+      operationId: deleteMaintenanceQuoteRegistrationContractsByMaintenanceContractIdDocumentsByDocumentId
+      summary: 契約ドキュメント削除
+      description: 保守登録前の契約関連ドキュメントを論理削除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+        - name: documentId
+          in: path
+          required: true
+          description: ドキュメントID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      responses:
+        '204':
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/-'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約または文書が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 完了済み契約の文書削除不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：なし）
+      x-word-response-subtable-titles: []
+  /maintenance-quote-registration/contracts/{maintenanceContractId}/complete:
+    post:
+      tags:
+        - 保守契約管理
+      operationId: postMaintenanceQuoteRegistrationContractsByMaintenanceContractIdComplete
+      summary: 保守登録完了
+      description: STEP③の必須条件を検証し、保守契約を 完了 にする。同時に保守契約由来の点検タスクを作成または更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      responses:
+        '200':
+          description: 保守登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceContractCompleteResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 必須条件不足、点検タスク競合、ステータス不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：MaintenanceContractCompleteResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/maintenance-contracts/{maintenanceContractId}/content-review:
+    post:
+      tags:
+        - 保守契約管理
+      operationId: postQuotationDataBoxMaintenanceContractsByMaintenanceContractIdContentReview
+      summary: 契約内容見直し登録
+      description: 完了かつ契約終了日を過ぎていない保守契約に対して、既存資産の除外、新規資産追加、見直し後契約金額、理由を履歴登録し、必要に応じて契約変更文書を添付する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxMaintenanceContractsByMaintenanceContractIdContentReviewRequest'
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - payload.documents要素（DocumentInput）
+      x-word-request-subtables:
+        - Title: payload.documents要素（DocumentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentCategory
+              - string
+              - ✓
+              - CONTRACT_REVIEW 固定
+            - - documentType
+              - string
+              - ✓
+              - 契約変更覚書 / その他
+            - - fileName
+              - string
+              - ✓
+              - ファイル名
+            - - contentType
+              - string
+              - '-'
+              - application/pdf 固定。application_documents.mime_type に保存するMIMEタイプ
+            - - fileSize
+              - int64
+              - '-'
+              - application_documents.file_size_bytes に保存するファイルサイズ
+            - - filePartName
+              - string
+              - ✓
+              - multipart/form-data 内のファイルパート名。ファイル実体とメタデータを対応付ける
+            - - contentHash
+              - string
+              - '-'
+              - 改ざん検知・重複確認用ハッシュ。指定時はアップロード実体と照合し application_documents.content_hash に保存する
+            - - title
+              - string
+              - '-'
+              - 文書タイトル
+            - - documentDate
+              - date
+              - '-'
+              - 文書日付
+            - - storageFormat
+              - string
+              - '-'
+              - 電子取引 / スキャナ保存 / 未指定。保存先ではなく電帳法等の保存形式区分を表す
+            - - accountType
+              - string
+              - '-'
+              - 会計区分
+            - - accountOtherText
+              - string
+              - '-'
+              - 会計区分その他
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceContractReviewResponse'
+        '400':
+          description: 見直し対象未指定、金額、理由、文書メタデータまたはファイル本体が不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、対象契約または資産が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 期限切れ、ステータス不正、資産重複
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: S3保存または保存後ロールバック失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：MaintenanceContractReviewResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/maintenance-contracts/{maintenanceContractId}/renewal:
+    post:
+      tags:
+        - 保守契約管理
+      operationId: postQuotationDataBoxMaintenanceContractsByMaintenanceContractIdRenewal
+      summary: 契約更新作成
+      description: 完了かつ契約終了日を過ぎていない契約から後継の保守契約グループを作成し、見積依頼 から再開する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      x-feature-code: maintenance_contract
+      parameters:
+        - name: maintenanceContractId
+          in: path
+          required: true
+          description: 更新元保守契約ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: パスパラメータ
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceContractRenewalResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 maintenance_contract なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または、更新元契約が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 更新元契約が完了ではない、契約終了日を過ぎている、または複製対象資産が0件
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：MaintenanceContractRenewalResponse）
+      x-word-response-subtable-titles: []
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    MaintenanceContractTaskListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - totalCount
+        - page
+        - pageSize
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceContractTaskSummary'
+          description: 一覧行
+          x-word-omit-subtable: true
+        totalCount:
+          type: integer
+          format: int32
+          description: 総件数
+        page:
+          type: integer
+          format: int32
+          description: ページ番号
+        pageSize:
+          type: integer
+          format: int32
+          description: 1ページ件数
+    PostQuotationDataBoxMaintenanceContractsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - contractGroupName
+        - maintenanceType
+        - assetLedgerIds
+      properties:
+        contractGroupName:
+          type: string
+          description: 契約グループ名
+        maintenanceType:
+          type: string
+          description: 保守契約/定期点検/スポット契約/借用契約/その他
+        contractReviewStartOn:
+          type: string
+          format: date
+          description: 契約検討開始日
+        comment:
+          type: string
+          description: コメント
+        assetLedgerIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 対象資産ID。1件以上
+    MaintenanceContractCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - maintenanceContractId
+        - maintenanceContractNo
+        - status
+        - assetCount
+        - nextPath
+      properties:
+        maintenanceContractId:
+          type: integer
+          format: int64
+          description: 作成した保守契約ID
+        maintenanceContractNo:
+          type: string
+          description: 採番した保守契約No.
+        status:
+          type: string
+          description: 見積依頼
+        assetCount:
+          type: integer
+          format: int32
+          description: 登録した対象資産数
+        nextPath:
+          type: string
+          description: /maintenance-quote-registration?id={maintenanceContractId}
+    PostQuotationDataBoxMaintenanceContractsByMaintenanceContractIdQuoteRequestRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - vendors
+      properties:
+        vendorRequestComment:
+          type: string
+          description: ご依頼事項
+        vendors:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteRequestVendorInput'
+          description: 依頼先。1件以上
+          x-word-subtable-title: vendors要素（QuoteRequestVendorInput）
+    QuoteRequestResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqId
+        - vendors
+        - status
+      properties:
+        rfqId:
+          type: integer
+          format: int64
+          description: 保守契約RFQ ID
+        receptionDepartmentName:
+          type: string
+          description: 保存または保持した受付部署名
+        receptionPersonName:
+          type: string
+          description: 保存または保持した受付担当者名
+        receptionContact:
+          type: string
+          description: 保存または保持した受付連絡先
+        vendors:
+          type: array
+          items:
+            $ref: '#/components/schemas/RfqVendorSummary'
+          description: 依頼先一覧
+          x-word-omit-subtable: true
+        status:
+          type: string
+          description: 見積依頼
+    QuoteRequestVendorInput:
+      type: object
+      additionalProperties: false
+      required:
+        - vendorName
+      properties:
+        rfqVendorId:
+          type: integer
+          format: int64
+          description: 既存行更新時に指定
+        vendorId:
+          type: integer
+          format: int64
+          description: 業者マスタID
+        vendorName:
+          type: string
+          description: 業者名
+        contactPerson:
+          type: string
+          description: 担当者名
+        email:
+          type: string
+          description: メールアドレス
+        phone:
+          type: string
+          description: 連絡先
+    RfqVendorSendResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqVendorId
+        - requestStatus
+        - requestedAt
+      properties:
+        rfqVendorId:
+          type: integer
+          format: int64
+          description: 送信済みにした依頼先ID
+        requestStatus:
+          type: string
+          description: SENT
+        requestedAt:
+          type: string
+          format: date-time
+          description: 送信日時
+    PostQuotationDataBoxMaintenanceContractsByMaintenanceContractIdQuoteRequestCompleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - maintenanceContractId
+        - status
+      properties:
+        maintenanceContractId:
+          type: integer
+          format: int64
+          description: 保守契約ID
+        status:
+          type: string
+          description: 見積依頼済
+    PostQuotationDataBoxMaintenanceContractsByMaintenanceContractIdCancelResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - maintenanceContractId
+        - status
+      properties:
+        maintenanceContractId:
+          type: integer
+          format: int64
+          description: 保守契約ID
+        status:
+          type: string
+          description: 申請見送り
+    MaintenanceContractDetailResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - contract
+        - currentStep
+        - assets
+        - vendors
+        - quotations
+        - documents
+        - availableActions
+      properties:
+        contract:
+          $ref: '#/components/schemas/MaintenanceContractHeader'
+          description: 契約ヘッダー
+          x-word-omit-subtable: true
+        currentStep:
+          type: integer
+          format: int32
+          description: 1 / 2 / 3。ステータスから算出
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceContractAssetDetail'
+          description: 契約対象資産明細
+          x-word-omit-subtable: true
+        rfq:
+          $ref: '#/components/schemas/MaintenanceRfqSummary'
+          description: 保守契約RFQ
+          x-word-omit-subtable: true
+        vendors:
+          type: array
+          items:
+            $ref: '#/components/schemas/RfqVendorSummary'
+          description: 見積依頼先
+          x-word-omit-subtable: true
+        quotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceQuotationSummary'
+          description: 登録済み見積
+          x-word-omit-subtable: true
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentSummary'
+          description: 契約関連ドキュメント
+          x-word-omit-subtable: true
+        availableActions:
+          type: array
+          items:
+            type: string
+          description: 画面表示可能操作
+    PostMaintenanceQuoteRegistrationContractsByMaintenanceContractIdQuoteRequestPreviewRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        vendorRequestComment:
+          type: string
+          description: ご依頼事項。未保存の画面入力値を指定し、PDFへ反映する
+        vendors:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteRequestVendorInput'
+          description: 依頼先業者。未保存の画面入力値を指定し、PDFへ反映する
+          x-word-subtable-title: vendors要素（QuoteRequestVendorInput）
+    application/pdf:
+      type: object
+      additionalProperties: false
+      required:
+        - body
+      properties:
+        body:
+          type: string
+          format: binary
+          description: 見積依頼書PDFバイナリ。Content-Type は application/pdf
+    PutMaintenanceQuoteRegistrationContractsByMaintenanceContractIdAssetsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - assets
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceContractAssetSaveInput'
+          description: 保存対象明細。1件以上
+          x-word-subtable-title: assets要素（MaintenanceContractAssetSaveInput）
+    MaintenanceContractAssetsSaveResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - assets
+        - assetCount
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceContractAssetDetail'
+          description: 保存後の対象資産明細
+          x-word-omit-subtable: true
+        assetCount:
+          type: integer
+          format: int32
+          description: 有効対象資産数
+    MaintenanceContractAssetSaveInput:
+      type: object
+      additionalProperties: false
+      required:
+        - assetLedgerId
+      properties:
+        maintenanceContractAssetId:
+          type: integer
+          format: int64
+          description: 既存明細更新時に指定。新規追加時は null
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 契約対象資産ID。新規追加時も必須
+        inspectionGroupName:
+          type: string
+          description: 点検グループ名
+        inspectionType:
+          type: string
+          description: メーカー保守。未設定可。院内定期点検・院内スポット点検・日常点検は保守契約管理では扱わない
+        inspectionCycleMonths:
+          type: integer
+          format: int32
+          description: メーカー保守の点検周期（月）
+        inspectionCountPerYear:
+          type: integer
+          format: int32
+          description: 年間点検回数
+        partsExemptionFlag:
+          type: boolean
+          description: 部品免責有無。未指定時 false
+        partsExemptionText:
+          type: string
+          description: 部品免責条件
+        exemptionAmount:
+          type: number
+          description: 免責金額
+        onCallSupport:
+          type: boolean
+          description: オンコール対応。未指定時 false
+        remoteMaintenanceAvailable:
+          type: boolean
+          description: リモート対応。未指定時 false
+        legalInspectionFlag:
+          type: boolean
+          description: 法定点検フラグ。未指定時 false
+        legalInspectionBasis:
+          type: string
+          description: 法定点検根拠
+        contractUnitPriceExclTax:
+          type: number
+          description: 契約単価。個別入力は任意
+        remarks:
+          type: string
+          description: 備考
+    PostMaintenanceQuoteRegistrationContractsByMaintenanceContractIdQuotationsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload.quotationPhase
+        - payload.storageFormat
+        - payload.vendorName
+        - payload.document
+        - files
+      properties:
+        payload.quotationPhase:
+          type: string
+          description: 発注登録用見積 / 参考見積
+        payload.quotationOn:
+          type: string
+          format: date
+          description: 見積日。未指定時は業務日を保存する
+        payload.storageFormat:
+          type: string
+          description: 電子取引 / スキャナ保存 / 未指定。ファイル保存先ではなく保存形式区分を表す
+        payload.vendorId:
+          type: integer
+          format: int64
+          description: 業者マスタID
+        payload.vendorName:
+          type: string
+          description: 見積登録業者名
+        payload.quotationAmountExclTax:
+          type: number
+          description: 見積金額(税抜)
+        payload.annualAmountExclTax:
+          type: number
+          description: 単年度金額(税抜)
+        payload.accountDivisionCode:
+          type: string
+          description: 会計区分コード
+        payload.document:
+          $ref: '#/components/schemas/DocumentInput'
+          description: 見積原本PDFメタデータ。filePartName で対応するファイルパートを指定する
+          x-word-subtable-title: payload.document要素（DocumentInput）
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: payload.document.filePartName で参照される見積原本PDFファイル本体
+    MaintenanceQuotationCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - quotation
+        - status
+      properties:
+        quotation:
+          $ref: '#/components/schemas/MaintenanceQuotationSummary'
+          description: 登録済み見積
+          x-word-omit-subtable: true
+        status:
+          type: string
+          description: 保守契約ステータス。登録のみでは変更しない
+    DocumentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - documentCategory
+        - documentType
+        - fileName
+        - filePartName
+      properties:
+        documentCategory:
+          type: string
+          description: QUOTATION / CONTRACT / CONTRACT_REVIEW
+        documentType:
+          type: string
+          description: 見積書 / 契約書 / その他 / 契約変更覚書
+        fileName:
+          type: string
+          description: ファイル名
+        contentType:
+          type: string
+          description: application/pdf 固定。application_documents.mime_type に保存するMIMEタイプ
+        fileSize:
+          type: integer
+          format: int64
+          description: application_documents.file_size_bytes に保存するファイルサイズ
+        filePartName:
+          type: string
+          description: multipart/form-data 内のファイルパート名。ファイル実体とメタデータを対応付ける
+        contentHash:
+          type: string
+          description: 改ざん検知・重複確認用ハッシュ。指定時はアップロード実体と照合し application_documents.content_hash に保存する
+        title:
+          type: string
+          description: 文書タイトル
+        documentDate:
+          type: string
+          format: date
+          description: 文書日付
+        storageFormat:
+          type: string
+          description: 電子取引 / スキャナ保存 / 未指定。保存先ではなく電帳法等の保存形式区分を表す
+        accountType:
+          type: string
+          description: 会計区分
+        accountOtherText:
+          type: string
+          description: 会計区分その他
+    PdfPreviewUrlResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - documentId
+        - fileName
+        - contentType
+        - fileSize
+        - previewUrl
+        - expiresAt
+      properties:
+        documentId:
+          type: integer
+          format: int64
+          description: application_documents.application_document_id
+        fileName:
+          type: string
+          description: 表示対象PDFのファイル名
+        contentType:
+          type: string
+          description: application/pdf
+        fileSize:
+          type: integer
+          format: int64
+          description: application_documents.file_size_bytes
+        previewUrl:
+          type: string
+          description: S3オブジェクトキーからAPI側で発行する認可済みプレビューURL。S3オブジェクトキー、S3バケット名、S3直接URLは返却しない
+        expiresAt:
+          type: string
+          format: date-time
+          description: プレビューURLの有効期限
+    PostMaintenanceQuoteRegistrationContractsByMaintenanceContractIdQuotationsCompleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - maintenanceContractId
+        - status
+      properties:
+        maintenanceContractId:
+          type: integer
+          format: int64
+          description: 保守契約ID
+        status:
+          type: string
+          description: 見積登録済
+    '-':
+      type: object
+      additionalProperties: false
+      properties: {}
+    PutMaintenanceQuoteRegistrationContractsByMaintenanceContractIdContractRegistrationRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - maintenanceType
+        - contractStartOn
+        - contractEndOn
+        - adoptedQuotationId
+      properties:
+        settlementNo:
+          type: string
+          description: 決済No.
+        maintenanceType:
+          type: string
+          description: 契約種別
+        maintenanceTypeNote:
+          type: string
+          description: 種別備考
+        contractedOn:
+          type: string
+          format: date
+          description: 契約日
+        contractStartOn:
+          type: string
+          format: date
+          description: 契約開始日
+        contractEndOn:
+          type: string
+          format: date
+          description: 契約終了日。契約開始日以降
+        contractReviewStartOn:
+          type: string
+          format: date
+          description: 契約検討開始日
+        adoptedQuotationId:
+          type: integer
+          format: int64
+          description: 採用見積ID。発注登録用見積のみ指定可
+    MaintenanceContractHeaderResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - maintenanceContractId
+        - status
+        - adoptedQuotationId
+        - contractStartOn
+        - contractEndOn
+      properties:
+        maintenanceContractId:
+          type: integer
+          format: int64
+          description: 保守契約ID
+        status:
+          type: string
+          description: 見積登録済
+        adoptedQuotationId:
+          type: integer
+          format: int64
+          description: 採用見積ID
+        contractStartOn:
+          type: string
+          format: date
+          description: 契約開始日
+        contractEndOn:
+          type: string
+          format: date
+          description: 契約終了日
+    PostMaintenanceQuoteRegistrationContractsByMaintenanceContractIdDocumentsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload.documents
+        - files
+      properties:
+        payload.documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractDocumentInput'
+          description: 登録する契約関連PDFドキュメント。1件以上。各要素の filePartName で対応するファイルパートを指定する
+          x-word-subtable-title: payload.documents要素（ContractDocumentInput）
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: payload.documents[].filePartName で参照される契約関連PDFドキュメントのファイル本体
+    DocumentCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - documents
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentSummary'
+          description: 登録後の文書一覧
+          x-word-omit-subtable: true
+    ContractDocumentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - documentCategory
+        - documentType
+        - fileName
+        - filePartName
+      properties:
+        documentCategory:
+          type: string
+          description: CONTRACT 固定
+        documentType:
+          type: string
+          description: 契約書 / その他。画面の「その他（免責部品一覧など）」は その他 として送信する
+        fileName:
+          type: string
+          description: ファイル名
+        contentType:
+          type: string
+          description: application/pdf 固定。application_documents.mime_type に保存するMIMEタイプ
+        fileSize:
+          type: integer
+          format: int64
+          description: application_documents.file_size_bytes に保存するファイルサイズ
+        filePartName:
+          type: string
+          description: multipart/form-data 内のファイルパート名。ファイル実体とメタデータを対応付ける
+        contentHash:
+          type: string
+          description: 改ざん検知・重複確認用ハッシュ。指定時はアップロード実体と照合し application_documents.content_hash に保存する
+        title:
+          type: string
+          description: 文書タイトル
+        documentDate:
+          type: string
+          format: date
+          description: 文書日付
+        storageFormat:
+          type: string
+          description: 電子取引 / スキャナ保存 / 未指定。保存先ではなく電帳法等の保存形式区分を表す
+        accountType:
+          type: string
+          description: 会計区分
+        accountOtherText:
+          type: string
+          description: 会計区分その他
+    MaintenanceContractCompleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - maintenanceContractId
+        - status
+        - createdInspectionTaskIds
+        - updatedInspectionTaskIds
+      properties:
+        maintenanceContractId:
+          type: integer
+          format: int64
+          description: 保守契約ID
+        status:
+          type: string
+          description: 完了
+        createdInspectionTaskIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 作成した点検タスクID
+        updatedInspectionTaskIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 更新した点検タスクID
+    PostQuotationDataBoxMaintenanceContractsByMaintenanceContractIdContentReviewRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload.newContractAmountExclTax
+        - payload.reviewReason
+      properties:
+        payload.removeMaintenanceContractAssetIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 除外する既存契約対象資産ID
+        payload.addAssetLedgerIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 追加する資産台帳ID
+        payload.newContractAmountExclTax:
+          type: number
+          description: 見直し後契約金額(税抜)
+        payload.reviewReason:
+          type: string
+          description: 見直し理由
+        payload.documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentInput'
+          description: 任意添付する契約変更覚書等のPDF文書。添付する場合は1件以上とし、各要素の filePartName で対応するファイルパートを指定する
+          x-word-subtable-title: payload.documents要素（DocumentInput）
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: payload.documents[].filePartName で参照される契約変更PDF文書のファイル本体。文書を添付しない場合は省略する
+    MaintenanceContractReviewResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - maintenanceContractReviewId
+        - reviewNo
+        - status
+        - newContractAmountExclTax
+        - addedAssetCount
+        - removedAssetCount
+      properties:
+        maintenanceContractReviewId:
+          type: integer
+          format: int64
+          description: 契約内容見直しID
+        reviewNo:
+          type: string
+          description: 見直しNo.
+        status:
+          type: string
+          description: 完了
+        newContractAmountExclTax:
+          type: number
+          description: 反映後契約金額
+        addedAssetCount:
+          type: integer
+          format: int32
+          description: 追加資産数
+        removedAssetCount:
+          type: integer
+          format: int32
+          description: 除外資産数
+    MaintenanceContractRenewalResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - sourceMaintenanceContractId
+        - newMaintenanceContractId
+        - newMaintenanceContractNo
+        - status
+        - assetCount
+        - nextPath
+      properties:
+        sourceMaintenanceContractId:
+          type: integer
+          format: int64
+          description: 更新元保守契約ID
+        newMaintenanceContractId:
+          type: integer
+          format: int64
+          description: 作成した後継保守契約ID
+        newMaintenanceContractNo:
+          type: string
+          description: 後継保守契約No.
+        status:
+          type: string
+          description: 見積依頼
+        assetCount:
+          type: integer
+          format: int32
+          description: 複製した対象資産数
+        nextPath:
+          type: string
+          description: /maintenance-quote-registration?id={newMaintenanceContractId}
+    MaintenanceContractTaskSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - maintenanceContractId
+        - maintenanceContractNo
+        - contractGroupName
+        - maintenanceType
+        - status
+        - dueStatus
+        - assetCount
+        - availableActions
+      properties:
+        maintenanceContractId:
+          type: integer
+          format: int64
+          description: maintenance_contracts.maintenance_contract_id
+        maintenanceContractNo:
+          type: string
+          description: 保守契約No.。画面上の申請No.列に表示する場合もこの値を返す
+        contractGroupName:
+          type: string
+          description: 契約グループ名
+        maintenanceType:
+          type: string
+          description: 保守契約/定期点検/スポット契約/借用契約/その他
+        maintenanceTypeNote:
+          type: string
+          description: 種別備考
+        contractedOn:
+          type: string
+          format: date
+          description: 契約日
+        contractStartOn:
+          type: string
+          format: date
+          description: 契約開始日
+        contractEndOn:
+          type: string
+          format: date
+          description: 契約終了日
+        contractReviewStartOn:
+          type: string
+          format: date
+          description: 契約検討開始日
+        vendorName:
+          type: string
+          description: 契約業者名。完了前は null
+        vendorContactPerson:
+          type: string
+          description: 契約業者担当者名
+        vendorEmail:
+          type: string
+          description: 契約業者メール
+        vendorPhone:
+          type: string
+          description: 契約業者連絡先
+        contractAmountExclTax:
+          type: number
+          description: 契約金額(税抜)
+        annualAmountExclTax:
+          type: number
+          description: 単年度金額(税抜)
+        status:
+          type: string
+          description: maintenance_contracts.status
+        dueStatus:
+          type: string
+          description: NONE / CONTRACT_ENDING_SOON
+        dueLabel:
+          type: string
+          description: '画面表示用期限ラベル。例: 契約期間終了 3ヶ月前、30日前'
+        assetCount:
+          type: integer
+          format: int32
+          description: 有効な契約対象資産数。excluded_flag=false の件数
+        comment:
+          type: string
+          description: フリーコメント
+        availableActions:
+          type: array
+          items:
+            type: string
+          description: >-
+            QUOTE_REQUEST / CANCEL_APPLICATION / REGISTER_QUOTATION / REGISTER_CONTRACT / CONTENT_REVIEW / RENEWAL /
+            DETAIL
+    MaintenanceContractAssetDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - assetLedgerId
+        - itemName
+        - excludedFlag
+      properties:
+        maintenanceContractAssetId:
+          type: integer
+          format: int64
+          description: maintenance_contract_assets.maintenance_contract_asset_id。新規追加時は null
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: asset_ledgers.asset_ledger_id
+        qrCodeValue:
+          type: string
+          description: 代表QR識別子
+        departmentName:
+          type: string
+          description: 設置部署または管理部署表示
+        sectionName:
+          type: string
+          description: 設置部門表示
+        itemName:
+          type: string
+          description: 品目名
+        makerName:
+          type: string
+          description: メーカー名
+        modelName:
+          type: string
+          description: 型式
+        inspectionGroupName:
+          type: string
+          description: 点検グループ名
+        inspectionType:
+          type: string
+          description: メーカー保守。未設定可。院内定期点検・院内スポット点検・日常点検は保守契約管理では扱わない
+        inspectionCycleMonths:
+          type: integer
+          format: int32
+          description: メーカー保守の点検周期（月）
+        inspectionCountPerYear:
+          type: integer
+          format: int32
+          description: 年間点検回数
+        partsExemptionFlag:
+          type: boolean
+          description: 部品免責有無
+        partsExemptionText:
+          type: string
+          description: 部品免責条件
+        exemptionAmount:
+          type: number
+          description: 免責金額
+        onCallSupport:
+          type: boolean
+          description: オンコール対応
+        remoteMaintenanceAvailable:
+          type: boolean
+          description: リモート対応
+        legalInspectionFlag:
+          type: boolean
+          description: 法定点検フラグ
+        legalInspectionBasis:
+          type: string
+          description: 法定点検根拠
+        contractUnitPriceExclTax:
+          type: number
+          description: 契約単価。個別入力は任意
+        excludedFlag:
+          type: boolean
+          description: 契約内容見直しで期中除外された場合 true
+        remarks:
+          type: string
+          description: 備考
+    MaintenanceQuotationSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - quotationId
+        - quotationNo
+        - quotationPhase
+        - quotationOn
+        - storageFormat
+        - vendorName
+        - status
+      properties:
+        quotationId:
+          type: integer
+          format: int64
+          description: quotations.quotation_id
+        quotationNo:
+          type: string
+          description: 見積番号
+        quotationPhase:
+          type: string
+          description: 発注登録用見積 / 参考見積
+        quotationOn:
+          type: string
+          format: date
+          description: 見積日。入力省略時は業務日
+        storageFormat:
+          type: string
+          description: 見積原本の application_documents.storage_format。電子取引 / スキャナ保存 / 未指定
+        vendorId:
+          type: integer
+          format: int64
+          description: 業者マスタID
+        vendorName:
+          type: string
+          description: 見積業者名
+        totalAmountExclTax:
+          type: number
+          description: 見積金額(税抜)
+        annualAmountExclTax:
+          type: number
+          description: 単年度金額(税抜)
+        accountDivisionCode:
+          type: string
+          description: 会計区分コード
+        status:
+          type: string
+          description: DRAFT / REGISTERED / ORDER_SELECTED
+        document:
+          $ref: '#/components/schemas/DocumentSummary'
+          description: 見積原本メタデータ
+          x-word-omit-subtable: true
+    RfqVendorSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqVendorId
+        - vendorName
+        - requestStatus
+      properties:
+        rfqVendorId:
+          type: integer
+          format: int64
+          description: rfq_vendors.rfq_vendor_id
+        vendorId:
+          type: integer
+          format: int64
+          description: 業者マスタID
+        vendorName:
+          type: string
+          description: 依頼先業者名
+        contactPerson:
+          type: string
+          description: 担当者名
+        email:
+          type: string
+          description: メールアドレス
+        phone:
+          type: string
+          description: 連絡先
+        requestStatus:
+          type: string
+          description: DRAFT / SENT / CANCELED
+        requestedAt:
+          type: string
+          format: date-time
+          description: 送信日時
+        requestedByName:
+          type: string
+          description: 送信者名
+    MaintenanceRfqSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqId
+        - rfqNo
+        - status
+      properties:
+        rfqId:
+          type: integer
+          format: int64
+          description: rfqs.rfq_id
+        rfqNo:
+          type: string
+          description: 見積依頼No.
+        status:
+          type: string
+          description: 見積依頼 / 見積依頼済 / 見積DB登録済 / 申請を見送る
+        vendorRequestComment:
+          type: string
+          description: ご依頼事項。rfqs.remarks から返す
+    MaintenanceContractHeader:
+      type: object
+      additionalProperties: false
+      required:
+        - maintenanceContractId
+        - maintenanceContractNo
+        - contractGroupName
+        - maintenanceType
+        - status
+      properties:
+        maintenanceContractId:
+          type: integer
+          format: int64
+          description: maintenance_contracts.maintenance_contract_id
+        maintenanceContractNo:
+          type: string
+          description: 保守契約No.
+        contractGroupName:
+          type: string
+          description: 契約グループ名
+        renewalSourceMaintenanceContractId:
+          type: integer
+          format: int64
+          description: 契約更新元の保守契約ID
+        rfqId:
+          type: integer
+          format: int64
+          description: 保守契約RFQ ID
+        settlementNo:
+          type: string
+          description: 決済No.
+        maintenanceType:
+          type: string
+          description: 契約種別
+        maintenanceTypeNote:
+          type: string
+          description: 種別備考
+        contractedOn:
+          type: string
+          format: date
+          description: 契約日
+        contractStartOn:
+          type: string
+          format: date
+          description: 契約開始日
+        contractEndOn:
+          type: string
+          format: date
+          description: 契約終了日
+        contractReviewStartOn:
+          type: string
+          format: date
+          description: 契約検討開始日
+        vendorId:
+          type: integer
+          format: int64
+          description: 契約業者ID
+        vendorName:
+          type: string
+          description: 契約業者名
+        vendorContactPerson:
+          type: string
+          description: 契約業者担当者名
+        vendorEmail:
+          type: string
+          description: 契約業者メール
+        vendorPhone:
+          type: string
+          description: 契約業者連絡先
+        receptionDepartmentName:
+          type: string
+          description: 受付部署名。見積依頼タスク開始時の users.section_name スナップショット
+        receptionPersonName:
+          type: string
+          description: 受付担当者名。見積依頼タスク開始時の users.name スナップショット
+        receptionContact:
+          type: string
+          description: 受付連絡先。見積依頼タスク開始時の users.phone_number スナップショット
+        contractAmountExclTax:
+          type: number
+          description: 契約金額(税抜)
+        annualAmountExclTax:
+          type: number
+          description: 単年度金額(税抜)
+        status:
+          type: string
+          description: maintenance_contracts.status
+        comment:
+          type: string
+          description: コメント
+    DocumentSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - documentId
+        - ownerType
+        - documentCategory
+        - documentType
+        - fileName
+        - uploadedAt
+      properties:
+        documentId:
+          type: integer
+          format: int64
+          description: application_documents.application_document_id
+        ownerType:
+          type: string
+          description: RFQ / QUOTATION / MAINTENANCE_CONTRACT_REVIEW
+        documentCategory:
+          type: string
+          description: QUOTATION / CONTRACT / CONTRACT_REVIEW
+        documentType:
+          type: string
+          description: 見積書 / 契約書 / その他 / 契約変更覚書
+        fileName:
+          type: string
+          description: ファイル名
+        contentType:
+          type: string
+          description: application/pdf。application_documents.mime_type に保存するMIMEタイプ
+        fileSize:
+          type: integer
+          format: int64
+          description: application_documents.file_size_bytes に保存するファイルサイズ
+        uploadedAt:
+          type: string
+          format: date-time
+          description: 登録日時
+        uploadedByName:
+          type: string
+          description: 登録者名
+    QuoteRequestPreviewInput:
+      type: object
+      additionalProperties: false
+      properties:
+        vendorRequestComment:
+          type: string
+          description: ご依頼事項。未保存の画面入力値を指定し、PDFへ反映する
+        vendors:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteRequestVendorInput'
+          description: 依頼先業者。未保存の画面入力値を指定し、PDFへ反映する
+          x-word-omit-subtable: true
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

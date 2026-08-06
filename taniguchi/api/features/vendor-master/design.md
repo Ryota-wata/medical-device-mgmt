@@ -1,0 +1,242 @@
+# 業者マスタ API内部設計
+
+## 第1章 概要
+
+### 本書の目的
+
+本書は、業者マスタ画面（`/vendor-master`）で利用する API の設計内容を整理し、クライアント、開発者、運用担当者が共通認識を持つことを目的とする。
+
+特に以下を明確にする。
+
+- 業者一覧の取得、絞り込み、新規登録、更新、削除I/F
+- 画面で扱う担当施設、業者情報、連絡先情報の入出力項目
+- 論理削除を前提とした削除方針
+- 権限、バリデーション、エラーレスポンス
+
+### 対象システム概要
+
+業者マスタは、見積・修理・保守・貸出・廃棄などのフローで参照する業者情報を管理する画面である。担当施設、インボイス登録番号、住所、担当者、連絡先などを管理し、関連申請で業者候補として再利用する。
+
+モック画面は、PCでは表形式、モバイルではカード形式で表示し、フィルター条件による絞り込み、新規作成モーダル、編集モーダル、削除確認ダイアログを備える。
+
+### 用語定義
+
+| 用語 | 説明 |
+| --- | --- |
+| 業者マスタ | 業者情報を管理する `vendors` テーブルおよびその管理画面 |
+| 担当施設 | 業者の主担当先として紐づく施設。`facilities` の施設情報を参照する |
+| 担当フラグ | 当該施設に対するメイン担当者であることを示すフラグ。モックの `isPrimaryContact` に相当する |
+
+### 対象画面
+
+| 項目 | 内容 |
+| --- | --- |
+| 画面名 | 63. 業者マスタ画面 |
+| 画面URL | /vendor-master |
+| 主機能 | 業者一覧の検索、作成、更新、削除 |
+
+## 第2章 システム全体構成
+
+### 業者マスタAPIの位置づけ
+
+本API群は、業者マスタ画面の一覧参照、登録、更新、削除を提供する。業者情報は `vendors` を正本とし、画面表示時は `facilities` を参照して担当施設名を解決する。
+
+新規作成・編集モーダルで選択する担当施設候補は、業者マスタAPI自身では返却せず、既存の施設マスタ取得APIから取得する前提とする。本API群では、選択結果として `facilityId` を受け取り、存在確認のみを行う。
+
+削除は `deleted_at` を用いた論理削除を前提とし、既存申請・見積・修理・保守などの履歴参照を壊さずに、マスタ候補からは除外する。
+
+### 画面とAPIの関係
+
+1. 画面初期表示および絞り込み時に業者一覧取得APIを呼び出す
+2. 新規作成モーダルの作成ボタン押下時に業者新規作成APIを呼び出す
+3. 編集モーダルの更新ボタン押下時に業者更新APIを呼び出す
+4. 削除確認ダイアログで確定した場合に業者削除APIを呼び出す
+
+### 使用テーブル
+
+| テーブル | 利用内容 | 主な項目 |
+| --- | --- | --- |
+| vendors | 一覧取得・新規作成・更新・削除の正本 | vendor_id, facility_id, invoice_registration_no, vendor_name, address, position_name, role_name, contact_person, phone, email, is_primary_contact, deleted_at |
+| facilities | 担当施設名の解決、担当施設候補APIの参照元、作業対象施設および担当施設の未削除判定 | facility_id, facility_name, deleted_at |
+| users | 共有システム管理者アカウント判定、監査記録の実行ユーザー解決 | user_id, account_type |
+| user_facility_assignments | 通常アカウントの作業対象施設割当判定 | user_id, facility_id, is_active, valid_from, valid_to |
+| facility_feature_settings | 通常アカウントの作業対象施設における `vendor_master_list` / `vendor_master_edit` 提供有無判定 | facility_id, feature_code, is_enabled |
+| user_facility_feature_settings | 通常アカウントのユーザー×作業対象施設単位の `vendor_master_list` / `vendor_master_edit` 利用可否判定 | user_facility_assignment_id, feature_code, is_enabled |
+| rfq_vendors / quotations / orders / borrowing_application_details / disposal_application_details / repair_request_details / maintenance_contracts / inspection_tasks / edit_list_items | 論理削除後も参照される業者履歴の参照先 | vendor_id, vendor_name など |
+
+## 第3章 共通仕様
+
+### API共通仕様
+
+- 通信方式: HTTPS
+- データ形式: JSON
+- 文字コード: UTF-8
+- 日時形式: ISO 8601（例: `2026-04-18T00:00:00Z`）
+- 画面要件上ページングは定義しない
+
+### 認証方式
+
+ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。
+
+### 権限モデル
+
+本API群で使用する `feature_code` は以下の通りとする。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず、`vendor_master_list` / `vendor_master_edit` を有効として扱う。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。
+
+| 管理単位名 | feature_code | 対象処理 |
+| --- | --- | --- |
+| 業者マスタ / 一覧 | `vendor_master_list` | 業者一覧取得 |
+| 業者マスタ / 新規作成・編集 | `vendor_master_edit` | 業者新規作成、更新、削除 |
+
+| 処理 | 必要 feature_code | 判定テーブル | 説明 |
+| --- | --- | --- | --- |
+| 業者一覧取得 | `vendor_master_list` | 通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities` | 一覧参照と絞り込み |
+| 業者新規作成 / 更新 / 削除 | `vendor_master_edit` | 通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities` | 業者マスタ管理処理 |
+
+### 作業対象施設ベースの認可
+
+- 各 API は Bearer トークン上の作業対象施設が存在し、未削除であることを確認する
+- 通常アカウントでは、作業対象施設に対する有効担当施設割当と実効 `feature_code` を都度再判定する
+- 共有システム管理者アカウントでは、作業対象施設が未削除であれば通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による認可判定をバイパスする
+- 業者一覧の返却対象は未削除施設に紐づく未削除業者全件とし、個票データ閲覧で用いる他施設公開設定は適用しない
+- リクエストボディの `facilityId` は業者データの所属先を表す業務項目であり、認可判定の正本には使わない
+- 通常アカウントで作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する
+- 作業対象施設が存在しない、または削除済みの場合は 404 を返却する
+
+### 検索・絞り込み仕様
+
+- モック画面に合わせ、担当施設名、業者名、キーワードで絞り込む
+- 担当施設候補は既存の施設マスタAPIから取得し、業者マスタAPIでは候補一覧を返さない
+- キーワード検索はインボイス登録番号、住所、役職、役割、氏名、連絡先、メールを対象にする
+- 文字列検索は部分一致を基本とする
+- 一覧取得では `deleted_at IS NULL` の業者のみ返却する
+
+### エラーレスポンス仕様
+
+#### 基本エラーレスポンス（ErrorResponse）
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| code | string | ✓ | エラーコード |
+| message | string | ✓ | 利用者向けエラーメッセージ |
+| details | string[] | - | 入力エラーや補足情報 |
+
+## 第4章 API一覧
+
+### 業者マスタ（/vendor-master）
+
+| 機能名 | Method | Path | 概要 | 認証 |
+| --- | --- | --- | --- | --- |
+| 業者一覧取得 | GET | /vendor-master/vendors | 業者一覧と件数を取得する | 要 |
+| 業者新規作成 | POST | /vendor-master/vendors | 業者情報を新規登録する | 要 |
+| 業者更新 | PUT | /vendor-master/vendors/{vendorId} | 既存業者情報を更新する | 要 |
+| 業者削除 | DELETE | /vendor-master/vendors/{vendorId} | 既存業者を論理削除する | 要 |
+
+## 第5章 業者マスタ機能設計
+
+### getVendorMasterVendors
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `vendor_master_list` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_list` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する
+2. `vendors.deleted_at IS NULL` かつ `facilities.deleted_at IS NULL` のみを対象にする
+3. `facilities` を参照して担当施設名を解決する
+4. 担当施設名・業者名・キーワードは AND 条件で絞り込む
+5. 画面要件上ページングは定義しない
+
+### postVendorMasterVendors
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `vendor_master_edit` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_edit` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する
+2. リクエストボディの `facilityId` は `facilities.deleted_at IS NULL` の未削除施設IDであることを検証する
+3. `vendors` に新規レコードを追加し、`created_at` と `updated_at` を現在時刻で設定する
+4. `deleted_at` は `NULL`、`is_primary_contact` は未指定時 `false` とする
+
+### putVendorMasterVendorsByVendorId
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `vendor_master_edit` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_edit` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する
+2. 対象の `vendors` が `deleted_at IS NULL` で存在することを確認する
+3. リクエストボディの `facilityId` は `facilities.deleted_at IS NULL` の未削除施設IDであることを検証する
+4. 指定IDの `vendors` を更新し、`updated_at` を現在時刻に更新する
+
+### deleteVendorMasterVendorsByVendorId
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `vendor_master_edit` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_edit` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する
+2. 対象の `vendors` が `deleted_at IS NULL` で存在することを確認する
+3. 物理削除は行わず、`deleted_at` と `updated_at` を現在時刻に更新する
+4. 既存申請・見積・修理・保守などの履歴参照は保持し、以後の候補一覧からは除外する
+
+## 第6章 権限・業務ルール
+
+### 必要権限
+
+| 処理 | 必要 feature_code | 判定基準 | 説明 |
+| --- | --- | --- | --- |
+| 業者一覧取得 | `vendor_master_list` | 通常アカウントは作業対象施設に対して実効 `vendor_master_list` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可 | 業者一覧と件数を参照する |
+| 業者新規作成 / 更新 / 削除 | `vendor_master_edit` | 通常アカウントは作業対象施設に対して実効 `vendor_master_edit` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可 | 業者マスタの変更系処理 |
+
+### データ整合ルール
+
+- `facility_id` は `facilities.deleted_at IS NULL` の未削除施設IDを参照する
+- 一覧取得は `vendors.deleted_at IS NULL` かつ `facilities.deleted_at IS NULL` のみを返却する
+- 削除は論理削除とし、参照元テーブルの履歴は保持する
+- 論理削除済み業者は、新規の見積・修理・保守候補には表示しない前提とする
+
+### 実装前提
+
+- 画面の表示制御は `/auth/context` の `vendor_master_list` / `vendor_master_edit` を参照して行い、一覧表示、新規作成ボタン、編集ボタン、削除ボタンを同じ `feature_code` で出し分ける。共有システム管理者アカウントでは作業対象施設が未削除であれば両 `feature_code` を有効扱いにする
+- 担当施設候補は既存の施設マスタ取得APIから取得し、本 API 群では候補一覧を返さない
+- 業者データはマスタ管理の対象として全施設分を扱うが、他施設閲覧機能ではなくマスタ管理機能として認可する
+
+## 第7章 エラーコード一覧
+
+| エラーコード | HTTP | 説明 |
+| --- | --- | --- |
+| VALIDATION_ERROR | 400 | 入力不正、必須不足、形式不正 |
+| UNAUTHORIZED | 401 | 認証トークン未付与または無効 |
+| AUTH_403_VENDOR_MASTER_LIST_DENIED | 403 | 通常アカウントで作業対象施設に対する実効 `vendor_master_list` がない。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする |
+| AUTH_403_VENDOR_MASTER_EDIT_DENIED | 403 | 通常アカウントで作業対象施設に対する実効 `vendor_master_edit` がない。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする |
+| VENDOR_NOT_FOUND | 404 | 対象の業者が存在しない |
+| FACILITY_NOT_FOUND | 404 | 作業対象施設または指定した担当施設が存在しない、または削除済み |
+| INTERNAL_SERVER_ERROR | 500 | サーバー内部エラー |
+
+## 第8章 運用・保守方針
+
+### マスタ保守方針
+
+- 業者削除は論理削除とし、過去申請・見積・修理・保守の履歴参照を壊さない
+- 担当施設名は `facilities` から解決する
+- 画面一覧は論理削除済み業者を表示しない
+
+### 今後拡張時の留意点
+
+- 共通業者マスタ運用へ変更する場合は `facility_id` の必須性と画面入力項目を再整理する
+- 検索件数が増加した場合はページングや並び順指定の追加を検討する

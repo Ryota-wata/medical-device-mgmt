@@ -1,0 +1,470 @@
+openapi: 3.0.4
+info:
+  title: 資産マスタ選択 API
+  version: '1.1'
+  description: 資産マスタ選択で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 資産マスタ選択
+    description: 資産マスタ選択のAPI
+paths:
+  /asset-master/assets:
+    get:
+      tags:
+        - 資産マスタ選択
+      operationId: getAssetMasterAssets
+      summary: 資産マスタ選択候補一覧取得
+      description: >-
+        資産マスタ選択画面の一覧候補を検索取得する。画面一覧に表示する 選択 / No. / Category / 大分類 / 中分類 / 個体管理品目 / メーカー / 型式 のうち、選択制御を除く表示項目と、親画面へ返却する
+        shipAssetMasterId を返す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_master_list
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          description: キーワード。資産マスタID、Category、大分類、中分類、個体管理品目、メーカー、型式の部分一致検索
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          required: false
+          description: Category ID
+          schema:
+            type: integer
+            format: int64
+        - name: largeClassId
+          in: query
+          required: false
+          description: 大分類ID
+          schema:
+            type: integer
+            format: int64
+        - name: mediumClassId
+          in: query
+          required: false
+          description: 中分類ID
+          schema:
+            type: integer
+            format: int64
+        - name: assetItemId
+          in: query
+          required: false
+          description: 個体管理品目ID
+          schema:
+            type: integer
+            format: int64
+        - name: manufacturerId
+          in: query
+          required: false
+          description: メーカーID
+          schema:
+            type: integer
+            format: int64
+        - name: modelId
+          in: query
+          required: false
+          description: 型式ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetMasterSelectionListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_master_list なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetMasterSelectionListResponse）
+      x-word-response-subtable-titles:
+        - items要素（AssetMasterSelectionItem）
+      x-word-response-subtables:
+        - Title: items要素（AssetMasterSelectionItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - displayNo
+              - int32
+              - ✓
+              - 一覧の No. 列に表示する連番
+            - - shipAssetMasterId
+              - int64
+              - ✓
+              - SHIP資産マスタID。親画面の保存APIへ渡す正本ID
+            - - categoryId
+              - int64
+              - ✓
+              - Category ID
+            - - categoryName
+              - string
+              - ✓
+              - Category 表示名
+            - - largeClassId
+              - int64
+              - ✓
+              - 大分類ID
+            - - largeClassName
+              - string
+              - ✓
+              - 大分類表示名
+            - - mediumClassId
+              - int64
+              - ✓
+              - 中分類ID
+            - - mediumClassName
+              - string
+              - ✓
+              - 中分類表示名
+            - - assetItemId
+              - int64
+              - ✓
+              - 個体管理品目ID
+            - - assetItemName
+              - string
+              - ✓
+              - 個体管理品目表示名
+            - - manufacturerId
+              - int64
+              - ✓
+              - メーカーID
+            - - manufacturerName
+              - string
+              - ✓
+              - メーカー表示名
+            - - modelId
+              - int64
+              - ✓
+              - 型式ID
+            - - modelName
+              - string
+              - ✓
+              - 型式表示名
+  /asset-master/filter-options:
+    get:
+      tags:
+        - 資産マスタ選択
+      operationId: getAssetMasterFilterOptions
+      summary: 資産マスタ選択フィルター候補取得
+      description: 資産マスタ選択画面のフィルター候補を取得する。選択済み条件がある場合は、有効な SHIP資産マスタの組み合わせに存在する候補だけへ絞り込む。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: asset_master_list
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: categoryId
+          in: query
+          required: false
+          description: 選択済み Category ID
+          schema:
+            type: integer
+            format: int64
+        - name: largeClassId
+          in: query
+          required: false
+          description: 選択済み大分類ID
+          schema:
+            type: integer
+            format: int64
+        - name: mediumClassId
+          in: query
+          required: false
+          description: 選択済み中分類ID
+          schema:
+            type: integer
+            format: int64
+        - name: assetItemId
+          in: query
+          required: false
+          description: 選択済み個体管理品目ID
+          schema:
+            type: integer
+            format: int64
+        - name: manufacturerId
+          in: query
+          required: false
+          description: 選択済みメーカーID
+          schema:
+            type: integer
+            format: int64
+        - name: modelId
+          in: query
+          required: false
+          description: 選択済み型式ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetMasterSelectionFilterOptionsResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 asset_master_list なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetMasterSelectionFilterOptionsResponse）
+      x-word-response-subtable-titles:
+        - 各候補要素（MasterFilterOption）
+      x-word-response-subtables:
+        - Title: 各候補要素（MasterFilterOption）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - id
+              - int64
+              - ✓
+              - 候補ID
+            - - label
+              - string
+              - ✓
+              - 画面表示名
+            - - parentId
+              - int64|null
+              - '-'
+              - >-
+                親候補ID。Categoryは null、大分類は categoryId、中分類は largeClassId、個体管理品目は mediumClassId、メーカーは assetItemId、型式は
+                manufacturerId
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    AssetMasterSelectionListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 絞り込み後の総件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetMasterSelectionItem'
+          description: 資産マスタ候補一覧
+          x-word-subtable-title: items要素（AssetMasterSelectionItem）
+    AssetMasterSelectionItem:
+      type: object
+      additionalProperties: false
+      required:
+        - displayNo
+        - shipAssetMasterId
+        - categoryId
+        - categoryName
+        - largeClassId
+        - largeClassName
+        - mediumClassId
+        - mediumClassName
+        - assetItemId
+        - assetItemName
+        - manufacturerId
+        - manufacturerName
+        - modelId
+        - modelName
+      properties:
+        displayNo:
+          type: integer
+          format: int32
+          description: 一覧の No. 列に表示する連番
+        shipAssetMasterId:
+          type: integer
+          format: int64
+          description: SHIP資産マスタID。親画面の保存APIへ渡す正本ID
+        categoryId:
+          type: integer
+          format: int64
+          description: Category ID
+        categoryName:
+          type: string
+          description: Category 表示名
+        largeClassId:
+          type: integer
+          format: int64
+          description: 大分類ID
+        largeClassName:
+          type: string
+          description: 大分類表示名
+        mediumClassId:
+          type: integer
+          format: int64
+          description: 中分類ID
+        mediumClassName:
+          type: string
+          description: 中分類表示名
+        assetItemId:
+          type: integer
+          format: int64
+          description: 個体管理品目ID
+        assetItemName:
+          type: string
+          description: 個体管理品目表示名
+        manufacturerId:
+          type: integer
+          format: int64
+          description: メーカーID
+        manufacturerName:
+          type: string
+          description: メーカー表示名
+        modelId:
+          type: integer
+          format: int64
+          description: 型式ID
+        modelName:
+          type: string
+          description: 型式表示名
+    AssetMasterSelectionFilterOptionsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - categories
+        - largeClasses
+        - mediumClasses
+        - assetItems
+        - manufacturers
+        - models
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterFilterOption'
+          description: Category候補
+          x-word-subtable-title: 各候補要素（MasterFilterOption）
+        largeClasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterFilterOption'
+          description: 大分類候補
+          x-word-omit-subtable: true
+        mediumClasses:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterFilterOption'
+          description: 中分類候補
+          x-word-omit-subtable: true
+        assetItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterFilterOption'
+          description: 個体管理品目候補
+          x-word-omit-subtable: true
+        manufacturers:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterFilterOption'
+          description: メーカー候補
+          x-word-omit-subtable: true
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasterFilterOption'
+          description: 型式候補
+          x-word-omit-subtable: true
+    MasterFilterOption:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 候補ID
+        label:
+          type: string
+          description: 画面表示名
+        parentId:
+          type: integer
+          format: int64
+          nullable: true
+          description: >-
+            親候補ID。Categoryは null、大分類は categoryId、中分類は largeClassId、個体管理品目は mediumClassId、メーカーは assetItemId、型式は
+            manufacturerId
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

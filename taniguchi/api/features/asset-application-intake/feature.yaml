@@ -1,0 +1,55 @@
+$schema: ../../feature.schema.json
+id: API-013
+slug: asset-application-intake
+title: 資産申請起票
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /asset-search-result
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/asset-application-intake.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_資産申請起票.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-005
+  - API-012
+  - API-023
+  - API-025
+  - API-027
+
+dbTables:
+  - applications
+  - application_assets
+  - purchase_application_details
+  - transfer_application_details
+  - disposal_application_details
+  - application_documents
+  - application_status_definitions
+  - application_status_histories
+  - asset_ledgers
+  - facility_locations
+  - facilities
+  - users
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+  - purchase_applications
+
+permissionCodes:
+  - original_list_view
+  - original_application

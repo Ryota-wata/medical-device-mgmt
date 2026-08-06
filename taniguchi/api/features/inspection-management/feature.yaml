@@ -1,0 +1,59 @@
+$schema: ../../feature.schema.json
+id: API-030
+slug: inspection-management
+title: 点検管理
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /quotation-data-box/inspection-requests
+  - /periodic-inspection
+  - /maker-maintenance-result
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/inspection-management.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_点検管理.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-004
+  - API-006
+  - API-028
+  - API-029
+  - API-031
+
+dbTables:
+  - asset_ledgers
+  - qr_codes
+  - inspection_menus
+  - inspection_menu_items
+  - inspection_tasks
+  - inspection_task_status_definitions
+  - inspection_task_status_transitions
+  - inspection_results
+  - application_documents
+  - lending_devices
+  - maintenance_contracts
+  - maintenance_contract_assets
+  - vendors
+  - users
+  - facilities
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+
+permissionCodes:
+  - inspection_management

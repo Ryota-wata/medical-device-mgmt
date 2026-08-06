@@ -88,7 +88,8 @@
 | `INTERNAL_SERVER_ERROR` | `500` | サーバー内部エラー | 想定外エラー |
 
 ## 1. 基本方針
-- 画面要件の正本は [機能要件.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/機能要件.md) とする。
+- APIの外部I/Fは機能別`openapi.yaml`、画面操作と内部処理は機能別`design.md`を正本とする。
+- [機能要件.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/機能要件.md) は内部作業メモとして参照できるが、採用する内容はOpenAPIまたは`design.md`へ反映してからWordへ展開する。
 - テーブル定義の正本は [db-schema.puml](/C:/Projects/mock/medical-device-mgmt/taniguchi/db/db-schema.puml) とする。
 - API 設計書では、画面から見た操作と、保存先/参照先テーブル、権限判定、エラー条件を対応づけて記載する。
 - モック実装に依存する一時的な UI 挙動は、要件で Fix していない限り API 設計に持ち込まない。

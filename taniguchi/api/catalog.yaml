@@ -1,0 +1,371 @@
+$schema: ./catalog.schema.json
+schemaVersion: 1
+sourceIndex: ./API設計書_一覧.md
+
+defaults:
+  openapiVersion: 3.0.4
+  requirements: ../機能要件.md # 内部作業メモへのトレーサビリティ。開発者連携・実装の正本ではない
+  database: ../db/db-schema.puml
+  legacySpecRoot: ../scripts/specs/api-docs
+  approvedWordRoot: ./Fix
+
+features:
+  - id: API-001
+    legacyNo: "1"
+    slug: auth-authz
+    title: 認証／認可
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/auth-authz/feature.yaml
+    legacySpec: auth-authz.ps1
+    approvedWord: API設計書_認証／認可.docx
+
+  - id: API-002
+    legacyNo: "2"
+    slug: facility-selection
+    title: 作業対象施設選択
+    phase: 1
+    status: 不要
+    authoringMode: none
+    coveredBy:
+      - API-001
+    rationale: 認証／認可API設計書に統合して管理する。
+
+  - id: API-003
+    legacyNo: "3"
+    slug: home-menu
+    title: ホーム/メニュー
+    phase: 1
+    status: 不要
+    authoringMode: none
+    coveredBy:
+      - API-001
+    rationale: 専用APIを設けず、認証／認可APIと各業務APIを組み合わせる。
+
+  - id: API-004
+    legacyNo: "4"
+    slug: daily-inspection
+    title: 日常点検
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/daily-inspection/feature.yaml
+    legacySpec: daily-inspection.ps1
+    approvedWord: API設計書_日常点検.docx
+
+  - id: API-005
+    legacyNo: "5"
+    slug: inventory
+    title: 棚卸し
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/inventory/feature.yaml
+    legacySpec: inventory.ps1
+    approvedWord: API設計書_棚卸し.docx
+
+  - id: API-006
+    legacyNo: "6"
+    slug: repair-request
+    title: 修理申請
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/repair-request/feature.yaml
+    legacySpec: repair-request.ps1
+    approvedWord: API設計書_修理申請.docx
+
+  - id: API-007
+    legacyNo: "7"
+    slug: lending-checkout
+    title: 貸出・返却
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/lending-checkout/feature.yaml
+    legacySpec: lending-checkout.ps1
+    approvedWord: API設計書_貸出・返却.docx
+
+  - id: API-008
+    legacyNo: "8"
+    slug: qr-issue-print
+    title: QR発行・ラベル印刷
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/qr-issue-print/feature.yaml
+    legacySpec: qr-issue-print.ps1
+    approvedWord: API設計書_QR発行・ラベル印刷.docx
+
+  - id: API-009
+    legacyNo: "9"
+    slug: asset-survey
+    title: 現有品調査
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/asset-survey/feature.yaml
+    legacySpec: asset-survey.ps1
+    approvedWord: API設計書_現有品調査.docx
+
+  - id: API-010
+    legacyNo: "10"
+    slug: asset-import
+    title: 資産台帳取込・マスタ突き合わせ
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/asset-import/feature.yaml
+    legacySpec: asset-import.ps1
+    approvedWord: API設計書_資産台帳取込.docx
+
+  - id: API-011
+    legacyNo: "11"
+    slug: data-matching
+    title: データ突合
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/data-matching/feature.yaml
+    legacySpec: data-matching.ps1
+    approvedWord: API設計書_データ突合.docx
+
+  - id: API-012
+    legacyNo: "12"
+    slug: asset-search-detail
+    title: 資産一覧・資産詳細
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/asset-search-detail/feature.yaml
+    legacySpec: asset-search-detail.ps1
+    approvedWord: API設計書_資産一覧・資産詳細.docx
+
+  - id: API-013
+    legacyNo: "13"
+    slug: asset-application-intake
+    title: 資産申請起票
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/asset-application-intake/feature.yaml
+    legacySpec: asset-application-intake.ps1
+    approvedWord: API設計書_資産申請起票.docx
+
+  - id: API-014
+    legacyNo: "14"
+    slug: ship-asset-master
+    title: SHIP資産マスタ
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/ship-asset-master/feature.yaml
+    legacySpec: ship-asset-master.ps1
+    approvedWord: API設計書_SHIP資産マスタ.docx
+
+  - id: API-014A
+    legacyNo: "14a"
+    slug: asset-master-selection
+    title: 資産マスタ選択
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/asset-master-selection/feature.yaml
+    legacySpec: asset-master-selection.ps1
+    approvedWord: API設計書_資産マスタ選択.docx
+
+  - id: API-015
+    legacyNo: "15"
+    slug: ship-facility-master
+    title: SHIP施設マスタ
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/ship-facility-master/feature.yaml
+    legacySpec: ship-facility-master.ps1
+    approvedWord: API設計書_SHIP施設マスタ.docx
+
+  - id: API-016
+    legacyNo: "16"
+    slug: permission-management
+    title: 権限管理
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/permission-management/feature.yaml
+    legacySpec: permission-management.ps1
+    approvedWord: API設計書_権限管理.docx
+
+  - id: API-017
+    legacyNo: "17"
+    slug: facility-group-management
+    title: 施設グループ管理
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/facility-group-management/feature.yaml
+    legacySpec: facility-group-management.ps1
+    approvedWord: API設計書_施設グループ管理.docx
+
+  - id: API-018
+    legacyNo: "18"
+    slug: hospital-facility-master
+    title: 個別部署マスタ
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/hospital-facility-master/feature.yaml
+    legacySpec: hospital-facility-master.ps1
+    approvedWord: API設計書_個別部署マスタ.docx
+
+  - id: API-019
+    legacyNo: "19"
+    slug: ship-department
+    title: SHIP部署マスタ
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/ship-department/feature.yaml
+    legacySpec: ship-department.ps1
+    approvedWord: API設計書_SHIP部署マスタ.docx
+
+  - id: API-020
+    legacyNo: "20"
+    slug: user-management
+    title: ユーザー管理
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/user-management/feature.yaml
+    legacySpec: user-management.ps1
+    approvedWord: API設計書_ユーザー管理.docx
+
+  - id: API-020A
+    legacyNo: "20a"
+    slug: ship-user-management
+    title: SHIPユーザー管理
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/ship-user-management/feature.yaml
+    legacySpec: ship-user-management.ps1
+    approvedWord: API設計書_SHIPユーザー管理.docx
+
+  - id: API-021
+    legacyNo: "21"
+    slug: vendor-master
+    title: 業者マスタ
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/vendor-master/feature.yaml
+    legacySpec: vendor-master.ps1
+    approvedWord: API設計書_業者マスタ.docx
+
+  - id: API-022
+    legacyNo: "22"
+    slug: task-management-home
+    title: タスク管理トップ
+    phase: 1
+    status: 不要
+    authoringMode: none
+    rationale: 既定業務画面へのリダイレクトのみで、業務APIは各業務機能側で管理する。
+
+  - id: API-023
+    legacyNo: "23"
+    slug: edit-list
+    title: 編集リスト
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/edit-list/feature.yaml
+    legacySpec: edit-list.ps1
+    approvedWord: API設計書_編集リスト.docx
+
+  - id: API-024
+    legacyNo: "24"
+    slug: remodel-management
+    title: リモデル管理
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/remodel-management/feature.yaml
+    legacySpec: remodel-management.ps1
+    approvedWord: API設計書_リモデル管理.docx
+
+  - id: API-025
+    legacyNo: "25"
+    slug: purchase-management
+    title: 購入管理
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/purchase-management/feature.yaml
+    legacySpec: purchase-management.ps1
+    approvedWord: API設計書_購入管理.docx
+
+  - id: API-026
+    legacyNo: "26"
+    slug: ship-proxy-request
+    title: SHIP代理作業依頼
+    phase: 2
+    status: 不要
+    authoringMode: none
+    legacySpec: ship-proxy-request.ps1
+    rationale: Phase1のFix成果物から除外し、Phase2で責務と要件を再整理する。
+
+  - id: API-027
+    legacyNo: "27"
+    slug: transfer-disposal-management
+    title: 移動・廃棄管理
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/transfer-disposal-management/feature.yaml
+    legacySpec: transfer-disposal-management.ps1
+    approvedWord: API設計書_移動・廃棄管理.docx
+
+  - id: API-028
+    legacyNo: "28"
+    slug: repair-management
+    title: 修理管理
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/repair-management/feature.yaml
+    legacySpec: repair-management.ps1
+    approvedWord: API設計書_修理管理.docx
+
+  - id: API-029
+    legacyNo: "29"
+    slug: maintenance-contract-management
+    title: 保守契約管理
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/maintenance-contract-management/feature.yaml
+    legacySpec: maintenance-contract-management.ps1
+    approvedWord: API設計書_保守契約管理.docx
+
+  - id: API-030
+    legacyNo: "30"
+    slug: inspection-management
+    title: 点検管理
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/inspection-management/feature.yaml
+    legacySpec: inspection-management.ps1
+    approvedWord: API設計書_点検管理.docx
+
+  - id: API-031
+    legacyNo: "31"
+    slug: lending-management
+    title: 貸出管理
+    phase: 1
+    status: Fix
+    authoringMode: openapi
+    manifest: features/lending-management/feature.yaml
+    legacySpec: lending-management.ps1
+    approvedWord: API設計書_貸出管理.docx

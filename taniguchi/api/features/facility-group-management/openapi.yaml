@@ -1,0 +1,988 @@
+openapi: 3.0.4
+info:
+  title: 施設グループ管理 API API
+  version: '1.1'
+  description: 施設グループ管理で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 施設グループ管理
+    description: 施設グループ管理 APIのAPI
+paths:
+  /facility-group-management/groups:
+    get:
+      tags:
+        - 施設グループ管理
+      operationId: getFacilityGroupManagementGroups
+      summary: 施設グループ一覧取得
+      description: 施設グループ一覧、所属施設、公開元施設単位の共有設定を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-admin
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: includeInactive
+          in: query
+          required: false
+          description: 無効化済みグループを含めるかどうか。既定値 false
+          schema:
+            type: boolean
+        - name: keyword
+          in: query
+          required: false
+          description: グループ名の部分一致条件
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacilityGroupListResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 共有システム管理者アカウントではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：FacilityGroupListResponse）
+    post:
+      tags:
+        - 施設グループ管理
+      operationId: postFacilityGroupManagementGroups
+      summary: 施設グループ新規作成
+      description: 施設グループを新規作成する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-admin
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacilityGroupCreateRequest'
+      x-word-request-title: リクエスト（FacilityGroupCreateRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostFacilityGroupManagementGroupsResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 共有システム管理者アカウントではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 有効グループ名が重複している
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '201': FacilityGroupSummary
+      x-word-response-title: レスポンス（201：FacilityGroupSummary）
+  /facility-group-management/groups/{groupId}:
+    put:
+      tags:
+        - 施設グループ管理
+      operationId: putFacilityGroupManagementGroupsByGroupId
+      summary: 施設グループ更新
+      description: 施設グループ名と有効状態を更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-admin
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: 更新対象の施設グループID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacilityGroupUpdateRequest'
+      x-word-request-title: リクエスト（FacilityGroupUpdateRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutFacilityGroupManagementGroupsByGroupIdResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 共有システム管理者アカウントではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または対象グループが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 有効グループ名が重複している
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': FacilityGroupSummary
+      x-word-response-title: レスポンス（200：FacilityGroupSummary）
+    delete:
+      tags:
+        - 施設グループ管理
+      operationId: deleteFacilityGroupManagementGroupsByGroupId
+      summary: 施設グループ無効化
+      description: 施設グループを無効化する。所属施設行と公開設定行は削除しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-admin
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: 無効化対象の施設グループID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 無効化成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 共有システム管理者アカウントではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または対象グループが存在しない/既に無効
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス
+      x-word-response-lines:
+        - 'Body: なし'
+  /facility-group-management/facilities:
+    get:
+      tags:
+        - 施設グループ管理
+      operationId: getFacilityGroupManagementFacilities
+      summary: 施設候補取得
+      description: 施設グループへ追加可能な施設候補を検索取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-admin
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: groupId
+          in: query
+          required: false
+          description: 指定時は当該グループに未所属の施設だけを返却する
+          schema:
+            type: integer
+            format: int64
+        - name: keyword
+          in: query
+          required: false
+          description: 施設コード、施設名、設立母体名の部分一致条件
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: 最大取得件数。既定値 50、上限 100
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacilityCandidateListResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 共有システム管理者アカウントではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または groupId 指定時に対象グループが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：FacilityCandidateListResponse）
+  /facility-group-management/groups/{groupId}/facilities:
+    post:
+      tags:
+        - 施設グループ管理
+      operationId: postFacilityGroupManagementGroupsByGroupIdFacilities
+      summary: 所属施設追加
+      description: 施設グループへ施設を追加する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-admin
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: 施設を追加する施設グループID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupFacilityAddRequest'
+      x-word-request-title: リクエスト（GroupFacilityAddRequest）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 追加成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostFacilityGroupManagementGroupsByGroupIdFacilitiesResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 共有システム管理者アカウントではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または対象グループ/施設が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象施設が既に所属している
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '201': FacilityGroupSummary
+      x-word-response-title: レスポンス（201：FacilityGroupSummary）
+  /facility-group-management/groups/{groupId}/facilities/{facilityId}:
+    delete:
+      tags:
+        - 施設グループ管理
+      operationId: deleteFacilityGroupManagementGroupsByGroupIdFacilitiesByFacilityId
+      summary: 所属施設解除
+      description: 施設グループから施設を解除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-admin
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: 施設グループID
+          schema:
+            type: integer
+            format: int64
+        - name: facilityId
+          in: path
+          required: true
+          description: 解除する施設ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 解除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 共有システム管理者アカウントではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または対象グループ/施設/所属行が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス
+      x-word-response-lines:
+        - 'Body: なし'
+  /facility-group-management/groups/{groupId}/sharing:
+    put:
+      tags:
+        - 施設グループ管理
+      operationId: putFacilityGroupManagementGroupsByGroupIdSharing
+      summary: 共有データ種別設定保存
+      description: 対象グループの所属施設を公開元施設として、他施設向け公開データ種別と公開カラム設定を保存する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-admin
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          description: 共有設定を保存する施設グループID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacilityGroupSharingUpdateRequest'
+      x-word-request-title: リクエスト（FacilityGroupSharingUpdateRequest）
+      x-word-request-subtable-titles:
+        - sharingSettings要素（SharingSettingUpdateItem）
+        - columnSettings要素（ColumnSharingUpdateItem）
+      x-word-request-subtables:
+        - Title: sharingSettings要素（SharingSettingUpdateItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - sharingDataType
+              - string
+              - ✓
+              - asset、estimate、history
+            - - isEnabled
+              - boolean
+              - ✓
+              - 公開データ種別を有効にするかどうか
+            - - columnSettings
+              - ColumnSharingUpdateItem[]
+              - '-'
+              - 公開カラム設定
+        - Title: columnSettings要素（ColumnSharingUpdateItem）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - columnCode
+              - string
+              - ✓
+              - 公開カラムの column_code。価格カラムは original_price_column
+            - - isEnabled
+              - boolean
+              - ✓
+              - 公開カラムを有効にするかどうか
+      responses:
+        '200':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutFacilityGroupManagementGroupsByGroupIdSharingResponse'
+        '400':
+          description: 入力不正、未知の共有データ種別 / column_code、必要な共有データ種別不足
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 共有システム管理者アカウントではない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない/削除済み、または対象グループ/公開元施設が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象グループに所属施設が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': FacilityGroupSummary
+      x-word-response-title: レスポンス（200：FacilityGroupSummary）
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    FacilityGroupListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 絞り込み後の施設グループ件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacilityGroupSummary'
+          description: 施設グループ一覧
+          x-word-omit-subtable: true
+    FacilityGroupCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - groupName
+      properties:
+        groupName:
+          type: string
+          description: グループ名。1文字以上100文字以内
+    PostFacilityGroupManagementGroupsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - groupId
+        - groupName
+        - isActive
+        - memberFacilityCount
+        - memberFacilities
+        - sharingSettings
+      properties:
+        groupId:
+          type: integer
+          format: int64
+          description: 作成した施設グループID
+        groupName:
+          type: string
+          description: グループ名
+        isActive:
+          type: boolean
+          description: 有効フラグ
+        memberFacilityCount:
+          type: integer
+          format: int32
+          description: 所属施設数。作成直後は 0
+        memberFacilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupFacilityItem'
+          description: 所属施設一覧。作成直後は空配列
+          x-word-omit-subtable: true
+        sharingSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalSharingSettingItem'
+          description: 公開設定一覧。作成直後は空配列
+          x-word-omit-subtable: true
+    FacilityGroupUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        groupName:
+          type: string
+          description: 変更後グループ名。指定時は1文字以上100文字以内
+        isActive:
+          type: boolean
+          description: 有効状態。未指定の場合は既存値を維持する
+    PutFacilityGroupManagementGroupsByGroupIdResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - groupId
+        - groupName
+        - isActive
+        - memberFacilityCount
+        - memberFacilities
+        - sharingSettings
+      properties:
+        groupId:
+          type: integer
+          format: int64
+          description: 更新した施設グループID
+        groupName:
+          type: string
+          description: グループ名
+        isActive:
+          type: boolean
+          description: 有効フラグ
+        memberFacilityCount:
+          type: integer
+          format: int32
+          description: 所属施設数
+        memberFacilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupFacilityItem'
+          description: 所属施設一覧
+          x-word-omit-subtable: true
+        sharingSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalSharingSettingItem'
+          description: 公開設定一覧
+          x-word-omit-subtable: true
+    FacilityCandidateListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupFacilityItem'
+          description: 施設候補一覧
+          x-word-omit-subtable: true
+    GroupFacilityAddRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 追加する施設ID
+    PostFacilityGroupManagementGroupsByGroupIdFacilitiesResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - groupId
+        - groupName
+        - memberFacilityCount
+        - memberFacilities
+      properties:
+        groupId:
+          type: integer
+          format: int64
+          description: 施設グループID
+        groupName:
+          type: string
+          description: グループ名
+        memberFacilityCount:
+          type: integer
+          format: int32
+          description: 所属施設数
+        memberFacilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupFacilityItem'
+          description: 所属施設一覧
+          x-word-omit-subtable: true
+    FacilityGroupSharingUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - sharingSettings
+      properties:
+        providerFacilityIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 公開元施設ID一覧。未指定の場合は対象グループの全所属施設を対象とする
+        sharingSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/SharingSettingUpdateItem'
+          description: 保存する公開データ種別設定
+          x-word-subtable-title: sharingSettings要素（SharingSettingUpdateItem）
+    PutFacilityGroupManagementGroupsByGroupIdSharingResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - groupId
+        - groupName
+        - memberFacilityCount
+        - memberFacilities
+        - sharingSettings
+      properties:
+        groupId:
+          type: integer
+          format: int64
+          description: 施設グループID
+        groupName:
+          type: string
+          description: グループ名
+        memberFacilityCount:
+          type: integer
+          format: int32
+          description: 所属施設数
+        memberFacilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupFacilityItem'
+          description: 所属施設一覧
+          x-word-omit-subtable: true
+        sharingSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalSharingSettingItem'
+          description: 保存後の公開設定一覧
+          x-word-omit-subtable: true
+    SharingSettingUpdateItem:
+      type: object
+      additionalProperties: false
+      required:
+        - sharingDataType
+        - isEnabled
+      properties:
+        sharingDataType:
+          type: string
+          description: asset、estimate、history
+        isEnabled:
+          type: boolean
+          description: 公開データ種別を有効にするかどうか
+        columnSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ColumnSharingUpdateItem'
+          description: 公開カラム設定
+          x-word-subtable-title: columnSettings要素（ColumnSharingUpdateItem）
+    ColumnSharingUpdateItem:
+      type: object
+      additionalProperties: false
+      required:
+        - columnCode
+        - isEnabled
+      properties:
+        columnCode:
+          type: string
+          description: 公開カラムの column_code。価格カラムは original_price_column
+        isEnabled:
+          type: boolean
+          description: 公開カラムを有効にするかどうか
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml
+    FacilityGroupSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - groupId
+        - groupName
+        - isActive
+        - memberFacilityCount
+        - memberFacilities
+        - sharingSettings
+        - createdAt
+        - updatedAt
+      properties:
+        groupId:
+          type: integer
+          format: int64
+          description: facility_collaboration_groups.facility_collaboration_group_id
+        groupName:
+          type: string
+          description: グループ名
+        isActive:
+          type: boolean
+          description: 有効フラグ
+        memberFacilityCount:
+          type: integer
+          format: int32
+          description: 所属施設数
+        memberFacilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupFacilityItem'
+          description: 所属施設一覧
+          x-word-omit-subtable: true
+        sharingSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalSharingSettingItem'
+          description: 公開元施設単位の公開設定
+          x-word-omit-subtable: true
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    GroupFacilityItem:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - facilityName
+        - systemContractStatus
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: facilities.facility_id
+        facilityCode:
+          type: string
+          description: 施設コード
+        facilityName:
+          type: string
+          description: 施設名
+        establishmentName:
+          type: string
+          description: 設立母体名
+        systemContractStatus:
+          type: string
+          description: ACTIVE または CANCELLED
+    ExternalSharingSettingItem:
+      type: object
+      additionalProperties: false
+      required:
+        - providerFacilityId
+        - sharingDataType
+        - sharingDataTypeLabel
+        - isEnabled
+        - columnSettings
+      properties:
+        providerFacilityId:
+          type: integer
+          format: int64
+          description: 公開元施設ID
+        sharingDataType:
+          type: string
+          description: asset、estimate、history
+        sharingDataTypeLabel:
+          type: string
+          description: 画面表示名。資産データ、見積データ、データ履歴
+        isEnabled:
+          type: boolean
+          description: 公開データ種別を有効にするかどうか
+        columnSettings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalColumnSharingSettingItem'
+          description: 公開カラム設定
+          x-word-omit-subtable: true
+    ExternalColumnSharingSettingItem:
+      type: object
+      additionalProperties: false
+      required:
+        - columnCode
+        - requiredSharingDataType
+        - isEnabled
+      properties:
+        columnCode:
+          type: string
+          description: 公開カラムを表す column_code。価格カラムは original_price_column
+        columnName:
+          type: string
+          description: 公開カラム名
+        requiredSharingDataType:
+          type: string
+          description: 当該カラムを公開するために有効化が必要な共有データ種別。価格カラムは asset
+        isEnabled:
+          type: boolean
+          description: 公開カラムを有効にするかどうか

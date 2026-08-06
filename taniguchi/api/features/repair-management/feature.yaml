@@ -1,0 +1,71 @@
+$schema: ../../feature.schema.json
+id: API-028
+slug: repair-management
+title: 修理管理
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /quotation-data-box/repair-requests
+  - /repair-task
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/repair-management.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_修理管理.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.2"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/7
+  revisionSummary: 受付担当者の選択・更新仕様を反映
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-004
+  - API-006
+  - API-007
+  - API-021
+  - API-027
+  - API-029
+  - API-030
+
+dbTables:
+  - applications
+  - repair_request_details
+  - application_assets
+  - application_task_steps
+  - application_status_histories
+  - rfq_status_histories
+  - application_status_definitions
+  - repair_requests
+  - asset_ledgers
+  - maintenance_contract_assets
+  - maintenance_contracts
+  - inspection_results
+  - application_documents
+  - rfqs
+  - rfq_vendors
+  - rfq_applications
+  - quotations
+  - quotation_items
+  - orders
+  - order_items
+  - lending_devices
+  - disposal_application_details
+  - vendors
+  - users
+  - api_idempotency_records
+  - facilities
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+
+permissionCodes:
+  - repair_management

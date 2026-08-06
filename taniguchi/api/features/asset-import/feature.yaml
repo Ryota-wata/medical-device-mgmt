@@ -1,0 +1,56 @@
+$schema: ../../feature.schema.json
+id: API-010
+slug: asset-import
+title: 資産台帳取込・マスタ突き合わせ
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /asset-import
+  - /asset-matching
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/asset-import.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_資産台帳取込.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-011
+  - API-014
+  - API-018
+
+dbTables:
+  - asset_import_jobs
+  - asset_import_rows
+  - facilities
+  - facility_locations
+  - users
+  - asset_categories
+  - asset_large_classes
+  - asset_medium_classes
+  - asset_items
+  - ship_asset_masters
+  - jmdn_registered_items
+  - jmdn_classifications
+  - asset_ledgers
+  - manufacturers
+  - models
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+
+permissionCodes:
+  - asset_ledger_import
+  - survey_ledger_matching

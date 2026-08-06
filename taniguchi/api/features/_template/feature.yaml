@@ -1,0 +1,24 @@
+$schema: ../../feature.schema.json
+id: API-000
+slug: feature-slug
+title: 機能名
+phase: 1
+status: 未着手
+authoringMode: openapi
+
+screens: []
+
+sources:
+  requirements: ../../../機能要件.md # 内部作業メモへのトレーサビリティ。実装正本ではない
+  database: ../../../db/db-schema.puml
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_機能名.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "0.1"
+
+relatedFeatures: []
+dbTables: []
+permissionCodes: []

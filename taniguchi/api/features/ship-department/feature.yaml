@@ -1,0 +1,45 @@
+$schema: ../../feature.schema.json
+id: API-019
+slug: ship-department
+title: SHIP部署マスタ
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /ship-department-master
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/ship-department.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_SHIP部署マスタ.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.0"
+  coverDate: 2026年4月18日
+  revisionDate: 2026/4/18
+  revisionSummary: 初版作成
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-018
+
+dbTables:
+  - users
+  - facilities
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+  - ship_departments
+  - ship_room_categories
+  - facility_locations
+  - facility_location_remodels
+
+permissionCodes:
+  - ship_dept_master_list
+  - ship_dept_master_edit

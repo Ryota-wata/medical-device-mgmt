@@ -1,0 +1,4 @@
+type: apiKey
+in: cookie
+name: remember_token
+description: OpenAPI上の論理名としてremember_tokenを使用する。実環境のcookie名は環境設定で定義し、ログイン情報記憶用のHttpOnly cookieとしてSecure、SameSite=Lax、Path=/authを基本属性とする。

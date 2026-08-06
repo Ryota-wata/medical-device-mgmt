@@ -1,0 +1,513 @@
+# 点検管理 API内部設計
+
+## 第1章 概要
+
+### 本書の目的
+
+本書は、点検管理画面（`/quotation-data-box/inspection-requests`）、定期点検画面（`/periodic-inspection`）、メーカー保守 点検結果登録画面（`/maker-maintenance-result`）で利用する API の設計内容を整理し、画面要件、DB設計、日常点検APIとの責務境界を一致させることを目的とする。
+
+特に以下を明確にする。
+
+- 点検管理の定期点検タスクおよび日常点検設定行の一覧取得 I/F
+- 点検メニューの登録・更新・無効化 I/F
+- 資産一覧画面で選択した原本資産（`asset_ledgers`）から起動する点検管理登録 I/F
+- 日常点検設定行の変更・一部解除・設定解除 I/F
+- 定期点検の実施開始、点検結果登録、日程調整、スキップ、予定表CSV出力 I/F
+- メーカー保守結果登録、添付ファイルのAPI内S3保存、メタデータ保存 I/F
+- No.4 日常点検APIとの責務境界
+
+### 対象システム概要
+
+点検管理は、点検メニューを作成し、資産単位に定期点検タスクまたは日常点検設定行を紐づけ、定期点検の進行管理と日常点検設定の管理CRUDを一元的に扱う機能である。日常点検の実施自体はメイン画面から `/inspection-prep`、`/daily-inspection` へ進む No.4 日常点検APIの責務とし、本書ではその前提となるメニューと資産別設定行を管理する。
+
+点検管理登録では、資産一覧画面で選択した原本資産（`asset_ledgers`）を起点に、対象資産の大分類・中分類・品目と一致する点検メニューのみ適用できる。同じ分類の資産が複数存在しても自動展開せず、選択された原本資産単位で `inspection_tasks` を作成または更新する。定期点検は1資産に複数メニューを紐づけられるが、日常点検は1資産1有効行として使用前・使用中・使用後メニューを保持する。
+
+院内スポット点検は点検周期を持たない単発の点検タスクとして扱う。点検管理登録では予定日未定の `点検日調整` で作成し、Action の日程調整で点検予定日を設定する。周期による次回予定日の自動算出は行わない。
+
+### 用語定義
+
+| 用語 | 説明 |
+| --- | --- |
+| 点検メニュー | `inspection_menus` と `inspection_menu_items` に保持する点検項目テンプレート。`menu_type=PERIODIC` または `DAILY` で区分する |
+| 定期点検タスク | `inspection_tasks.inspection_type` が `院内定期点検`、`メーカー保守`、`院内スポット点検` の行。予定日、ステータス、前回実施日を持つ。院内スポット点検は点検周期を持たず、日程調整で予定日を設定する |
+| 日常点検設定行 | `inspection_tasks.inspection_type='日常点検'` の1資産1有効行。`daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` に使用前・使用中・使用後メニューを保持する |
+| 点検種別表示ラベル | 画面表示の `院内点検` / `メーカー点検` / `スポット点検` / `日常点検`。API保存値は `院内定期点検` / `メーカー保守` / `院内スポット点検` / `日常点検` へ変換する |
+| 点検ステータス | 定期点検系のみ `inspection_task_status_definitions` / `inspection_task_status_transitions` で管理する状態。日常点検行はステータスを持たない |
+
+### 対象画面
+
+| 画面名 | 画面パス | 利用目的 |
+| --- | --- | --- |
+| 点検管理画面 | /quotation-data-box/inspection-requests | 点検メニュー、定期点検タスク、日常点検設定行、日程調整、スキップ、予定表CSV出力を管理する |
+| 定期点検画面 | /periodic-inspection | 点検管理から選択した定期点検タスクに対し、QR照合、点検開始、点検結果登録を行う |
+| メーカー保守 点検結果登録画面 | /maker-maintenance-result | メーカー保守タスクの点検結果、費用内訳、点検報告書添付を登録する |
+
+## 第2章 システム全体構成
+
+### API の位置づけ
+
+本API群は、点検管理の一覧・メニュー管理・タスク管理・定期点検実施・メーカー保守結果登録を提供する。No.4 日常点検APIはPWAのマスタダウンロード、QR起点の日常点検実施、未送信同期を担当し、本書は日常点検メニュー登録と資産別日常点検設定行の正本管理を担当する。
+
+### 画面とAPIの関係
+
+| 画面操作 | API | 補足 |
+| --- | --- | --- |
+| 点検管理初期表示/フィルター変更 | `GET /quotation-data-box/inspection-requests/tasks` | 定期点検タスクと日常点検設定行を同じ一覧レスポンスで返す |
+| 点検予定表の出力 | `GET /quotation-data-box/inspection-requests/schedule-export` | 点検管理一覧と同じ正本フィルターを適用できる。定期点検系タスクのみCSV出力対象とし、日常点検行は除外する。CSVはレスポンスとして直接返し、永続ファイルとしてS3へ保存しない |
+| 点検メニュー登録モーダル表示/候補取得 | `GET /quotation-data-box/inspection-requests/menus` | メニュー一覧または資産分類に一致する候補を取得する |
+| 点検メニュー登録 | `POST /quotation-data-box/inspection-requests/menus` | メニュー本体と点検項目を同時に登録する |
+| 点検メニュー更新 | `PUT /quotation-data-box/inspection-requests/menus/{menuId}` | 未使用メニューの内容を更新する。使用中メニューは履歴整合のため更新制限する |
+| 点検メニュー削除 | `DELETE /quotation-data-box/inspection-requests/menus/{menuId}` | `inspection_menus.is_active=false` による無効化を行う |
+| 点検管理登録 | `POST /quotation-data-box/inspection-requests/tasks` | 資産一覧で選択した原本資産に定期点検タスクまたは日常点検設定行を作成/更新する |
+| 設定変更 | `PUT /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}` | 定期点検タスクまたは日常点検設定行を更新する |
+| 設定解除 | `DELETE /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}` | `inspection_tasks.is_active=false`、`deleted_at` 設定で論理解除する |
+| 定期点検のQR照合後開始 | `POST /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/start` | `START_INSPECTION` 遷移で `点検実施中` へ更新する |
+| 日程調整 | `POST /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/schedule` | メーカー保守または院内スポット点検の日程を更新し、`点検日調整` から予定系ステータスへ戻す |
+| スキップ | `POST /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/skip` | 周期を持つ定期点検タスクの次回予定日を再計算し、再計算後の予定系ステータスへ更新する |
+| 定期点検完了 | `POST /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/result` | 点検結果を登録し、前回点検日・次回予定日・ステータスを更新する |
+| メーカー保守結果登録画面表示 | `GET /maker-maintenance-result/tasks/{maintenanceTaskId}` | 対象タスク、資産、添付候補、費用入力初期値を取得する |
+| メーカー保守結果登録 | `POST /maker-maintenance-result/tasks/{maintenanceTaskId}/result` | メーカー保守結果、費用、添付ファイル本体を受け取り、API内でAmazon S3へ保存してメタデータを登録し、対象タスクを論理解除する |
+
+### 使用テーブル
+
+| テーブル名 | 利用種別 | 用途 |
+| --- | --- | --- |
+| `asset_ledgers` | READ | 点検対象資産、分類一致、施設スコープ、QR表示情報の取得 |
+| `qr_codes` | READ | 資産に紐づくQR識別子、定期点検開始時のQR照合 |
+| `inspection_menus` | READ / CREATE / UPDATE | 点検メニュー本体、メニュー種別、日常点検タイミング、周期、分類条件の管理。周期は院内定期点検で使用し、院内スポット点検では使用しない |
+| `inspection_menu_items` | READ / CREATE / UPDATE / DELETE | 点検項目、入力方式、評価方式、表示順の管理 |
+| `inspection_tasks` | READ / CREATE / UPDATE | 定期点検タスクと日常点検設定行の正本。解除時は `is_active=false` と `deleted_at` を設定する |
+| `inspection_task_status_definitions` | READ | 定期点検系ステータスの許容値、初期状態、終端状態確認 |
+| `inspection_task_status_transitions` | READ | 点検開始、完了、スキップ、日程調整の遷移可否確認 |
+| `inspection_results` | READ / CREATE | 定期点検結果、メーカー保守結果、費用内訳、結果明細JSONの保存 |
+| `application_documents` | CREATE / READ | メーカー保守点検報告書や添付資料のファイルメタデータ。ファイル実体はAmazon S3に保存し、`file_path` にはS3オブジェクトキーのみを保持する |
+| `lending_devices` | READ | 貸出状況フィルターおよび一覧表示 |
+| `maintenance_contracts` | READ | メーカー保守タスクの契約情報参照 |
+| `maintenance_contract_assets` | READ | 保守契約管理タブから作成された点検条件の由来参照 |
+| `vendors` | READ | 点検委託業者・メーカー保守業者の表示 |
+| `users` | READ | 点検開始者、結果登録者、共有システム管理者アカウント判定 |
+| `facilities` | READ | Bearer トークン上の作業対象施設の存在確認、未削除確認 |
+| `user_facility_assignments` | READ | 通常アカウントにおける作業対象施設への有効担当施設割当確認 |
+| `facility_feature_settings` | READ | 通常アカウントにおける施設提供機能 `inspection_management` の有効化確認 |
+| `user_facility_feature_settings` | READ | 通常アカウントにおけるユーザー施設別 `inspection_management` の有効化確認 |
+
+## 第3章 共通仕様
+
+### API 共通仕様
+
+- 通信方式: HTTPS
+- データ形式: JSON（メーカー保守結果登録の添付を含むPOST APIは multipart/form-data を使用し、`payload` に業務データとファイルメタデータ、`files` にファイル本体を指定する）。CSV出力APIのみ `text/csv; charset=UTF-8` を返す
+- 文字コード: UTF-8
+- 日時形式: ISO 8601（例: `2026-05-18T00:00:00+09:00`）
+- 日付形式: `YYYY-MM-DD`
+- 認証済みAPIは Bearer トークンを `Authorization` ヘッダーに付与する
+- 各APIは Bearer トークン上の作業対象施設を基準に自施設データのみ処理する
+
+### ファイル保存ルール
+
+- メーカー保守結果登録で扱う点検報告書・添付資料のファイル実体は、APIが multipart/form-data の `files` パートとして受け取り、API内でAmazon S3へPutObjectする
+- `application_documents.file_path` にはS3オブジェクトキーのみ保存し、S3バケット名、S3の直接URL、認可なしで利用できるURLはDBへ保存しない
+- レスポンスではS3オブジェクトキー、S3バケット名、S3の直接URLを返さず、画面表示やダウンロードが必要な場合は認可済み `downloadUrl` を返す
+- Amazon S3保存後にDBメタデータ保存または業務トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`INSPECTION_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す
+- `storageFormat` は保存先ではなく、電子取引/スキャナ保存/未指定などの保存形式区分を表す列として扱い、S3保存有無の表現には使用しない
+- 点検予定表CSV出力は画面操作に対する直接レスポンスであり、永続ファイルとしてS3へ保存しない。将来、帳票履歴として保存する要件が追加された場合は、別途ファイル保存APIまたは帳票履歴設計で扱う
+- 添付ファイルの論理削除が必要になった場合は `application_documents.deleted_at` を正本とし、S3実体は同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するS3ライフサイクルまたは後続クリーンアップで扱う
+
+### 認証・認可
+
+本API群で使用する `feature_code` は `inspection_management` とする。画面表示用の `/auth/context` はUX用キャッシュであり、各業務APIでも同条件を再判定する。通常アカウントでは作業対象施設への有効担当施設割当、施設提供機能、ユーザー施設別機能設定を確認する。共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）では、作業対象施設が未削除であることを確認できれば、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする。
+
+| 処理 | 必要 feature_code | 判定テーブル | 説明 |
+| --- | --- | --- | --- |
+| 点検管理API全般 | `inspection_management` | `users`, `facilities`, `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` | 通常アカウントは担当施設割当と実効 `inspection_management` を確認する。共有システム管理者アカウントは作業対象施設が未削除であれば通常権限判定をバイパスする |
+| 日常点検PWA本体 | `daily_inspection` | `users`, `facilities`, `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` | No.4 日常点検APIで扱う。点検管理では日常点検設定行の管理のみ `inspection_management` で扱う。共有システム管理者アカウントの例外方針はNo.4側の業務APIで再判定する |
+
+### 作業対象施設ベースの認可例外
+
+- 各APIは Bearer トークン上の作業対象施設が存在し、未削除であることを確認する
+- 通常アカウントでは、作業対象施設に対する有効担当施設割当と実効 `inspection_management` を都度再判定する
+- 共有システム管理者アカウントでは、作業対象施設が未削除であれば通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による認可判定をバイパスする
+- 対象資産・点検メニュー・点検タスク・点検結果・メーカー保守タスクが作業対象施設に属すること、点検種別、メニュー分類一致、有効行、削除/解除済み除外、定期点検ステータス遷移順序、QR照合、日常点検行の操作制限、メーカー保守結果登録条件といった業務制約は共有システム管理者でもバイパスしない
+- 通常アカウントで作業対象施設に対して必要な実効 `inspection_management` がない場合は403を返す
+- 作業対象施設が存在しない、または削除済みの場合は404を返す
+
+### 点検種別・ステータス共通ルール
+
+- 画面表示ラベル `院内点検` は DB/API保存値 `院内定期点検`、`メーカー点検` は `メーカー保守`、`スポット点検` は `院内スポット点検`、`日常点検` は `日常点検` へ変換する
+- 定期点検系タスクは `inspection_tasks.periodic_menu_id`、`status`、`last_inspection_on`、`next_inspection_on` を用いる
+- 院内スポット点検は点検周期を持たず、登録時は `next_inspection_on=NULL`、`status='点検日調整'` とし、日程調整APIで初回予定日を設定する
+- メーカー保守は保守契約管理の保守登録から作成または更新される。点検管理登録APIでは保守契約由来のメーカー保守タスクを新規作成しない
+- 日常点検設定行は `inspection_type='日常点検'`、`status=NULL`、`periodic_menu_id=NULL`、`last_inspection_on=NULL`、`next_inspection_on=NULL` とし、一覧では `-` 表示用に返す
+- 日常点検設定行の使用前・使用中・使用後メニュー更新では、JSONフィールド未指定は既存値維持、明示的な null は該当タイミングの解除として扱う
+- 完了回数は現行DBに保持カラムがないため、対象 `inspection_task_id` または同一資産・同一メニューの `inspection_results` 件数から画面表示時に算出する。`inspection_tasks` へ完了回数を保存しない
+- 日常点検設定行の設定解除は `is_active=false`、`deleted_at=現在日時` とし、過去の `inspection_results` は削除しない
+- 定期点検系ステータス更新は `inspection_task_status_transitions` に存在する遷移のみ許可する。日常点検はステータス遷移対象外とする
+
+### エラーレスポンス仕様
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| code | string | ✓ | エラーコード |
+| message | string | ✓ | 利用者向けエラーメッセージ |
+| details | string[] | - | 入力エラーや競合理由の補足 |
+
+## 第4章 API 一覧
+
+| No | API名 | Method | Path | 用途 | 権限 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 点検タスク/日常点検設定一覧取得 | GET | /quotation-data-box/inspection-requests/tasks | 点検管理一覧を取得する | `inspection_management` |
+| 2 | 点検予定表CSV出力 | GET | /quotation-data-box/inspection-requests/schedule-export | 定期点検予定表をCSVで出力する | `inspection_management` |
+| 3 | 点検メニュー一覧取得 | GET | /quotation-data-box/inspection-requests/menus | 点検メニュー一覧または資産分類に一致する候補を取得する | `inspection_management` |
+| 4 | 点検メニュー登録 | POST | /quotation-data-box/inspection-requests/menus | 点検メニューと項目を登録する | `inspection_management` |
+| 5 | 点検メニュー更新 | PUT | /quotation-data-box/inspection-requests/menus/{menuId} | 点検メニューと項目を更新する | `inspection_management` |
+| 6 | 点検メニュー削除 | DELETE | /quotation-data-box/inspection-requests/menus/{menuId} | 点検メニューを無効化する | `inspection_management` |
+| 7 | 点検管理登録 | POST | /quotation-data-box/inspection-requests/tasks | 資産一覧で選択した原本資産に点検メニューを紐づける | `inspection_management` |
+| 8 | 点検タスク/日常点検設定更新 | PUT | /quotation-data-box/inspection-requests/tasks/{inspectionTaskId} | 定期点検タスクまたは日常点検設定行を更新する | `inspection_management` |
+| 9 | 点検タスク/日常点検設定解除 | DELETE | /quotation-data-box/inspection-requests/tasks/{inspectionTaskId} | 点検タスクまたは日常点検設定行を論理解除する | `inspection_management` |
+| 10 | 定期点検開始 | POST | /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/start | QR照合後に定期点検タスクを点検実施中へ更新する | `inspection_management` |
+| 11 | 点検日程調整 | POST | /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/schedule | メーカー保守または院内スポット点検の日程を調整する | `inspection_management` |
+| 12 | 点検スキップ | POST | /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/skip | 周期を持つ定期点検タスクの次回予定日を再計算する | `inspection_management` |
+| 13 | 定期点検結果登録 | POST | /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/result | 定期点検結果を登録しタスク状態を更新する | `inspection_management` |
+| 14 | メーカー保守結果登録詳細取得 | GET | /maker-maintenance-result/tasks/{maintenanceTaskId} | メーカー保守結果登録画面の詳細を取得する | `inspection_management` |
+| 15 | メーカー保守結果登録 | POST | /maker-maintenance-result/tasks/{maintenanceTaskId}/result | メーカー保守結果、費用、添付ファイル本体を登録し、ファイル実体をS3へ保存する | `inspection_management` |
+
+## 第5章 点検管理機能設計
+
+### getQuotationDataBoxInspectionRequestsTasks
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. `inspection_tasks` を `asset_ledgers`、`inspection_menus`、`qr_codes`、`lending_devices` と結合し、作業対象施設の `asset_ledgers.facility_id` に限定する
+3. `inspection_tasks.is_active=true` かつ `deleted_at IS NULL` の行を対象とする
+4. 定期点検系は `periodic_menu_id`、`status`、`next_inspection_on`、`last_inspection_on` を返す
+5. 日常点検行は `inspection_type='日常点検'` の行として返し、点検周期、前回点検日、次回点検予定、ステータスは null として返す
+6. `availableActions` は点検種別とステータスから返却する。`SCHEDULE` はメーカー保守または院内スポット点検、`SKIP` は周期を持つ院内定期点検またはメーカー保守のみ返し、院内スポット点検と日常点検行には `SKIP` を返さない
+7. 点検日フィルターは定期点検系の `next_inspection_on` と `status` にのみ適用する。日常点検行は `inspectionDateFilter=ALL` または未指定の場合のみ返す
+8. 貸出状況フィルターは `lending_devices.status` を参照し、貸出中は `貸出中` / `使用中` / `使用済` を対象とする
+9. 既定並び順は、日常点検行を定期点検行の後、定期点検系は `next_inspection_on ASC NULLS LAST`、`inspection_task_id ASC` とする
+
+### getQuotationDataBoxInspectionRequestsScheduleExport
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. `inspection_tasks.inspection_type<>'日常点検'`、`is_active=true`、`deleted_at IS NULL`、`next_inspection_on IS NOT NULL` の行を対象とする
+3. 作業対象施設外の資産は出力しない
+4. 指定期間がある場合は `next_inspection_on` で絞り込む。期間指定がない場合は点検管理一覧と同じ `inspectionDateFilter` を適用する
+5. 貸出状況フィルターは `lending_devices.status` を参照し、貸出中は `貸出中` / `使用中` / `使用済` を対象とする
+6. CSV列は、QRコード、品目、メーカー、型式、点検種別、点検メニュー、点検周期、前回点検日、次回点検予定、ステータス、点検グループ名を含める
+7. レスポンスヘッダーに `Content-Disposition: attachment; filename=inspection_schedule_YYYYMMDD.csv` を設定する
+
+### getQuotationDataBoxInspectionRequestsMenus
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. `inspection_menus` と `inspection_menu_items` を取得する
+3. `assetLedgerId` 指定時は対象資産が作業対象施設内に存在することを確認し、`large_class_name` / `medium_class_name` / `item_name` が資産と一致するメニューに限定する
+4. `menuType=DAILY` の場合は `daily_timing` を返す。`menuType=PERIODIC` の場合は `cycle_months` を返す
+5. 点検項目は `display_order ASC` で返す
+
+### postQuotationDataBoxInspectionRequestsMenus
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. `menuType=DAILY` の場合は `dailyTiming` 必須、`cycleMonths` は null とする
+3. `menuType=PERIODIC` の場合は `cycleMonths` 必須、`dailyTiming` は null とする
+4. 同一 `menuType`、`dailyTiming`、大分類、中分類、品目、メニュー名の有効メニューが既に存在する場合は 409 とする
+5. `inspection_menus` を `is_active=true` で作成し、`inspection_menu_items` を `display_order ASC` の順で作成する
+6. 点検項目は1件以上必須とし、`displayOrder` の重複を禁止する
+
+### putQuotationDataBoxInspectionRequestsMenusByMenuId
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象 `inspection_menus` が存在し `is_active=true` であることを確認する
+3. メニュー種別 `menu_type` は更新不可とし、日常点検メニューでは `dailyTiming`、定期点検メニューでは `cycleMonths` だけを対象種別に応じて更新する
+4. 対象メニューを参照する有効な `inspection_tasks`、または `inspection_results.result_details_json.inspectionMenuId` が存在する場合は 409 とする
+5. 未使用の場合のみ `inspection_menus` を更新し、既存 `inspection_menu_items` を要求内容に合わせて更新/差し替えする
+6. 使用中メニューの項目削除は、PWAダウンロード済み端末の同期結果で項目IDが解決できなくなるため禁止する
+
+### deleteQuotationDataBoxInspectionRequestsMenusByMenuId
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象 `inspection_menus` が存在することを確認する
+3. 対象メニューを参照する有効な `inspection_tasks` が存在する場合は 409 とする
+4. `inspection_menus.is_active=false` に更新する。`inspection_menu_items` は履歴参照と結果スナップショット整合のため保持する
+5. 無効化された日常点検メニューは、No.4 日常点検APIのPWAパッケージ取得対象から除外される
+
+### postQuotationDataBoxInspectionRequestsTasks
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象の原本資産が作業対象施設内に存在し、`asset_ledgers.status='ACTIVE'` であることを確認する
+3. 指定メニューはすべて `inspection_menus.is_active=true` であり、対象資産の大分類・中分類・品目と一致することを確認する
+4. `inspectionType` は `院内定期点検` / `院内スポット点検` / `日常点検` を許可する。`メーカー保守` は保守契約管理の保守登録から作成または更新するため、本APIでの新規作成は 400 とする
+5. 院内定期点検または院内スポット点検の場合は `periodicMenuId` 必須、`inspection_menus.menu_type='PERIODIC'` であることを確認する。院内スポット点検では `inspection_menus.cycle_months` を予定日算出やスキップに使用しない
+6. `inspection_type='院内定期点検'` では `nextInspectionOn` 必須とし、点検予定日を算出したステータスで作成する
+7. `inspection_type='院内スポット点検'` では `nextInspectionOn` を受け付けず、`next_inspection_on=NULL`、`status='点検日調整'` で作成する。点検予定日は日程調整APIで設定する
+8. 有効な同一資産・同一点検種別・同一定期メニューの `inspection_tasks` が既に存在する場合は 409 とする
+9. 院内定期点検の初期 `status` は `inspection_task_status_definitions.is_initial_status=true` の予定系ステータスから `nextInspectionOn` に応じて算出する。院内スポット点検は `点検日調整` を許可する
+10. 日常点検の場合は指定された日常点検メニューが `menu_type='DAILY'` であり、`dailyBeforeMenuId` は `daily_timing='BEFORE'`、`dailyDuringMenuId` は `daily_timing='DURING'`、`dailyAfterMenuId` は `daily_timing='AFTER'` と一致することを確認する
+11. 日常点検の場合は `periodicMenuId`、`status`、`nextInspectionOn`、`lastInspectionOn` を null とし、`daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` の少なくとも1つを必須とする
+12. 有効な日常点検設定行が既に存在する場合は同じ行を更新し、存在しない場合は新規作成する
+13. 同分類の他資産へ自動展開しない
+
+### putQuotationDataBoxInspectionRequestsTasksByInspectionTaskId
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象 `inspection_tasks` が作業対象施設内の資産に紐づき、`is_active=true`、`deleted_at IS NULL` であることを確認する
+3. 日常点検行の場合は、使用前/使用中/使用後メニューの変更または一部解除を許可する。ただし3タイミングすべてが null になる場合は設定解除APIを利用させ 400 とする
+4. 日常点検行では、未指定フィールドは既存値を維持し、明示的な null フィールドのみ該当タイミングを解除する
+5. 日常点検行で指定されたメニューは `menu_type='DAILY'` かつ各フィールドに対応する `daily_timing` と一致することを確認する
+6. 日常点検行では `status`、`nextInspectionOn`、`lastInspectionOn` を更新しない
+7. 定期点検系で `periodicMenuId` を変更する場合は、指定メニューが `menu_type='PERIODIC'` であることを確認し、有効な同一資産・同一点検種別・同一定期メニュー重複を禁止する
+8. `inspection_type='院内定期点検'` で予定日を更新する場合は `nextInspectionOn` を null にできない
+9. `inspection_type='院内スポット点検'` の予定日は本APIでは更新せず、日程調整APIで設定する
+10. `inspection_type='メーカー保守'` の予定日は本APIでは更新せず、日程調整APIで設定する
+11. 指定メニューは対象資産の大分類・中分類・品目と一致することを確認する
+12. 点検実施中または完了済みタスクのメニュー変更は 409 とする
+
+### deleteQuotationDataBoxInspectionRequestsTasksByInspectionTaskId
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象 `inspection_tasks` が作業対象施設内の資産に紐づくことを確認する
+3. 定期点検系で `status='点検実施中'` の場合は解除不可とする
+4. `inspection_tasks.is_active=false`、`deleted_at=現在日時` に更新する
+5. 日常点検設定行を解除した場合、以降の No.4 `/inspection-prep/master/download` のPWA配信対象から除外される
+6. 過去の `inspection_results` は削除しない
+
+### postQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdStart
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象タスクが定期点検系であり、`inspection_type<>'日常点検'`、`is_active=true`、`deleted_at IS NULL` であることを確認する
+3. `qr_codes.qr_identifier` が対象タスクの `asset_ledger_id` に紐づくことを確認する
+4. `inspection_task_status_transitions` で `START_INSPECTION` が許可される場合のみ `status='点検実施中'` へ更新する
+5. `inspection_menus` と `inspection_menu_items` を返し、画面は返却データで点検実施ステップへ進む
+
+### postQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdSchedule
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象タスクが `inspection_type in ('メーカー保守', '院内スポット点検')`、`is_active=true` であることを確認する
+3. `inspection_task_status_transitions` で `SET_DATE` が許可されることを確認する
+4. `next_inspection_on` を更新し、調整後日付に応じた予定系ステータスへ更新する
+5. 対象外の点検種別（院内定期点検、日常点検行）では 409 とする
+
+### postQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdSkip
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象タスクが定期点検系であり、`inspection_type<>'日常点検'`、`is_active=true` であることを確認する
+3. 院内スポット点検は点検周期を持たないためスキップ対象外とし、409 とする。予定日を変更する場合は日程調整APIを使用する
+4. `inspection_task_status_transitions` で `SKIP` または `RECALCULATE_SCHEDULE` が許可されることを確認する
+5. 院内定期点検は `inspection_menus.cycle_months`、メーカー保守は保守契約由来の点検周期を基準に `next_inspection_on` を再計算する
+6. 再計算後の予定系ステータスへ更新する。スキップ専用ステータスは保持しない
+
+### postQuotationDataBoxInspectionRequestsTasksByInspectionTaskIdResult
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象タスクが定期点検系であり、`status='点検実施中'` であることを確認する
+3. 点検項目結果が対象 `periodic_menu_id` 配下の `inspection_menu_items` と一致することを確認する
+4. `inspection_results` に点検結果を登録し、`result_details_json` に項目結果とメニュースナップショットを保存する
+5. `overallResult=PASS` の場合は `COMPLETE` 遷移で `点検完了` または次回予定系ステータスへ更新する
+6. `overallResult=REINSPECT` の場合は `再点検` へ更新する
+7. `overallResult=REPAIR_REQUEST` の場合も点検結果は登録し、`REINSPECT` 遷移で `再点検` へ更新したうえで修理申請連携用 `repairRequestSeed` を返す
+8. `last_inspection_on=inspectedOn` を設定し、院内定期点検またはメーカー保守で周期がある場合は `next_inspection_on` を再計算する。院内スポット点検は周期を持たないため、完了後の次回予定日は null とする
+9. 完了回数は `inspection_results` の件数集計で算出し、`inspection_tasks` には保持しない
+
+### getMakerMaintenanceResultTasksByMaintenanceTaskId
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象 `inspection_tasks` が `inspection_type='メーカー保守'`、`is_active=true`、`deleted_at IS NULL` であり、作業対象施設内の資産に紐づくことを確認する
+3. `asset_ledgers`、`qr_codes`、`maintenance_contracts`、`vendors` を参照して画面表示情報を返す
+4. 添付登録で許可するドキュメント種別、MIMEタイプ、ファイルサイズ上限を返す。S3オブジェクトキー、S3バケット名、S3直接URLは返さない
+5. 既存の `inspection_results` がある完了済みタスクは本API対象外として 409 とする
+
+### postMakerMaintenanceResultTasksByMaintenanceTaskIdResult
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象タスクが `inspection_type='メーカー保守'`、`is_active=true` であり、作業対象施設内の資産に紐づくことを確認する
+3. 費用行から `parts_cost`、`labor_cost`、`total_cost` を算出する。`OTHER` は `labor_cost` 側に含め、内訳詳細は `result_details_json.costRows` に保持する
+4. `payload.documents[].filePartName` が `files` パートに存在することを確認し、許可MIMEタイプ、拡張子、ファイルサイズ、`contentHash` 指定時のハッシュ一致を検証する
+5. `inspection_results` にメーカー保守結果を登録する。`overall_result` は `PASS` とし、異常や再修理が必要な場合は修理管理タブ側で別途修理申請を起票する
+6. 添付ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`inspectionResultId` などの業務IDを含めない
+7. 添付ファイルは `application_documents.owner_type='INSPECTION_RESULT'`、`inspection_result_id=作成した点検結果ID`、`document_category`、`document_type`、`document_date`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない
+8. Amazon S3保存後に文書メタデータ保存、点検結果登録、またはタスク論理解除へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`INSPECTION_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す
+9. 登録成功後、対象 `inspection_tasks` を `is_active=false`、`deleted_at=現在日時` として一覧から除外する
+10. DBトランザクションでは `inspection_results`、`application_documents`、`inspection_tasks` を整合更新し、S3保存処理はトランザクション外リソースとして上記の補償削除ルールを適用する
+
+## 第6章 権限・業務ルール
+
+### 点検管理との責務境界
+
+- 点検メニュー登録、更新、無効化は本書の責務とする
+- 資産一覧画面の `点検管理登録` ボタンから実行する資産別紐づけは本書の責務とする
+- 日常点検PWAの `/inspection-prep`、`/daily-inspection`、未送信結果同期は No.4 日常点検API設計書の責務とする
+- 点検管理の日常点検行では、点検実施、日程調整、スキップのActionを返さない
+- 点検結果から修理申請へ進む起票API本体は修理管理タブAPI設計書の責務とし、本書では `repairRequestSeed` までを返す
+
+### 重複・整合性ルール
+
+- 有効な定期点検系タスクは `(asset_ledger_id, inspection_type, periodic_menu_id)` の重複を禁止する
+- 有効な日常点検設定行は `(asset_ledger_id, inspection_type='日常点検')` の重複を禁止する
+- 点検管理登録で適用できるメニューは、対象資産の大分類・中分類・品目と一致する有効メニューに限定する
+- 日常点検設定行は使用前・使用中・使用後の各タイミングに最大1メニューを保持する
+- 点検メニューが有効タスクまたは点検結果で使用済みの場合、項目IDを破壊する更新は許可せず、新メニュー作成と既存メニュー無効化で運用する
+
+### ステータス遷移ルール
+
+- `START_INSPECTION` は予定系ステータスまたは再点検から `点検実施中` への遷移に使用する
+- `COMPLETE` は `点検実施中` から `点検完了` または `再点検` への遷移に使用する
+- `SKIP` / `RECALCULATE_SCHEDULE` は周期を持つ院内定期点検またはメーカー保守で使用し、次回予定日を再計算して再計算後の予定系ステータスへ更新する
+- `SET_DATE` はメーカー保守と院内スポット点検の日程調整に使用する。`点検日調整` は `inspection_type='メーカー保守'` または `院内スポット点検` で許可する
+- 日常点検行はステータス遷移対象外であり、`inspection_task_status_definitions` / `inspection_task_status_transitions` の対象に含めない
+
+## 第7章 エラーコード一覧
+
+| エラーコード | HTTP | 説明 | 発生条件 |
+| --- | --- | --- | --- |
+| UNAUTHORIZED | 401 | 認証トークン未付与または無効 | Bearer トークン未付与、期限切れ、署名不正 |
+| INSPECTION_MGMT_FORBIDDEN | 403 | 点検管理権限なし | 作業対象施設に対する実効 `inspection_management` がない |
+| FACILITY_NOT_FOUND | 404 | 作業対象施設が存在しない、または削除済み | Bearer トークン上の作業対象施設を参照できない |
+| INSPECTION_MGMT_INVALID_INPUT | 400 | 入力形式または必須項目が不正 | 必須不足、列挙値外、日付形式不正、点検項目なし |
+| INSPECTION_MGMT_ASSET_NOT_FOUND | 404 | 資産が存在しない | 指定 `assetLedgerId` が存在しない、または作業対象施設外 |
+| INSPECTION_MGMT_MENU_NOT_FOUND | 404 | 点検メニューが存在しない | 指定 `menuId` / `periodicMenuId` / `dailyMenuId` が存在しない、または無効 |
+| INSPECTION_MGMT_TASK_NOT_FOUND | 404 | 点検タスクが存在しない | 指定 `inspectionTaskId` が存在しない、作業対象施設外、または解除済み |
+| INSPECTION_MGMT_MENU_CLASS_MISMATCH | 409 | 点検メニューの対象分類が資産分類と一致しない | メニューの大分類・中分類・品目と対象資産の分類が不一致 |
+| INSPECTION_MGMT_TASK_DUPLICATE | 409 | 点検タスクまたは日常点検設定が重複 | 有効な同一資産・同一定期メニュー、または日常点検設定行が既に存在する |
+| INSPECTION_MGMT_MENU_IN_USE | 409 | 点検メニューが使用中 | 更新時は有効タスクまたは点検結果で参照されるメニュー、削除時は有効タスクまたは日常点検設定行で参照されるメニューを指定した |
+| INSPECTION_MGMT_STATUS_TRANSITION_INVALID | 409 | ステータス遷移不可 | `inspection_task_status_transitions` に対象遷移が存在しない |
+| INSPECTION_MGMT_DAILY_ACTION_NOT_ALLOWED | 409 | 日常点検行では実行不可の操作 | 日常点検行に対して点検開始、日程調整、スキップ、定期点検結果登録を実行した |
+| INSPECTION_MGMT_QR_MISMATCH | 409 | QRコードが対象資産と一致しない | 定期点検開始時に読み取ったQRが対象タスクの資産に紐づかない |
+| INSPECTION_MGMT_RESULT_DETAIL_INVALID | 422 | 点検結果明細がメニュー定義と一致しない | 点検項目ID、入力方式、評価方式、必須入力が不正 |
+| INSPECTION_FILE_502_S3_WRITE_FAILED | 502 | ファイル保存または保存後ロールバックに失敗 | Amazon S3 PutObject 失敗、またはDB保存失敗後のS3 DeleteObject 失敗 |
+| INTERNAL_SERVER_ERROR | 500 | サーバー内部エラー | 想定外例外 |
+
+## 第8章 運用・保守方針
+
+### マスタ保守方針
+
+- 点検メニューは `inspection_menus` と `inspection_menu_items` を正本とする
+- 日常点検メニューは No.4 日常点検APIのPWAパッケージへ配信されるため、使用中メニューの破壊的更新は禁止する
+- 点検タスクと日常点検設定行は `inspection_tasks` を正本とし、解除時は物理削除せず `is_active=false` と `deleted_at` を設定する
+- メーカー保守結果登録後の対象タスクも、履歴参照のため物理削除せず論理解除する
+- メーカー保守点検報告書や添付資料のメタデータは `application_documents.owner_type='INSPECTION_RESULT'` として保持し、`file_path` にはAmazon S3のS3オブジェクトキーのみを保持する。S3バケット名やHTTPS URLは保持しない
+- 添付メタデータを論理削除する場合は `application_documents.deleted_at` を設定し、S3実体は同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するS3ライフサイクルまたは後続クリーンアップで扱う
+
+### 今後拡張時の留意点
+
+- 点検グループ名を手動登録タスクで恒久保持する場合は、`inspection_tasks` へのカラム追加またはタスク拡張テーブルを検討する
+- 点検メニュー項目を使用中メニューでも非表示化したい場合は、`inspection_menu_items` に `is_active` または版管理カラムを追加する
+- メーカー保守費用の詳細検索や集計が必要になった場合は、`inspection_results.result_details_json.costRows` から正規化テーブルへの分離を検討する
+- CSV出力の列追加は画面表示列と検収基準の帳票要件を合わせて見直す。点検予定表CSVを履歴保存する要件が追加された場合は、レスポンス直返却とは別のS3保存・帳票履歴設計を追加する

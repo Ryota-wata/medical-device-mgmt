@@ -90,8 +90,8 @@ $ShipFacilityInputRows = @(
   @('infectiousTuberculosisBedCount', 'int32', '✓', '感染症・結核病床数。0以上の整数')
 )
 
-$ShipFacilityUpsertResponseRows = $ShipFacilitySummaryRows + @(
-  @('createdAt', 'datetime', '✓', '作成日時（`facilities.created_at`）')
+$ShipFacilityUpsertResponseRows = $ShipFacilitySummaryRows + ,@(
+  'createdAt', 'datetime', '✓', '作成日時（`facilities.created_at`）'
 )
 
 $ShipFacilityExportColumnRows = @(

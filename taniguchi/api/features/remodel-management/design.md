@@ -1,0 +1,740 @@
+# リモデル管理 API内部設計
+
+## 第1章 概要
+
+### 本書の目的
+
+本書は、リモデル管理画面および関連する共通後続画面で利用するAPIの設計内容を整理し、関係者が共通認識を持つことを目的とする。
+
+リモデル管理は、編集リストから作成された通常リモデルRFQと、リモデル起点廃棄申請グループの関連表示、通常RFQの後続進行、リモデルクローズを扱う。廃棄申請の見積依頼、見積登録、発注登録、作業日、完了登録はNo.27の廃棄申請管理へ委譲する。
+
+### 対象システム概要
+
+対象システムは医療機器管理システムである。本機能はリモデル編集リストで方針決定された購入、更新、増設、廃棄、移動対象を、RFQ、見積、発注、検収、原本反映まで進行管理する業務機能として位置づける。
+
+### 対象画面
+
+| 画面名 | URL | 本書で扱う内容 |
+| --- | --- | --- |
+| リモデル管理 | /quotation-data-box/remodel-management | リモデルRFQ/廃棄/移動ワークフロー一覧、フィルター、ステータス別操作 |
+| リモデルダッシュボード | /quotation-data-box/remodel-dashboard | 編集リスト単位の進捗、クローズ可否、クローズ不可理由 |
+| RFQプロセス | /quotation-data-box/rfq-process | 見積登録先業者保存、未確定業者行削除、取得済み見積書アップロード、見積登録ドラフト作成 |
+| 見積登録共通画面群 | /quotation-data-box/ocr-confirm ほか | 見積ドラフト、明細区分、資産マスタ照合、個体登録/金額按分、登録確認 |
+| 発注登録 | /quotation-data-box/order-registration | 発注ヘッダー、発注明細、支払条件、支払方法 |
+| 納品検収日登録 | /quotation-data-box/inspection-registration | 納品検収予定日、明細別納品日、検収書種別 |
+| 検収登録 | /quotation-data-box/asset-provisional-registration | モバイル/PC入力による検収登録、個体中間データ作成 |
+| 原本資産登録 | /quotation-data-box/asset-registration | 固定資産番号、会計区分、勘定科目、原本反映 |
+
+### 責務境界
+
+- 編集リスト本体操作、Data Link、見積DB Link、フリーカラム、行順変更、行削除、編集リスト画面で行選択して実行するRFQ作成は「編集リスト」API設計書を正本とする
+- 購入管理タブの申請受付一覧から行う購入申請取り込み、および通常購入RFQの一覧・後続進行は「購入管理」API設計書を正本とする
+- 本書では通常リモデルRFQ（`REMODEL/RFQ`）と、`rfq_applications` からリモデル編集リストへ辿れる廃棄グループ（`DISPOSAL/RFQ`）を対象とする。廃棄グループを `REMODEL/DISPOSAL` として新規作成・更新しない
+- Phase1では個別依頼送信API、`send-bulk`、RFQプロセスの業者向け `SHIPへ一括依頼` は定義しない。業者への見積依頼はシステム外で実施し、Phase2でOutlook連携を扱う場合もメール送信完了は管理しない
+- SHIP代理作業依頼は、見積書アップロード後のOCR〜見積DB登録代理依頼としてPhase2で再整理する。業者への見積依頼送信や `rfq_vendors.request_status='SENT'` 更新とは別責務とする
+- OCR実行サービス、Excel取込API、AI推論サービス自体は対象外とし、画面で確認・採用された結果の保存を扱う
+- 廃棄申請の後続操作はNo.27へ委譲し、No.24では関連表示とリモデルクローズ時の終端判定だけを扱う。移動の既存承認・完了操作は本書の移動ワークフロー契約に従う
+
+### 用語定義
+
+| 用語 | 説明 |
+| --- | --- |
+| リモデル編集リスト | `edit_lists.list_type='REMODEL'` の編集リスト。リモデル対象資産、購入/更新/増設/廃棄/移動方針、新設置場所を保持する |
+| リモデルRFQ | `rfqs.management_type='REMODEL'` かつ `workflow_type='RFQ'` の見積依頼グループ |
+| リモデル起点廃棄グループ | `rfqs.management_type='DISPOSAL'` かつ `workflow_type='RFQ'`。`rfq_applications.edit_list_id` / `edit_list_item_id` からリモデル編集リストへ辿り、後続処理はNo.27が管理する |
+| 移動ワークフロー | `rfqs.management_type='REMODEL'` かつ `workflow_type='TRANSFER'` の移動承認・完了管理 |
+| リモデルクローズ | 編集リスト単位で全ワークフロー終端、原本登録、新設置場所入力を確認し、新居情報と原本資産へ反映する確定処理 |
+
+## 第2章 システム全体構成
+
+### APIの位置づけ
+
+本API群は、編集リストAPIで作成された通常リモデルRFQの後続進行と、リモデル起点の `DISPOSAL/RFQ` 廃棄グループの関連表示・クローズ判定を扱う親API設計である。編集リスト本体の行編集、RFQ作成、廃棄申請正本の作成はNo.23、通常購入RFQの一覧・後続進行はNo.25、廃棄タスクの見積・発注・作業日・完了はNo.27を正本とする。
+
+### 画面とAPIの関係
+
+| 画面操作 | API | 補足 |
+| --- | --- | --- |
+| リモデル管理初期表示 | `GET /quotation-data-box/remodel-management/context` | 編集リスト候補、選択肢、権限、戻り先を取得 |
+| リモデル管理一覧表示・絞り込み | `GET /quotation-data-box/remodel-management/tasks` | RFQ/廃棄/移動ワークフローを同一一覧で取得 |
+| 期限・実績日の編集 | `PATCH /quotation-data-box/remodel-management/rfq-groups/{rfqGroupId}/deadlines` | ステータス別の日付項目を更新 |
+| リモデルダッシュボード表示 | `GET /quotation-data-box/remodel-dashboard` | 編集リスト単位の進捗、クローズ可否、不可理由を取得 |
+| 廃棄タスクを開く | `GET /quotation-data-box/rfq-groups/{rfqGroupId}` → No.27 | `DISPOSAL/RFQ` の関連情報と戻り先を解決し、後続操作をNo.27へ委譲する |
+| 移動の承認・却下・完了 | `POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action` | 移動ワークフローだけを扱い、新モデル廃棄には使用しない |
+| RFQプロセスの見積登録先業者保存 | `POST /quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests` ほか | 見積業者行の保存と未確定削除を扱う。個別送信・一括送信はPhase1対象外 |
+| 見積登録共通画面 | `POST /quotation-data-box/rfq-groups/{rfqGroupId}/quotation-drafts` ほか | ドラフト作成から見積確定までを扱う |
+| 発注登録 | `POST /quotation-data-box/order-registration/orders` | 発注ヘッダー、発注明細、支払条件、支払方法を保存 |
+| 納品検収・検収登録・原本登録 | `POST /quotation-data-box/inspection-registration/records` ほか | 納期確定、検収済、完了まで進行 |
+| リモデルクローズ | `POST /quotation-data-box/remodel-management/edit-lists/{editListId}/close` | 編集リスト単位で新居情報、原本資産、履歴を同一トランザクションで反映 |
+
+### 業務フロー概要
+
+| 工程 | 起点 | 結果 | 主な正本テーブル |
+| --- | --- | --- | --- |
+| 編集リストからRFQ作成 | 編集リストAPI | `management_type='REMODEL'` / `workflow_type='RFQ'` のRFQを作成 | `edit_lists` / `edit_list_items` / `rfqs` / `rfq_applications` |
+| 編集リストから廃棄/移動申請作成 | 編集リストAPI | `applications` / `application_assets` の申請正本を作成。廃棄依頼グループは作成しない | `applications` / `application_assets` / `application_status_histories` |
+| リモデル管理一覧 | リモデル管理API | `REMODEL/RFQ` と関連 `DISPOSAL/RFQ` を表示し、廃棄後続はNo.27へ委譲 | `rfqs` / `rfq_applications` / `rfq_vendors` |
+| 見積登録 | RFQプロセス | 見積ドラフト保存、見積確定、ステータス更新 | `quotations` / `quotation_items` |
+| 発注・検収・原本登録 | 共通後続画面 | 発注、納期確定、検収済、完了へ進行 | `orders` / `order_items` / `individuals` / `asset_ledgers` |
+| リモデルクローズ | リモデルダッシュボード | 編集リストCLOSED、新居→現状反映、履歴保存 | `edit_lists` / `edit_list_items` / `facility_location_remodels` / `facility_locations` / `asset_ledger_histories` |
+
+### 使用テーブル
+
+| テーブル名 | 利用種別 | 用途 |
+| --- | --- | --- |
+| `users` | READ | 共有システム管理者アカウント判定、作成者、送信者、クローズ実行者の表示 |
+| `facilities` | READ | Bearer トークン上の作業対象施設、編集リスト対象施設、RFQ対象施設の存在確認・未削除判定 |
+| `user_facility_assignments` | READ | 通常アカウントの作業対象施設割当判定 |
+| `facility_feature_settings` | READ | 通常アカウントの作業対象施設におけるリモデル見積、発注、検収、廃棄・移動機能の提供有無判定 |
+| `user_facility_feature_settings` | READ | 通常アカウントのユーザー×作業対象施設単位のリモデル見積、発注、検収、廃棄・移動機能の利用可否判定 |
+| `edit_lists` | READ / UPDATE | リモデル編集リスト候補、クローズ状態、クローズ日時、実行者 |
+| `edit_list_work_locks` | READ | リモデルクローズ時の有効作業ロック残存チェック |
+| `edit_list_items` | READ / UPDATE | リモデル対象明細、方針、新設置場所、原本反映ステータス |
+| `rfqs` | READ / CREATE / UPDATE | リモデルRFQ、廃棄、移動ワークフロー、ステータス、期限、承認日、完了日 |
+| `rfq_status_definitions` | READ | ワークフロー別ステータス許容値と終端判定 |
+| `rfq_status_transitions` | READ | ステータス遷移許可判定 |
+| `rfq_applications` | READ | RFQ/廃棄/移動に採用された編集リスト明細・申請明細のリンク |
+| `applications` | READ | 廃棄/移動ワークフローに紐づく申請情報 |
+| `application_status_histories` | READ | リモデル起点廃棄申請の状態・起票履歴を参照。申請作成は編集リストAPI、廃棄後続の状態更新はNo.27が担当し、No.24は更新しない |
+| `rfq_vendors` | READ / CREATE / UPDATE / DELETE | 見積業者行、取得済み見積の業者、提出期限、補足メモ。Phase1では送信完了の正本として `SENT` を更新しない |
+| `quotations` | READ / CREATE / UPDATE | 見積ヘッダー、見積フェーズ、確定状態、添付参照 |
+| `quotation_items` | READ / CREATE / UPDATE | 見積明細、明細区分、分類、AI採用結果、按分結果 |
+| `quotation_item_application_links` | READ / CREATE / UPDATE | 見積明細と編集リスト明細の対応 |
+| `orders` | READ / CREATE / UPDATE | 発注ヘッダー、支払条件、支払方法、納品検収予定日、検収書種別 |
+| `order_items` | READ / CREATE / UPDATE | 発注明細、納品日、検収登録対象 |
+| `individuals` | READ / CREATE / UPDATE | 検収登録済み個体の中間正本、原本登録状態 |
+| `asset_ledgers` | READ / CREATE / UPDATE | 原本資産登録、リモデルクローズ時の反映先 |
+| `facility_location_remodels` | READ / UPDATE | 個別部署マスタのリモデル先ロケーション情報、クローズ時の反映元。反映後は `deleted_at` を設定 |
+| `facility_locations` | READ / UPDATE | 個別部署マスタの現状情報への反映先 |
+| `asset_ledger_histories` | CREATE | リモデルクローズ時の原本反映監査履歴 |
+| `application_documents` | READ / CREATE / UPDATE | 見積書、発注書、検収書、写真などのファイルメタデータ。ファイル実体はAmazon S3に保存し、`file_path` にはS3オブジェクトキーのみを保持する |
+| `application_document_order_item_links` | READ / CREATE / UPDATE | 検収写真ドキュメントと発注明細の対応。`relation_type='ACCEPTANCE_PHOTO'` で、S3オブジェクトキーのprefixに依存せず `photoDocumentIds` を検証する |
+| `vendors` | READ | 見積業者のマスタ参照 |
+
+## 第3章 共通仕様
+
+### API 共通仕様
+
+- 通信方式: HTTPS
+- データ形式: JSON（見積登録ドラフト作成・検収登録明細保存のファイル実体を含む multipart/form-data を除く）。ファイル実体はAPI内でAmazon S3へPutObjectし、DBには `application_documents` のメタデータを保存する
+- 文字コード: UTF-8
+- 日時形式: ISO 8601（例: `2026-05-30T10:00:00+09:00`）
+- 日付形式: `YYYY-MM-DD`
+- 認証済みAPIは Bearer トークンを `Authorization` ヘッダーに付与する
+- 一覧APIは cursor 方式のページングを基本とし、`limit` の既定値は50、最大値は200とする
+- 変更系APIは `Idempotency-Key` または `expectedUpdatedAt` を受け付け、二重送信または競合更新を検出する
+- 共通後続画面は `rfqGroupId` だけで遷移しても、APIが `rfqs.management_type` と `rfq_applications` の起票元リンクから `managementType`、`isRemodelOrigin`、`editListId`、`remodelCloseImpact`、既定 `returnTo` を解決して返す
+
+### 認証・認可
+
+本API群は、ロール固定ではなく対象施設に対する実効 `feature_code` で認可する。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず、リモデル見積、リモデル発注、リモデル検収・原本反映、廃棄・移動操作の対象 `feature_code` を有効として扱う。
+
+| 機能コード | 対象操作 | 説明 |
+| --- | --- | --- |
+| `remodel_purchase` | リモデル管理一覧、見積登録先業者保存、未確定業者行削除、見積登録ドラフト、見積確定 | リモデル見積工程 |
+| `remodel_order` | 発注登録 | リモデル発注工程 |
+| `remodel_acceptance` | 納品検収日登録、検収登録、原本登録、リモデルクローズ | リモデル検収・原本反映工程 |
+| `transfer_disposal` | リモデル起点廃棄のNo.27遷移、既存移動の承認・却下・完了 | 廃棄・移動操作 |
+
+### 作業対象施設ベースの認可
+
+- 各 API は Bearer トークン上の作業対象施設が存在し、未削除であることを確認する
+- 通常アカウントでは、作業対象施設に対する有効担当施設割当と実効 `feature_code` を都度再判定する
+- 共有システム管理者アカウントでは、作業対象施設が未削除であれば通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による認可判定をバイパスする
+- `rfqs.management_type='REMODEL'`、`workflow_type`、対象RFQ・編集リストの未削除、ステータス遷移順序、発注登録用見積確定、検収済み個体不足、リモデルクローズ条件、有効な編集リスト作業ロック不存在といった業務制約は共有システム管理者でもバイパスしない
+- 通常アカウントで作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する
+- 作業対象施設が存在しない、または削除済みの場合は 404 を返却する
+
+### 共通エラーレスポンス
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| code | string | ✓ | エラーコード |
+| message | string | ✓ | 利用者向けメッセージ |
+| details | string[] | - | 入力項目単位のエラーや補足情報 |
+| traceId | string | - | 調査用トレースID |
+
+### 共通DTO
+
+`DocumentInput` は multipart/form-data のファイルパートに対応するメタデータであり、`filePartName` で対象ファイルを指定する。APIはファイル実体をAmazon S3へPutObjectし、生成したS3オブジェクトキーを `application_documents.file_path` に保存する。S3オブジェクトキー、S3バケット名、HTTPS URLはリクエスト/レスポンスで直接扱わない。`storageFormat` はS3保存先ではなく、電子取引/スキャナ保存/未指定などの保存形式を表す列として扱う。
+
+#### DocumentInput
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| documentType | string | ✓ | `application_documents.document_type`。例: 見積原本 / 検収写真 |
+| filePartName | string | ✓ | multipart/form-data 内のファイルパート名。ファイル実体とメタデータを対応付ける |
+| fileName | string | - | 画面表示用ファイル名。未指定時はアップロードファイル名 |
+| contentType | string | - | MIME Type。未指定時はアップロードファイルまたはサーバー判定値を使用する |
+| fileSizeBytes | int64 | - | 画面側検証用ファイルサイズ。保存時はサーバーがファイル実体から算出した値を正本にする |
+| contentHash | string | - | クライアント計算ハッシュ。サーバー側でも再計算する |
+| title | string | - | 表示タイトル |
+| documentDate | date | - | 文書日付 |
+| takenAt | datetime | - | 写真撮影日時。見積原本では使用しない |
+| isPrimary | boolean | - | 検収写真を代表写真として扱う場合 true |
+
+### ステータス遷移の前提
+
+| ワークフロー | 工程 | 開始ステータス | 成功後ステータス | 主API |
+| --- | --- | --- | --- | --- |
+| RFQ | 参考系見積確定 | `見積依頼` / `見積DB登録済` など | `見積DB登録済` | `POST /quotation-data-box/quotation-drafts/{draftId}/confirm` |
+| RFQ | 発注登録用見積確定 | `見積依頼` / `発注用見積依頼済` など | `発注見積登録済` | `POST /quotation-data-box/quotation-drafts/{draftId}/confirm` |
+| RFQ | 発注登録 | `発注見積登録済` | `発注済` | `POST /quotation-data-box/order-registration/orders` |
+| RFQ | 納品検収日登録 | `発注済` | `納期確定` | `POST /quotation-data-box/inspection-registration/records` |
+| RFQ | 検収登録完了 | `納期確定` | `検収済` | `POST /quotation-data-box/asset-provisional-registration/complete` |
+| RFQ | 原本資産登録 | `検収済` | `完了` | `POST /quotation-data-box/asset-registration/register-bulk` |
+| DISPOSAL/RFQ | 廃棄後続処理 | `見積依頼` / `見積依頼済` / `見積DB登録済` / `発注用見積登録済` / `発注済` / `納期確定` | `完了` または `申請を見送る` | No.27 廃棄申請管理API |
+| DISPOSAL/RFQ | リモデル起点資産状態 | 廃棄タスク完了前 | `asset_ledgers.status='廃棄済'` | No.27 完了登録API |
+| TRANSFER | 移動承認 | `移動承認待ち` | `移動承認済み` | `POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action` |
+| TRANSFER | 移動却下 | `移動承認待ち` | `申請を見送る` | `POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action` |
+| TRANSFER | 移動完了 | `移動承認済み` | `移動完了` | `POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action` |
+
+## 第4章 API一覧
+
+| No | API名 | Method | Path | 用途 | 主権限 |
+| --- | --- | --- | --- | --- | --- |
+| 24-01 | リモデル管理コンテキスト取得 | GET | /quotation-data-box/remodel-management/context | 初期表示、選択肢、権限 | 入口権限いずれか |
+| 24-02 | リモデル管理タスク一覧取得 | GET | /quotation-data-box/remodel-management/tasks | RFQ/廃棄/移動一覧 | 入口権限いずれか |
+| 24-03 | リモデル管理期限更新 | PATCH | /quotation-data-box/remodel-management/rfq-groups/{rfqGroupId}/deadlines | 期限・実績日更新 | 入口権限いずれか |
+| 24-04 | リモデルダッシュボード取得 | GET | /quotation-data-box/remodel-dashboard | 進捗・クローズ可否 | 入口権限いずれか |
+| 24-05 | RFQグループ詳細取得 | GET | /quotation-data-box/rfq-groups/{rfqGroupId} | 共通後続画面文脈取得 | 入口権限いずれか |
+| 24-06 | 廃棄・移動ワークフロー操作 | POST | /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action | 承認/却下/完了 | transfer_disposal |
+| 24-07 | 見積登録先業者保存 | POST | /quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests | 見積業者行の追加・更新。業者依頼送信は行わない | remodel_purchase |
+| 24-08 | 見積登録先業者削除 | DELETE | /quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests/{rfqVendorId} | 未確定業者行削除 | remodel_purchase |
+| 24-09 | 見積登録ドラフト作成 | POST | /quotation-data-box/rfq-groups/{rfqGroupId}/quotation-drafts | 見積登録開始 | remodel_purchase |
+| 24-10 | 見積登録ドラフト取得 | GET | /quotation-data-box/quotation-drafts/{draftId} | 共通見積登録画面取得 | remodel_purchase |
+| 24-11 | OCR確認結果保存 | PATCH | /quotation-data-box/quotation-drafts/{draftId}/ocr-confirmation | 見積基本情報・明細保存 | remodel_purchase |
+| 24-12 | 明細区分登録保存 | PATCH | /quotation-data-box/quotation-drafts/{draftId}/line-categories | カテゴリ・明細区分保存 | remodel_purchase |
+| 24-13 | 資産マスタ照合結果保存 | PATCH | /quotation-data-box/quotation-drafts/{draftId}/asset-master-matches | AI採用/手動選択保存 | remodel_purchase |
+| 24-14 | 個体登録・金額按分保存 | PATCH | /quotation-data-box/quotation-drafts/{draftId}/price-allocations | 按分・個体候補保存 | remodel_purchase |
+| 24-15 | 見積登録確定 | POST | /quotation-data-box/quotation-drafts/{draftId}/confirm | 見積確定 | remodel_purchase |
+| 24-16 | 発注登録 | POST | /quotation-data-box/order-registration/orders | 発注作成 | remodel_order |
+| 24-17 | 納品検収予定日登録 | POST | /quotation-data-box/inspection-registration/records | 納期確定 | remodel_acceptance |
+| 24-18 | 検収登録コンテキスト取得 | GET | /quotation-data-box/asset-provisional-registration/context | 検収登録画面取得 | remodel_acceptance |
+| 24-19 | 検収登録明細保存 | PATCH | /quotation-data-box/asset-provisional-registration/items/{orderItemId} | 明細単位保存 | remodel_acceptance |
+| 24-20 | 検収登録完了 | POST | /quotation-data-box/asset-provisional-registration/complete | 検収済へ更新 | remodel_acceptance |
+| 24-21 | 原本登録コンテキスト取得 | GET | /quotation-data-box/asset-registration/context | 原本登録画面取得 | remodel_acceptance |
+| 24-22 | 原本資産登録 | POST | /quotation-data-box/asset-registration/register-bulk | RFQ完了 | remodel_acceptance |
+| 24-23 | リモデルクローズ | POST | /quotation-data-box/remodel-management/edit-lists/{editListId}/close | 編集リスト単位のリモデル完了確定 | remodel_acceptance |
+
+## 第5章 機能設計
+
+### getQuotationDataBoxRemodelManagementContext
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` / `remodel_order` / `remodel_acceptance` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、リモデル管理タブ入口は作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` / `remodel_order` / `remodel_acceptance` / `transfer_disposal` のいずれかが有効であれば参照可能とする
+- 認可条件: 個別操作APIでは、操作に対応する `feature_code` をサーバー側で再判定する
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 作業対象施設で参照可能な `edit_lists.list_type='REMODEL'`、`deleted_at IS NULL` の候補だけを返す。
+3. `editListId` 未指定時はリスト未選択状態とし、ダッシュボード用の既定候補があれば `defaultDashboardEditListId` に返す。
+4. 見積区分、見積フェーズ、ステータスはDB定義済みコードと表示ラベルの組で返す。
+5. 戻り先は `/quotation-data-box/remodel-management` を既定とする。
+
+### getQuotationDataBoxRemodelManagementTasks
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` / `remodel_order` / `remodel_acceptance` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、リモデル管理タブ入口は作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` / `remodel_order` / `remodel_acceptance` / `transfer_disposal` のいずれかが有効であれば参照可能とする
+- 認可条件: 個別操作APIでは、操作に対応する `feature_code` をサーバー側で再判定する
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 通常リモデルRFQは `rfqs.management_type='REMODEL'`、`workflow_type='RFQ'`、廃棄グループは `rfqs.management_type='DISPOSAL'`、`workflow_type='RFQ'`、`deleted_at IS NULL` の行を対象とする。
+3. 廃棄グループは `rfq_applications.edit_list_id` / `edit_list_item_id` から対象 `edit_lists.list_type='REMODEL'` へ辿れる行だけを関連表示する。`management_type='REMODEL'` の廃棄グループや旧 `workflow_type='DISPOSAL'` は新規対象に含めない。
+4. 通常RFQの見積区分または見積フェーズ指定時は `REMODEL/RFQ` だけを絞り込み、`DISPOSAL/RFQ` は見積区分・見積フェーズを持たないため除外する。
+5. `editListId` 未指定時は作業対象施設で参照可能なリモデル管理対象を横断表示する。
+6. RFQは `rfqs` 1件と `rfq_vendors` 複数件を画面表示用の業者行へ展開する。
+7. 操作可否はステータス、管理種別、起票元、実効権限からサーバー側で導出し、`DISPOSAL/RFQ` は `OPEN_DISPOSAL_TASK` と戻り先だけを返す。見積、発注、作業日、完了書類の登録・削除・プレビュー操作はNo.27へ委譲し、本APIでは返さない。
+
+### patchQuotationDataBoxRemodelManagementRfqGroupsByRfqGroupIdDeadlines
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` / `remodel_order` / `remodel_acceptance` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、リモデル管理タブ入口は作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` / `remodel_order` / `remodel_acceptance` / `transfer_disposal` のいずれかが有効であれば参照可能とする
+- 認可条件: 個別操作APIでは、操作に対応する `feature_code` をサーバー側で再判定する
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象RFQの `management_type='REMODEL'` を検証する。`DISPOSAL/RFQ` の期限更新は本APIでは受け付けず、No.27の廃棄作業日/納期登録APIへ委譲する。
+3. ステータス別に、見積提出期限、発注期限、登録期限、納入期限、納入年月日、検収年月日、却下日、承認日、完了日のいずれかとして保存する。
+4. RFQ系の期限は原則 `rfqs.due_on`、承認日/却下日/完了日は `approved_on` / `rejected_on` / `completed_on` に保存する。
+5. 期限更新はステータス遷移ではないため `rfqs.last_status_changed_at` は更新しない。
+6. 更新前後の期限ラベル、日付、変更者、変更日時はアプリケーション監査ログへ出力し、業務DBでは対象日付列と `rfqs.updated_at` を現在値正本とする。
+
+### getQuotationDataBoxRemodelDashboard
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` / `remodel_order` / `remodel_acceptance` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、リモデル管理タブ入口は作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` / `remodel_order` / `remodel_acceptance` / `transfer_disposal` のいずれかが有効であれば参照可能とする
+- 認可条件: 個別操作APIでは、操作に対応する `feature_code` をサーバー側で再判定する
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象は `edit_lists.list_type='REMODEL'` の編集リストのみとする。
+3. RFQ単位ではなく `editListId` 単位で集計する。
+4. 新設置場所入力状況は廃棄方針の明細を集計対象外とする。
+5. リモデル起点廃棄は `rfq_applications` の行リンクから対象を集計し、`rfqs.status` が `完了` または `申請を見送る`、対象 `applications.status` が `完了` または `申請見送り`、登録済み資産が `asset_ledgers.status='廃棄済'` であることを終端条件として扱う。
+6. クローズ不可理由は、方針未決、新設置場所未入力、未終端通常RFQ、未終端リモデル起点廃棄申請、廃棄済み未反映資産、原本登録未完了、作業ロック残存に区分する。
+
+### getQuotationDataBoxRfqGroupsByRfqGroupId
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` / `remodel_order` / `remodel_acceptance` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、リモデル管理タブ入口は作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` / `remodel_order` / `remodel_acceptance` / `transfer_disposal` のいずれかが有効であれば参照可能とする
+- 認可条件: 個別操作APIでは、操作に対応する `feature_code` をサーバー側で再判定する
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. `rfqs.management_type='REMODEL'` かつ `workflow_type='RFQ'` の通常リモデルRFQ、または `rfqs.management_type='DISPOSAL'`、`workflow_type='RFQ'` で `rfq_applications` からリモデル編集リストへ辿れる廃棄グループだけを対象とする。旧 `REMODEL/DISPOSAL` は新規詳細対象外とする。
+3. `rfqGroupId` だけで遷移した場合でも、RFQ正本と `rfq_applications` から `managementType`、`isRemodelOrigin`、`editListId`、`editListItemIds`、`remodelCloseImpact`、既定戻り先を解決して返す。
+4. レスポンスにはRFQヘッダー、業者行、対象編集リスト明細、既存見積/発注/検収/資産登録状況を含める。
+5. 廃棄グループの場合、共通画面側は本レスポンスの `context.managementType='DISPOSAL'`、`disposalTaskId=rfqGroupId`、`returnTo` を使ってNo.27の廃棄申請管理画面へ遷移し、No.24の後続操作を実行しない。完了書類はNo.27が `application_documents(owner_type='RFQ', rfq_id=disposalTaskId, step_code='COMPLETE', document_category='COMPLETE')` として管理する。
+
+### postQuotationDataBoxRfqGroupsByRfqGroupIdWorkflowAction
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `transfer_disposal` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `transfer_disposal` が有効であること
+- 認可条件: 対象は `REMODEL/RFQ` の通常RFQ、`DISPOSAL/RFQ` のリモデル起点廃棄グループ、または既存の移動ワークフローであり、`deleted_at IS NULL` であること。`REMODEL/DISPOSAL` の旧廃棄ワークフローは新規操作対象外とする
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象が `rfqs.management_type='DISPOSAL'`、`workflow_type='RFQ'` の場合は 409 (`DISPOSAL_TASK_DELEGATED`) を返し、No.27の廃棄申請管理APIを呼び出すよう案内する。`REMODEL/DISPOSAL` の旧データ更新も新APIでは実行せず、移行処理の対象とする。
+3. 本APIは `workflow_type='TRANSFER'` の承認、却下、完了だけを扱い、次状態は現在ステータスからサーバー側で検証する。
+4. `APPROVE` は `移動承認待ち` から `移動承認済み`、`REJECT` は承認待ちから `申請を見送る`、`COMPLETE_TRANSFER` は `移動承認済み` から `移動完了` へ遷移する。
+5. 移動操作では対象 `applications.status` を更新せず、既存の移動ワークフロー履歴方式に従う。
+6. 遷移は `rfq_status_transitions` に存在する組み合わせだけ許可する。
+
+### postQuotationDataBoxRfqGroupsByRfqGroupIdVendorRequests
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象RFQは `workflow_type='RFQ'` のみ許可する。Phase1では業者への見積依頼送信をシステム上で管理しないため、`見積依頼済` はPhase2のOutlook連携または送信管理を持つ他業務用の状態として扱う。
+3. 業者名、担当者、メール、電話番号、提出期限、補足メモを `rfq_vendors` に保存する。
+4. 新規業者は `rfq_vendors.request_status='DRAFT'` として追加し、業者マスタ未選択の手入力も許可する。
+5. `DRAFT` 行のみ業者情報、提出期限、補足メモを更新可能とする。`SENT` / `REPLIED` 行の業者情報更新は拒否する。
+6. 本APIは `rfq_vendors.request_status='SENT'`、`requested_at`、`requested_by_user_id` を更新しない。
+
+### deleteQuotationDataBoxRfqGroupsByRfqGroupIdVendorRequestsByRfqVendorId
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. `request_status='DRAFT'` の行だけ削除できる。
+3. `SENT` / `REPLIED` 行は送信履歴または取得済み見積の記録として保持し、削除不可とする。
+4. 本APIは `rfq_vendors.request_status='SENT'`、`requested_at`、`requested_by_user_id` を更新しない。
+5. 画面内追加行が未保存の場合はサーバー更新を行わず、クライアント側で破棄する。
+
+### postQuotationDataBoxRfqGroupsByRfqGroupIdQuotationDrafts
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. RFQプロセスで作成できる見積フェーズは定価見積、概算見積、発注登録用見積とする。
+3. 最終原本登録用は一覧絞り込みと既存見積参照候補として扱い、ドラフト作成対象外とする。
+4. `payload.documents[].filePartName` が multipart のファイルパートに存在することを確認し、`.pdf`、`.xlsx`、`.xls` の拡張子とMIME Typeを受け付ける。
+5. OCR実行サービスやExcel取込APIは対象外とし、画面で確認・編集された結果を後続APIで保存する。
+6. ドラフト作成時は `quotations.status='DRAFT'` の見積ヘッダーを作成し、`draftId` には `quotations.quotation_id` を返す。
+7. 見積原本ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`rfqGroupId` や `quotationId` などの業務IDを含めない。
+8. 見積原本は `application_documents` に `owner_type='QUOTATION'`、`quotation_id`、`document_category='QUOTATION'`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format=payload.storageFormat`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない。
+9. `storageFormat` は保存先ではなく電子取引/スキャナ保存/未指定などの保存形式を表す列として扱い、S3保存有無の表現には使用しない。
+10. Amazon S3保存後にDBメタデータ保存またはドラフト作成トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REMODEL_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す。
+11. ドラフト明細は `quotation_items` に保持し、画面上で除外した行は `quotation_items.deleted_at` を設定して確定対象から外す。
+12. `managementType='REMODEL'`、`returnTo`、対象RFQ/業者/明細の初期値をドラフトへ保持する。
+
+### getQuotationDataBoxQuotationDraftsByDraftId
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. `lineScope=INDIVIDUAL_MANAGED` の場合は、明細区分が親明細または子明細の行だけを返す。
+3. レスポンスには全明細件数、個体管理対象件数、紐付け済み件数を含める。
+4. 戻り先はドラフトに保持された `returnTo` を返し、購入管理固定戻り先を採用しない。
+
+### patchQuotationDataBoxQuotationDraftsByDraftIdOcrConfirmation
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 保存対象は画面で確認・修正された結果に限定する。
+3. 明細は見積書上の行番号、原文品目/メーカー/型式/数量、仕様行、価格、行削除/除外結果を保持する。
+4. 除外行は `quotation_items.deleted_at` を設定して論理削除扱いとし、確定時の登録対象から除外する。
+
+### patchQuotationDataBoxQuotationDraftsByDraftIdLineCategories
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. カテゴリ候補は会計区分 `01` から `17` の固定候補とする。
+3. 明細区分は `明細代表` / `内訳代表` / `親明細` / `子明細` / `孫明細` / `その他` / `値引き` とする。
+4. 行単位の登録は明細区分が選択済みの場合のみ許可する。
+5. 未登録行が残る場合でも、利用者が確認して続行した場合はドラフト状態として保持できる。
+
+### patchQuotationDataBoxQuotationDraftsByDraftIdAssetMasterMatches
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. AI候補は明細区分が `明細代表` または `親明細` の行に限定する。
+3. `子明細` は個体管理表示対象だがAI候補の自動提示対象外とする。
+4. その他/値引きは推薦対象外とする。
+5. 資産マスタ手動選択時の反映範囲は `all`、`toMaker`、`toItem` を保存する。
+
+### patchQuotationDataBoxQuotationDraftsByDraftIdPriceAllocations
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 単位候補は `台` / `個` / `本` / `枚` / `組` / `セット` / `式` とする。
+3. 按分区分は `対象` または `-`、税区分は `課税` または `非課税` とする。
+4. 親明細は数量分だけ個体行へ展開し、`seqId` と `parentSeqId` で親子関係を保持する。
+5. 差額按分がある場合は指定行へ差額を寄せ、合計金額と明細金額の整合を検証する。
+
+### postQuotationDataBoxQuotationDraftsByDraftIdConfirm
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_purchase` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_purchase` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 受領見積番号は施設番号、年月、連番でサーバー採番する。
+3. 確定時は対象見積ヘッダーを `quotations.status='REGISTERED'` に更新し、以後は登録済み見積として扱う。
+4. 有効見積ヘッダー確定後、`rfqs.quotation_type` / `rfqs.quotation_phase` と一覧用スナップショットを同期する。
+5. 見積フェーズが `ORDER_REGISTRATION` の場合はRFQステータスを `発注見積登録済` へ進め、`nextRoute` に発注登録画面を返す。
+6. それ以外の見積フェーズはRFQステータスを `見積DB登録済` へ進め、リモデル管理一覧へ戻す。
+7. Phase1では業者依頼送信をシステム上で管理しないため、`rfqs.status='見積依頼'` から `見積DB登録済` または `発注見積登録済` へ直接遷移できる。
+8. 確定対象見積が `rfq_vendor_id` を保持する場合は、対象 `rfq_vendors.request_status` を取得済み見積として `REPLIED` に更新できる。ただし `SENT`、`requested_at`、`requested_by_user_id` は更新しない。
+9. 見積明細には行番号、原文品目/メーカー/型式/数量、AI判定数量、枝番、確定品目/メーカー/型式、価格、`seqId`、`parentSeqId`、仕様行情報を保持する。
+
+### postQuotationDataBoxOrderRegistrationOrders
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_order` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_order` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `workflow_type='RFQ'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象RFQは `発注見積登録済` のみ許可する。
+3. 採用対象の見積は同一RFQに属し、`quotation_phase='ORDER_REGISTRATION'` かつ `quotations.status='REGISTERED'` であることを検証する。
+4. 発注番号は `PO-yyyyMMdd-nnnn` 形式でサーバー採番する。
+5. `payment_terms` は支払条件、`payment_method` は支払手段として分離して保存する。
+6. 発注明細は見積明細ID、登録区分、品目、メーカー、型式、数量、単価、金額を保持する。
+7. 個体管理対象は数量分の発注明細または個体候補へ展開する。
+8. 登録完了後の印刷はレスポンスの `printContext` を使ったプレビュー/ブラウザ印刷で扱い、No.24では発注メール送信APIを新設しない。
+9. 登録成功時は採用した見積を `quotations.status='ORDER_SELECTED'` に更新する。
+10. 登録成功時はRFQステータスを `発注済` へ進める。
+
+### postQuotationDataBoxInspectionRegistrationRecords
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_acceptance` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_acceptance` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `workflow_type='RFQ'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象RFQは `発注済` のみ許可する。
+3. 納品検収予定日は必須とし、未入力の場合は登録を拒否する。
+4. `orders.inspection_on` / `inspection_cert_type` と必要な明細納品日を更新する。
+5. 登録完了後の検収書Excel出力とQRラベル発行は後続アクションとして実行可否と出力キーを返す。
+6. 登録成功時はRFQステータスを `納期確定` へ進める。
+
+### getQuotationDataBoxAssetProvisionalRegistrationContext
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_acceptance` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_acceptance` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `workflow_type='RFQ'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象RFQは `納期確定` のみ許可する。
+3. 発注明細の品目名または型式と資産マスタの品目または型式を照合し、分類初期候補を返す。
+4. 設置場所初期値は同一RFQ申請資産の資産名または型式と発注明細の品目名または型式を照合して決定する。
+5. 付属品行は同一 `quotationItemId` の本体行に一致する申請資産から継承する。
+6. 一致しない場合は同一RFQ申請の先頭資産をフォールバック候補とする。
+
+### patchQuotationDataBoxAssetProvisionalRegistrationItemsByOrderItemId
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_acceptance` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_acceptance` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `workflow_type='RFQ'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象発注明細が指定RFQの発注に属することを検証する。
+3. `payload.photoDocuments[].filePartName` が multipart の写真ファイルパートに存在することを確認し、拡張子・MIME Type は画像として許可された形式に限定する。
+4. 新規写真ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`rfqGroupId` や `orderItemId` などの業務IDを含めない。
+5. 検収登録中の写真は資産登録前の工程ドキュメントとして `application_documents` に `owner_type='RFQ'`、`rfq_id`、`step_code='ACCEPTANCE'`、`document_category='PHOTO'`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`taken_at`、`is_primary`、`uploaded_by_user_id`、`uploaded_at` を保存する。S3バケット名やHTTPS URLはDBへ保存しない。
+6. `payload.photoDocumentIds` は同一RFQの未削除 `application_documents(owner_type='RFQ', document_category='PHOTO')` であり、`application_document_order_item_links(relation_type='ACCEPTANCE_PHOTO', order_item_id=対象発注明細ID, deleted_at IS NULL)` に有効リンクがあるIDのみ受け付ける。
+7. 保存対象の発注明細IDと写真ドキュメントIDの対応は `application_document_order_item_links` に `relation_type='ACCEPTANCE_PHOTO'` として保存し、レスポンスやコンテキストの `photoDocumentIds` は同リンクから解決する。S3オブジェクトキーの接頭辞から `orderItemId` を再解決しない。
+8. Amazon S3保存後にDBメタデータ保存または明細保存へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REMODEL_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す。
+9. 明細単位の保存ではRFQステータスを変更しない。
+
+### postQuotationDataBoxAssetProvisionalRegistrationComplete
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_acceptance` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_acceptance` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `workflow_type='RFQ'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象RFQは `納期確定` のみ許可する。
+3. 未登録明細が残る場合は拒否する。
+4. 発注明細ID、RFQ ID、QRコード、シリアル番号、品目/メーカー/型式、取得金額、取得日、設置場所、分類、仮勘定情報を持つ `individuals` を作成/更新する。
+5. レスポンスの `IndividualSummary.photoDocumentIds` には、当該発注明細に対応する同一RFQの未削除 `application_documents(owner_type='RFQ', document_category='PHOTO')` のIDのみを返し、原本資産登録時に別発注明細の写真を誤って複製しない。
+6. 登録成功時はRFQステータスを `検収済` へ進める。
+
+### getQuotationDataBoxAssetRegistrationContext
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_acceptance` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_acceptance` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `workflow_type='RFQ'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象RFQは `検収済` のみ許可する。
+3. `individuals.registration_status='INSPECTED'` の個体を原本登録対象として返す。
+4. `IndividualSummary.photoDocumentIds` は同一RFQの未削除RFQ写真のうち `application_document_order_item_links(relation_type='ACCEPTANCE_PHOTO', order_item_id=対象発注明細ID, deleted_at IS NULL)` に紐づくドキュメントIDを設定する。
+5. 会計区分と勘定科目は固定候補をコード表として返す。
+
+### postQuotationDataBoxAssetRegistrationRegisterBulk
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_acceptance` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_acceptance` が有効であること
+- 認可条件: 対象RFQは `rfqs.management_type='REMODEL'` かつ `workflow_type='RFQ'` かつ `deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象RFQは `検収済` のみ許可する。
+3. `individuals` を原本資産へ反映し、`asset_ledgers` を作成または更新する。
+4. 対象個体、発注明細、見積明細、編集リスト明細の紐づけを保持する。
+5. リクエストの `individuals[].photoDocumentIds` で指定された `application_documents.owner_type='RFQ'`、`document_category='PHOTO'` の写真だけを、当該個体から作成/更新した原本資産へ反映する。各IDは同一RFQかつ当該個体の `orderItemId` に対応する `application_document_order_item_links(relation_type='ACCEPTANCE_PHOTO')` を持つことを検証する。
+6. 検収写真はS3オブジェクト自体を再アップロードせず、作成/更新した原本資産の `application_documents.owner_type='ASSET_LEDGER'`、`asset_ledger_id`、`document_category='PHOTO'`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`taken_at`、`is_primary`、`uploaded_by_user_id`、`uploaded_at` としてメタデータを複製する。
+7. 登録成功時はRFQステータスを `完了` へ進める。
+8. リモデル管理では、RFQ単位の原本登録完了後も編集リスト全体の原本反映確定はリモデルクローズで行う。
+
+### postQuotationDataBoxRemodelManagementEditListsByEditListIdClose
+
+#### 権限
+
+- 認可条件: 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `remodel_acceptance` 判定をバイパスする
+- 認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること
+- 認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `remodel_acceptance` が有効であること
+- 認可条件: 対象編集リストは `edit_lists.list_type='REMODEL'`、`deleted_at IS NULL`、`status='ACTIVE'` であること
+- 認可条件: 有効な `edit_list_work_locks` が存在しないこと
+
+#### 処理仕様
+
+1. Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。
+2. 対象 `edit_lists` 行をDBロックし、有効な `edit_list_work_locks` が存在しないことを検証する。
+3. 全対象明細で方針が決定済みであることを検証する。
+4. 廃棄以外の明細に `target_facility_id`、`target_building_name`、`target_floor_name`、`target_department_name`、`target_section_name`、`target_room_name`、`target_installation_location` の必要項目が入力済みであることを検証する。
+5. 当該編集リストに紐づく未削除 `rfqs` が全て終端状態であることを検証する。通常リモデルRFQは `rfqs.status='完了'` または `申請を見送る`、リモデル起点廃棄は `rfqs.status='完了'` かつ対象 `applications.status='完了'`、または `rfqs.status='申請を見送る'` かつ対象 `applications.status='申請見送り'`、移動は既存移動ワークフローの終端状態を確認する。
+6. リモデル起点廃棄の登録済み資産は、No.27の完了登録で `asset_ledgers.status='廃棄済'` になっていることを確認する。No.27の過去レスポンス値には依存せず、クローズ要求時点の `rfq_applications`、申請状態、資産台帳、原本登録状況を再取得し、未完了の廃棄申請または廃棄済み未反映資産がある場合は409 (`REMODEL_CLOSE_NOT_READY`) を返す。
+7. 原本登録未完了の対象が残る場合は拒否する。
+8. `facility_location_remodels` に保持した新居情報を読み取り、通常リモデルの追加/更新/移動方針に応じて `asset_ledgers`、`facility_locations`、`asset_ledger_histories`、`edit_list_items.reflection_status`、`edit_lists.status/closed_at/closed_by_user_id` を同一トランザクションで更新する。リモデル起点廃棄の資産台帳更新はNo.27に重複実装しない。
+9. 新居情報を現状へ反映した `facility_location_remodels` は `deleted_at` を設定し、有効なリモデル先情報から除外する。
+10. `asset_ledger_histories` 作成時は `change_source_type='EDIT_LIST_CLOSE'`、`change_source_id=editListId`、`change_type`、変更前後JSON、`changed_by_user_id`、`changed_at` を設定する。
+11. 1件でも反映エラーが残る場合は `edit_lists.status='CLOSED'` へ進めない。
+
+## 第6章 権限・業務ルール
+
+### 編集リストとの連携ルール
+
+- 編集リスト上で行を追加・編集しただけではリモデル管理一覧には表示しない。通常RFQ作成または廃棄申請正本作成後にNo.27で廃棄依頼グループが作成された時点で、リモデル起点廃棄を関連表示する
+- RFQ作成は編集リストAPIで `editListItemIds[]` を受け取り、`edit_lists.list_type='REMODEL'` から `rfqs.management_type='REMODEL'` を確定する
+- 廃棄申請作成は編集リストAPIで `applications` / `application_assets` の申請正本を作成し、No.27のグループ作成APIが `DISPOSAL/RFQ` と `rfq_applications` を作成する。No.24で `REMODEL/DISPOSAL` のワークフロー行を作成しない
+- リモデル起点廃棄の表示・詳細・クローズ影響は `rfq_applications.edit_list_id` / `edit_list_item_id` から解決する
+- リモデル管理は作成済みワークフローの進行管理を担当し、編集リスト明細の通常編集、Data Link、見積DB Link、行削除、行順変更は担当しない
+- 編集リスト作業ロックは編集リスト画面への入場と編集リスト更新APIを制御する。RFQ進行は作業ロック中でも実行できるが、リモデルクローズは有効な作業ロックが残っていないことを検証してから実行する
+
+### 一覧・フィルタールール
+
+- `editListId` 指定時は当該リモデル編集リストに紐づくワークフローだけを返す
+- `editListId` 未指定時は作業対象施設で参照可能なリモデル管理対象を横断表示する
+- `quotation_type` / `quotation_phase` が未指定のRFQは、該当フィルター指定時には除外し、フィルター未指定時のみ表示対象とする
+- 廃棄/移動ワークフローは見積区分/見積フェーズを持たないため、見積区分/見積フェーズ指定時は除外し、フィルター未指定時のみ表示対象とする
+- 期限表示はステータス別にラベルと日付項目を切り替える
+
+### リモデルクローズルール
+
+- クローズはRFQ単位ではなく `editListId` 単位で実行する
+- 全対象明細でリモデル方針が決定済みであることを必須とする
+- 廃棄方針以外の明細では新設置場所が入力済みであることを必須とする
+- 通常RFQは `完了` または `申請を見送る`、リモデル起点廃棄は `rfqs.status='完了'` かつ対象 `applications.status='完了'`、または両方の見送り状態、移動は `移動完了` または `申請を見送る` を終端状態とする
+- リモデル起点廃棄の資産台帳を `廃棄済` にする処理はNo.27完了登録が実行し、No.24クローズでは重複更新しない
+- 原本登録未完了の対象が残る場合はクローズ不可とする
+- 有効な編集リスト作業ロックが残る場合はクローズ不可とする
+- クローズ時は対象 `edit_lists` 行をロックし、原本資産、個別部署マスタ、履歴、編集リスト状態を同一トランザクションで更新する
+
+### 発注・支払情報ルール
+
+- 発注形態は `購入`、`割賦`、`リース（オペレーティング）`、`リース（ファイナンス）` を正本候補とする
+- 支払条件は `orders.payment_terms` に保持する
+- 支払方法は `orders.payment_method` に専用列として保持し、`payment_terms` へ統合しない
+- 支払方法の選択肢は `でんさい`、`銀行振込`、`クレジット`、`現金` とする
+- 検収書種別の保存値は `本体のみ` または `付属品含む` とする
+
+### ファイル保存ルール
+
+- 見積原本と検収写真のファイル実体はAPI内でAmazon S3へPutObjectし、`application_documents.file_path` にはS3オブジェクトキーのみを保存する
+- S3バケット名、HTTPS URL、S3オブジェクトキーはリクエスト/レスポンスで直接扱わない。表示・ダウンロードが必要な場合は、認可済みURLをAPI側で発行して返す
+- `storageFormat` / `application_documents.storage_format` / `orders.storage_format` は保存先ではなく電子取引/スキャナ保存/未指定などの保存形式を表す列として扱い、S3保存有無の表現には使用しない
+- S3保存に成功し、DBメタデータ保存または業務トランザクションに失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄してからエラー応答する
+- 検収写真を原本資産へ反映する場合は、S3オブジェクト自体を再アップロードせず、同一S3オブジェクトキーを含む `application_documents` メタデータを `owner_type='ASSET_LEDGER'` 側へ複製する
+- DB確定後に文書や写真を削除する後続APIを追加する場合は、`application_documents.deleted_at` の論理削除を正本とし、S3実体は同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するストレージ削除処理で扱う
+
+## 第7章 エラーコード一覧
+
+| エラーコード | HTTPステータス | 内容 | 発生条件 |
+| --- | --- | --- | --- |
+| AUTH_401_UNAUTHORIZED | 401 | 認証情報が存在しない、または無効 | Bearer トークン未指定、期限切れ、署名不正 |
+| FACILITY_NOT_FOUND | 404 | 作業対象施設を参照できない | Bearer トークン上の作業対象施設が存在しない、または削除済み |
+| AUTH_403_REMODEL_DENIED | 403 | リモデル管理の実効権限がない | 通常アカウントで `remodel_purchase` / `remodel_order` / `remodel_acceptance` のいずれも実効無効。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする |
+| AUTH_403_REMODEL_PURCHASE_DENIED | 403 | リモデル見積・見積登録権限がない | 通常アカウントで `remodel_purchase` が実効無効。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする |
+| AUTH_403_REMODEL_ORDER_DENIED | 403 | リモデル発注権限がない | 通常アカウントで `remodel_order` が実効無効。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする |
+| AUTH_403_REMODEL_ACCEPTANCE_DENIED | 403 | リモデル検収・原本登録権限がない | 通常アカウントで `remodel_acceptance` が実効無効。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする |
+| AUTH_403_TRANSFER_DISPOSAL_DENIED | 403 | 廃棄・移動操作権限がない | 通常アカウントで `transfer_disposal` が実効無効。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする |
+| EDIT_LIST_NOT_FOUND | 404 | リモデル編集リストを参照できない | ID不存在、施設不一致、削除済み、または `list_type='REMODEL'` ではない |
+| EDIT_LIST_LOCK_ACTIVE | 409 | 編集リスト作業ロックが残っている | リモデルクローズ時に有効な `edit_list_work_locks` が存在する |
+| RFQ_GROUP_NOT_FOUND | 404 | RFQグループを参照できない | ID不存在、施設不一致、削除済み、または `management_type='REMODEL'` ではない |
+| RFQ_STATUS_CONFLICT | 409 | RFQステータスが操作条件を満たさない | ステータス遷移順序不一致、または終端済みワークフローを更新した |
+| RFQ_VENDOR_NOT_FOUND | 404 | 見積業者行を参照できない | ID不存在、RFQ不一致、削除済み |
+| QUOTATION_DRAFT_NOT_FOUND | 404 | 見積登録ドラフトを参照できない | ID不存在、RFQ不一致、削除済み、または管理区分不一致 |
+| QUOTATION_CONFIRM_CONFLICT | 409 | 見積確定条件を満たさない | 見積フェーズ不正、必須情報不足、明細区分未確定、または未登録個体品目が残っている |
+| ORDER_QUOTATION_REQUIRED | 409 | 発注登録用見積が確定済みでない | 発注登録時に `発注見積登録済` のRFQまたは採用見積が存在しない |
+| ORDER_NOT_FOUND | 404 | 発注を参照できない | ID不存在、RFQ不一致、または対象発注データなし |
+| INDIVIDUAL_REGISTRATION_INCOMPLETE | 409 | 検収登録済み個体が不足している | 資産登録時に対象発注明細分の `individuals` が未作成 |
+| REMODEL_CLOSE_NOT_READY | 409 | リモデルクローズ条件を満たさない | 方針未決、新設置場所未入力、未終端RFQ/廃棄申請、廃棄済み未反映資産、原本登録未完了、または作業ロック残存 |
+| DISPOSAL_TASK_DELEGATED | 409 | 廃棄申請タスクの後続操作は移動・廃棄管理へ委譲する | `DISPOSAL/RFQ` に対してNo.24の承認・却下・完了APIを呼び出した |
+| REMODEL_FILE_502_S3_WRITE_FAILED | 502 | Amazon S3 へのファイル保存またはロールバック削除に失敗した | 見積原本または検収写真のAmazon S3 PutObject、またはDB失敗時の保存済みS3オブジェクト破棄に失敗した |
+| VALIDATION_ERROR | 400 | 入力値不正 | 必須不足、列挙値不正、文字数超過、日付前後関係不正 |
+| CONFLICT | 409 | 競合更新 | `expectedUpdatedAt` または `Idempotency-Key` の競合 |
+| INTERNAL_SERVER_ERROR | 500 | サーバー内部エラー | 想定外例外 |
+
+## 第8章 運用・保守方針
+
+### データ保守方針
+
+- 通常リモデル管理対象は `rfqs.management_type='REMODEL'`、`workflow_type='RFQ'` で判定し、通常購入、修理、保守契約とは一覧・進行を分離する。リモデル起点廃棄は `DISPOSAL/RFQ` を `rfq_applications` の行リンクで関連表示する
+- 新モデルの廃棄申請は `management_type='DISPOSAL'`、`workflow_type='RFQ'` としてNo.27が管理する。No.24では旧 `REMODEL/DISPOSAL` の承認状態を新規状態として使用せず、クローズ判定ではNo.27が返す終端・資産状態・原本登録状況を参照する
+- 見積依頼先、見積、発注、検収、原本登録の各工程はRFQステータス定義・遷移定義に従って更新する
+- 検収登録済み個体の中間正本は `individuals` とし、原本登録時に `asset_ledgers` へ反映する
+- リモデルクローズ時の原本反映履歴は `asset_ledger_histories` に `change_source_type='EDIT_LIST_CLOSE'`、`change_source_id=editListId` として保持し、編集リスト明細単位の反映結果は `edit_list_items.reflection_status` に保持する
+
+### 拡張時の留意点
+
+- 廃棄/移動の状態遷移を拡張する場合は、既存の承認、却下、完了操作とは別に遷移条件と履歴保存方針を再設計する
+- OCR連携を追加する場合は、OCRジョブ、抽出結果、補正結果、手動入力との差分を別APIとして設計する
+- メール送信や帳票出力を本実装化する場合は、出力ジョブ、送信ログ、再送条件、ストレージ保存方針を運用設計と合わせて追加する
+- リモデルクローズ後の再オープンが必要な場合は、管理者操作、監査、原本反映取り消し可否を別途設計する

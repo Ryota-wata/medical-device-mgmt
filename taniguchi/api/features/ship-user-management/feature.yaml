@@ -1,0 +1,47 @@
+$schema: ../../feature.schema.json
+id: API-020A
+slug: ship-user-management
+title: SHIPユーザー管理
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /ship-user-management
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/ship-user-management.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_SHIPユーザー管理.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-016
+  - API-020
+
+dbTables:
+  - users
+  - user_facility_assignments
+  - facilities
+  - feature_catalogs
+  - column_catalogs
+  - facility_feature_settings
+  - facility_column_settings
+  - user_facility_feature_settings
+  - user_facility_column_settings
+
+permissionCodes:
+  - user_list_view
+  - user_edit
+  - user_facility_assignment_edit

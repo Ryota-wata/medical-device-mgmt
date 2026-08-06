@@ -1,0 +1,47 @@
+$schema: ../../feature.schema.json
+id: API-015
+slug: ship-facility-master
+title: SHIP施設マスタ
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /ship-facility-master
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/ship-facility-master.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_SHIP施設マスタ.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-016
+  - API-017
+  - API-018
+  - API-020
+  - API-020A
+
+dbTables:
+  - establishments
+  - facilities
+  - facility_details
+  - users
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+
+permissionCodes:
+  - facility_master_list
+  - facility_master_edit

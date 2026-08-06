@@ -1,0 +1,4319 @@
+openapi: 3.0.4
+info:
+  title: 移動・廃棄管理 API
+  version: '1.2'
+  description: 移動・廃棄管理（廃棄申請管理）で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 移動・廃棄管理
+    description: 移動・廃棄管理で利用するAPI
+paths:
+  /quotation-data-box/transfer-management/tasks:
+    get:
+      tags:
+        - 移動・廃棄管理
+      operationId: getQuotationDataBoxTransferManagementTasks
+      summary: 移動・廃棄管理一覧取得
+      description: 移動・廃棄管理タブの申請受付一覧と廃棄RFQグループ一覧を取得する。現行画面にはページング操作がないため、検索条件に一致する行を各配列へ返す。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: applicationType
+          in: query
+          required: false
+          description: ALL / TRANSFER / DISPOSAL
+          schema:
+            type: string
+            enum: [ALL, TRANSFER, DISPOSAL]
+        - name: statusTab
+          in: query
+          required: false
+          description: ALL / INTAKE / VENDOR_SELECTION / QUOTE_COLLECTION / ORDERED / WORK_DATE_CONFIRMED / COMPLETED
+          schema:
+            type: string
+            enum: [ALL, INTAKE, VENDOR_SELECTION, QUOTE_COLLECTION, ORDERED, WORK_DATE_CONFIRMED, COMPLETED]
+        - name: keyword
+          in: query
+          required: false
+          description: 申請番号、RFQ番号、QRラベル、品目名、申請者名の部分一致
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferDisposalTaskListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：TransferDisposalTaskListResponse）
+      x-word-response-subtable-titles:
+        - transferApplications要素
+        - disposalApplications要素
+        - disposalGroups要素
+      x-word-response-subtables:
+        - Title: transferApplications要素
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - transferApplicationId
+              - int64
+              - ✓
+              - applications.application_id
+            - - applicationNo
+              - string
+              - ✓
+              - 申請番号
+            - - status
+              - string
+              - ✓
+              - applications.status の保存値。承認・原本反映後は 完了
+            - - statusLabel
+              - string
+              - ✓
+              - '画面表示用ステータス。例: 移動承認待ち / 移動完了'
+            - - requestedOn
+              - date
+              - ✓
+              - 申請日
+            - - requestedByDepartmentName
+              - string
+              - '-'
+              - 申請者所属
+            - - requestedByName
+              - string
+              - ✓
+              - 申請者名
+            - - requestedByContact
+              - string
+              - '-'
+              - 申請者連絡先
+            - - sourceLocationName
+              - string
+              - '-'
+              - 移動元設置場所
+            - - destinationLocationName
+              - string
+              - ✓
+              - 移動先設置場所
+            - - transferReason
+              - string
+              - '-'
+              - コメント（移動理由 他）。transfer_application_details.transfer_reason。一覧テーブル列ではなく、申請内容確認モーダル表示用
+            - - assets
+              - ApplicationAssetSummary[]
+              - ✓
+              - 移動対象資産
+            - - availableActions
+              - string[]
+              - ✓
+              - '表示可能操作。例: APPROVE_TRANSFER / VIEW_DETAIL'
+        - Title: disposalApplications要素
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - disposalApplicationId
+              - int64
+              - ✓
+              - applications.application_id
+            - - applicationNo
+              - string
+              - ✓
+              - 申請番号
+            - - status
+              - string
+              - ✓
+              - applications.status の保存値
+            - - statusLabel
+              - string
+              - ✓
+              - 画面表示用ステータス。保存値との対応はステータスマッピングに従う
+            - - requestedOn
+              - date
+              - ✓
+              - 申請日
+            - - requestedByDepartmentName
+              - string
+              - '-'
+              - 申請者所属
+            - - requestedByName
+              - string
+              - ✓
+              - 申請者名
+            - - requestedByContact
+              - string
+              - '-'
+              - 申請者連絡先
+            - - disposalReasonCode
+              - string
+              - '-'
+              - disposal_application_details.disposal_reason_code
+            - - disposalReasonText
+              - string
+              - '-'
+              - disposal_application_details.disposal_reason_text
+            - - relatedRepairApplicationId
+              - int64
+              - '-'
+              - 修理不能から作成された廃棄申請の場合の元修理申請ID
+            - - relatedPurchaseApplicationId
+              - int64
+              - '-'
+              - 更新購入後処理から作成された廃棄申請の場合の元購入申請ID
+            - - assets
+              - ApplicationAssetSummary[]
+              - ✓
+              - 廃棄対象資産
+            - - availableActions
+              - string[]
+              - ✓
+              - '表示可能操作。例: CREATE_DISPOSAL_GROUP / VIEW_DETAIL'
+        - Title: disposalGroups要素
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - disposalTaskId
+              - int64
+              - ✓
+              - rfqs.rfq_id。廃棄申請タスクID
+            - - rfqNo
+              - string
+              - ✓
+              - rfqs.rfq_no
+            - - groupName
+              - string
+              - ✓
+              - rfqs.rfq_group_name
+            - - status
+              - string
+              - ✓
+              - 画面表示用の集約ステータス。rfqStatus（グループ正本）、applicationStatus（申請正本）、有効な業者・見積・発注・書類からAPIが導出する
+            - - rfqStatus
+              - string
+              - ✓
+              - rfqs.status。作成直後は 見積依頼
+            - - applicationStatus
+              - string
+              - ✓
+              - 紐づく全 applications.status の代表値。作成直後は 新規申請。個別申請の状態は applications 要素で返す
+            - - statusLabel
+              - string
+              - ✓
+              - 画面表示用ステータス
+            - - managementType
+              - string
+              - ✓
+              - DISPOSAL。廃棄依頼グループの管理種別
+            - - workflowType
+              - string
+              - ✓
+              - RFQ。廃棄依頼グループのワークフロー種別
+            - - applicationType
+              - string
+              - ✓
+              - DISPOSAL。グループ内申請の種別
+            - - receptionDepartment
+              - string
+              - '-'
+              - rfqs.reception_department。現在の受付担当ユーザーの users.section_name スナップショット。未設定時は NULL
+            - - receptionPerson
+              - string
+              - '-'
+              - rfqs.reception_person。現在の受付担当ユーザーの users.name スナップショット
+            - - receptionUserId
+              - int64
+              - '-'
+              - rfqs.reception_user_id。現在の受付担当ユーザーを示す users.user_id
+            - - receptionConfirmedAt
+              - datetime
+              - '-'
+              - rfqs.reception_confirmed_at。初回受付情報を保存した日時
+            - - receptionContact
+              - string
+              - '-'
+              - rfqs.reception_contact。現在の受付担当ユーザーの users.phone_number スナップショット。未設定時は NULL
+            - - isRemodelOrigin
+              - boolean
+              - ✓
+              - rfq_applications.edit_list_id または edit_list_item_id から判定したリモデル起点フラグ
+            - - editListId
+              - int64
+              - '-'
+              - リモデル起点の場合の編集リストID。資産一覧等の通常起点では NULL
+            - - editListItemIds
+              - int64[]
+              - ✓
+              - グループ内のリモデル編集リスト明細ID。該当なしの場合は空配列
+            - - vendorName
+              - string
+              - '-'
+              - 発注前は主依頼先、発注後は採用した発注登録用見積の業者名。業者未登録時は NULL
+            - - vendorPerson
+              - string
+              - '-'
+              - 発注前は主依頼先、発注後は採用した発注登録用見積の業者担当者名。未設定時は NULL
+            - - vendorContact
+              - string
+              - '-'
+              - 代表表示業者の電話番号。メールアドレスは使用せず、未設定時は NULL
+            - - deadlineLabel
+              - string
+              - ✓
+              - 期限列ラベル。見積提出期限 / 廃棄予定日。期限を表示しない状態は null
+            - - deadlineOn
+              - date
+              - ✓
+              - 期限列の日付。対象日付が未設定または期限を表示しない状態は null
+            - - applicationCount
+              - int32
+              - ✓
+              - 紐づく廃棄申請件数
+            - - assetCount
+              - int32
+              - ✓
+              - 紐づく廃棄対象資産件数
+            - - availableActions
+              - string[]
+              - ✓
+              - '表示可能操作。例: OPEN_TASK / CANCEL'
+  /disposal-task/reception-assignees:
+    get:
+      tags:
+        - 移動・廃棄管理
+      operationId: getDisposalTaskReceptionAssignees
+      summary: 廃棄申請受付担当者候補取得
+      description: 作業対象施設で廃棄申請管理を担当できる病院ユーザー・SHIPユーザーを氏名検索し、受付担当者選択候補として返す。共有システム管理者アカウントは候補に含めない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          description: ユーザー氏名または所属部署の部分一致。未指定時は先頭候補を返す
+          schema:
+            type: string
+            maxLength: 100
+        - name: limit
+          in: query
+          required: false
+          description: 取得件数。未指定時50、最大100
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 50
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalReceptionAssigneeCandidateListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DisposalReceptionAssigneeCandidateListResponse）
+      x-word-response-subtable-titles: []
+      x-word-response-subtables: []
+  /transfer-applications/{transferApplicationId}/approve:
+    post:
+      tags:
+        - 移動・廃棄管理
+      operationId: postTransferApplicationsByTransferApplicationIdApprove
+      summary: 移動申請承認
+      description: 起票済み移動申請を承認し、対象資産の設置場所を原本資産台帳へ反映する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: transferApplicationId
+          in: path
+          required: true
+          description: applications.application_id。application_type='TRANSFER'
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostTransferApplicationsByTransferApplicationIdApproveRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 移動承認成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferApproveResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象移動申請または対象資産が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 現在ステータス不整合、移動先不正、または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：TransferApproveResponse）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/transfer-management/disposal-groups:
+    post:
+      tags:
+        - 移動・廃棄管理
+      operationId: postQuotationDataBoxTransferManagementDisposalGroups
+      summary: 廃棄RFQグループ作成
+      description: RFQ未作成の廃棄申請、画面入力した見積依頼グループ名、選択した初回受付担当ユーザーを受け取り、担当ユーザーの氏名・所属部署・電話番号スナップショットを含む廃棄申請タスクを作成する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '503'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 廃棄RFQグループ作成操作の冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxTransferManagementDisposalGroupsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalGroupCreateResponse'
+        '400':
+          description: 入力不正、申請件数不正、冪等キー未指定、受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄申請が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 有効な別グループへの資産重複、未登録資産条件不一致、または現在ステータス不整合。全件除外時は DISPOSAL_GROUP_ASSET_DUPLICATE とし、除外した申請を details に applicationId:reasonCode:reason 形式で返す
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。同じ冪等キーで再送する
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：DisposalGroupCreateResponse）
+      x-word-response-subtable-titles:
+        - created要素（DisposalGroupCreateResult）
+        - skipped要素（DisposalGroupSkippedResult）
+      x-word-response-subtables:
+        - Title: created要素（DisposalGroupCreateResult）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - disposalTaskId
+              - int64
+              - ✓
+              - rfqs.rfq_id
+            - - rfqNo
+              - string
+              - ✓
+              - 確定時にサーバー採番した DISP-yyyyMMdd-nnnn
+            - - groupName
+              - string
+              - ✓
+              - 作成したグループ名
+            - - applicationIds
+              - int64[]
+              - ✓
+              - 紐づけた廃棄申請ID
+            - - rfqStatus
+              - string
+              - ✓
+              - 見積依頼
+            - - applicationStatus
+              - string
+              - ✓
+              - 新規申請
+            - - statusLabel
+              - string
+              - ✓
+              - 画面表示ステータス
+            - - receptionDepartment
+              - string
+              - '-'
+              - 現在の受付担当ユーザーの所属部署。未設定時は NULL
+            - - receptionPerson
+              - string
+              - '-'
+              - 現在の受付担当者氏名
+            - - receptionUserId
+              - int64
+              - '-'
+              - 現在の受付担当ユーザーID
+            - - receptionConfirmedAt
+              - datetime
+              - '-'
+              - 初回受付情報を保存した日時
+        - Title: skipped要素（DisposalGroupSkippedResult）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - applicationId
+              - int64
+              - ✓
+              - 作成対象から除外した申請ID
+            - - reasonCode
+              - string
+              - ✓
+              - DISPOSAL_GROUP_ASSET_DUPLICATE 等の除外理由コード
+            - - reason
+              - string
+              - ✓
+              - 除外理由
+  /disposal-task/tasks/{disposalTaskId}:
+    get:
+      tags:
+        - 移動・廃棄管理
+      operationId: getDisposalTaskTasksByDisposalTaskId
+      summary: 廃棄タスク詳細取得
+      description: 廃棄申請管理画面に表示する申請情報、対象資産、工程、見積依頼先、見積、発注、添付を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalTaskDetailResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DisposalTaskDetailResponse）
+      x-word-response-subtable-titles:
+        - task要素
+        - applications要素
+        - steps要素
+        - vendorRequests要素
+        - quotations要素
+        - quotations配下items要素
+        - order要素
+        - documents要素
+      x-word-response-subtables:
+        - Title: task要素
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - disposalTaskId
+              - int64
+              - ✓
+              - rfqs.rfq_id。廃棄申請タスクID
+            - - rfqNo
+              - string
+              - ✓
+              - rfqs.rfq_no
+            - - groupName
+              - string
+              - ✓
+              - rfqs.rfq_group_name
+            - - status
+              - string
+              - ✓
+              - 画面表示用の集約ステータス。rfqStatus（グループ正本）、applicationStatus（申請正本）、有効な業者・見積・発注・書類からAPIが導出する
+            - - rfqStatus
+              - string
+              - ✓
+              - rfqs.status。作成直後は 見積依頼
+            - - applicationStatus
+              - string
+              - ✓
+              - 紐づく全 applications.status の代表値。作成直後は 新規申請。個別申請の状態は applications 要素で返す
+            - - statusLabel
+              - string
+              - ✓
+              - 画面表示用ステータス
+            - - managementType
+              - string
+              - ✓
+              - DISPOSAL。廃棄依頼グループの管理種別
+            - - workflowType
+              - string
+              - ✓
+              - RFQ。廃棄依頼グループのワークフロー種別
+            - - applicationType
+              - string
+              - ✓
+              - DISPOSAL。グループ内申請の種別
+            - - receptionDepartment
+              - string
+              - '-'
+              - rfqs.reception_department。現在の受付担当ユーザーの users.section_name スナップショット。未設定時は NULL
+            - - receptionPerson
+              - string
+              - '-'
+              - rfqs.reception_person。現在の受付担当ユーザーの users.name スナップショット
+            - - receptionUserId
+              - int64
+              - '-'
+              - rfqs.reception_user_id。現在の受付担当ユーザーを示す users.user_id
+            - - receptionConfirmedAt
+              - datetime
+              - '-'
+              - rfqs.reception_confirmed_at。初回受付情報を保存した日時
+            - - receptionContact
+              - string
+              - '-'
+              - rfqs.reception_contact。現在の受付担当ユーザーの users.phone_number スナップショット。未設定時は NULL
+            - - isRemodelOrigin
+              - boolean
+              - ✓
+              - rfq_applications.edit_list_id または edit_list_item_id から判定したリモデル起点フラグ
+            - - editListId
+              - int64
+              - '-'
+              - リモデル起点の場合の編集リストID。資産一覧等の通常起点では NULL
+            - - editListItemIds
+              - int64[]
+              - ✓
+              - グループ内のリモデル編集リスト明細ID。該当なしの場合は空配列
+            - - vendorName
+              - string
+              - '-'
+              - 発注前は主依頼先、発注後は採用した発注登録用見積の業者名。業者未登録時は NULL
+            - - quotationDueOn
+              - date
+              - '-'
+              - disposal_application_details.quotation_due_on。依頼先別期限は rfq_vendors.due_on
+            - - disposalScheduledOn
+              - date
+              - '-'
+              - disposal_application_details.disposal_scheduled_on
+            - - applicationCount
+              - int32
+              - ✓
+              - 紐づく廃棄申請件数
+            - - assetCount
+              - int32
+              - ✓
+              - 紐づく廃棄対象資産件数
+            - - availableActions
+              - string[]
+              - ✓
+              - '表示可能操作。例: OPEN_TASK / CANCEL'
+            - - requestComment
+              - string
+              - '-'
+              - rfqs.request_comment。廃棄依頼グループ単位のご依頼事項。再アクセス時に保存値を返す
+        - Title: applications要素
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - disposalApplicationId
+              - int64
+              - ✓
+              - applications.application_id
+            - - applicationNo
+              - string
+              - ✓
+              - 申請番号
+            - - status
+              - string
+              - ✓
+              - applications.status の保存値
+            - - statusLabel
+              - string
+              - ✓
+              - 画面表示用ステータス。保存値との対応はステータスマッピングに従う
+            - - requestedOn
+              - date
+              - ✓
+              - 申請日
+            - - requestedByDepartmentName
+              - string
+              - '-'
+              - 申請者所属
+            - - requestedByName
+              - string
+              - ✓
+              - 申請者名
+            - - requestedByContact
+              - string
+              - '-'
+              - 申請者連絡先
+            - - disposalReasonCode
+              - string
+              - '-'
+              - disposal_application_details.disposal_reason_code
+            - - disposalReasonText
+              - string
+              - '-'
+              - disposal_application_details.disposal_reason_text
+            - - relatedRepairApplicationId
+              - int64
+              - '-'
+              - 修理不能から作成された廃棄申請の場合の元修理申請ID
+            - - relatedPurchaseApplicationId
+              - int64
+              - '-'
+              - 更新購入後処理から作成された廃棄申請の場合の元購入申請ID
+            - - assets
+              - ApplicationAssetSummary[]
+              - ✓
+              - 廃棄対象資産
+            - - availableActions
+              - string[]
+              - ✓
+              - '表示可能操作。例: CREATE_DISPOSAL_GROUP / VIEW_DETAIL'
+        - Title: steps要素
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - stepCode
+              - string
+              - ✓
+              - QUOTE_REQUEST / QUOTATION_ORDER / WORK_DATE / COMPLETE
+            - - stepName
+              - string
+              - ✓
+              - 画面表示工程名
+            - - stepStatus
+              - string
+              - ✓
+              - NOT_STARTED / IN_PROGRESS / COMPLETED / SKIPPED / CANCELED
+            - - isCurrent
+              - boolean
+              - ✓
+              - 現在工程の場合 true
+            - - startedAt
+              - datetime
+              - '-'
+              - 工程開始日時
+            - - completedAt
+              - datetime
+              - '-'
+              - 工程完了日時
+        - Title: vendorRequests要素
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - rfqVendorId
+              - int64
+              - ✓
+              - rfq_vendors.rfq_vendor_id
+            - - vendorId
+              - int64
+              - '-'
+              - 業者マスタID
+            - - vendorName
+              - string
+              - ✓
+              - 依頼先業者名
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - email
+              - string
+              - ✓
+              - メールアドレス。依頼先保存時の必須項目。外部メール送信には使用しない
+            - - phone
+              - string
+              - '-'
+              - 連絡先
+            - - dueOn
+              - date
+              - '-'
+              - 回答期限
+            - - requestNote
+              - string
+              - '-'
+              - 依頼補足
+            - - requestStatus
+              - string
+              - ✓
+              - DRAFT / SENT / REPLIED / CANCELED。SENTは依頼送信操作の保存完了を表し、メール配信成功を意味しない
+        - Title: quotations要素
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - quotationId
+              - int64
+              - ✓
+              - quotations.quotation_id
+            - - quotationNo
+              - string
+              - ✓
+              - システム採番の受領見積番号。画面入力の見積No.とは別管理
+            - - vendorQuotationNo
+              - string
+              - '-'
+              - quotations.vendor_quotation_no。画面入力の業者側見積No.
+            - - vendorId
+              - int64
+              - '-'
+              - 業者マスタID
+            - - vendorName
+              - string
+              - ✓
+              - 見積業者名
+            - - quotationPhase
+              - string
+              - ✓
+              - ESTIMATE（参考見積） / ORDER_REGISTRATION（発注登録用見積）
+            - - quotationOn
+              - date
+              - ✓
+              - 見積日
+            - - totalAmountExclTax
+              - decimal
+              - '-'
+              - 税抜合計金額
+            - - accountDivisionCode
+              - string
+              - '-'
+              - quotations.account_division_code。勘定科目コード
+            - - storageFormat
+              - string
+              - ✓
+              - 見積原本の application_documents.storage_format。電子取引 / スキャナ保存 / 未指定
+            - - documentId
+              - int64
+              - ✓
+              - 見積原本の application_documents.application_document_id
+            - - fileName
+              - string
+              - ✓
+              - 見積原本ファイル名
+            - - previewUrl
+              - string
+              - '-'
+              - 見積書プレビュー用の認可済みURL。未発行時は NULL
+            - - status
+              - string
+              - ✓
+              - quotations.status
+            - - items
+              - DisposalQuotationItem[]
+              - ✓
+              - サーバー生成した廃棄委託費の集約明細1件
+        - Title: quotations配下items要素
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - quotationItemId
+              - int64
+              - ✓
+              - quotation_items.quotation_item_id
+            - - itemName
+              - string
+              - ✓
+              - quotation_items.item_name
+            - - quantity
+              - int32
+              - ✓
+              - quotation_items.original_quantity
+            - - unitPrice
+              - decimal
+              - '-'
+              - quotation_items.purchase_price_unit
+            - - amount
+              - decimal
+              - '-'
+              - quotation_items.purchase_price_total
+            - - accountTitle
+              - string
+              - '-'
+              - quotation_items.account_title
+            - - applicationAssetId
+              - int64
+              - '-'
+              - quotation_item_application_links.application_asset_id
+            - - editListId
+              - int64
+              - '-'
+              - quotation_item_application_links.edit_list_id
+            - - editListItemId
+              - int64
+              - '-'
+              - quotation_item_application_links.edit_list_item_id
+            - - linkedQuantity
+              - int32
+              - '-'
+              - quotation_item_application_links.linked_quantity
+            - - linkStatus
+              - string
+              - '-'
+              - quotation_item_application_links.link_status
+        - Title: order要素
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - orderId
+              - int64
+              - ✓
+              - orders.order_id
+            - - orderNo
+              - string
+              - ✓
+              - 発注番号
+            - - quotationId
+              - int64
+              - ✓
+              - 採用見積ID
+            - - vendorName
+              - string
+              - ✓
+              - 発注先業者名
+            - - orderType
+              - string
+              - ✓
+              - orders.order_type。廃棄申請では 廃棄委託 固定で保存する
+            - - settlementNo
+              - string
+              - '-'
+              - orders.settlement_no。院内決済No.
+            - - settlementOn
+              - date
+              - '-'
+              - orders.settlement_on。画面入力の決済日
+            - - orderDocumentDeliveryMethod
+              - string
+              - '-'
+              - 外部送付を行わないため null
+            - - orderDocumentDeliveryStatus
+              - string
+              - '-'
+              - 外部送付を行わないため null
+            - - orderDocumentSentAt
+              - datetime
+              - '-'
+              - 外部送付を行わないため null
+            - - orderOn
+              - date
+              - ✓
+              - 発注日
+            - - totalAmount
+              - decimal
+              - '-'
+              - orders.total_amount
+            - - status
+              - string
+              - ✓
+              - orders.status
+            - - documentId
+              - int64
+              - '-'
+              - 発注書の application_documents.application_document_id
+            - - previewUrl
+              - string
+              - '-'
+              - 発注書プレビュー用の認可済みURL
+        - Title: documents要素
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentId
+              - int64
+              - ✓
+              - application_documents.application_document_id
+            - - ownerType
+              - string
+              - ✓
+              - 廃棄タスクの完了書類は RFQ、見積書は QUOTATION。ORDER は使用しない
+            - - rfqId
+              - int64
+              - '-'
+              - 完了書類・発注書の application_documents.rfq_id。廃棄タスクの disposalTaskId と一致
+            - - orderId
+              - int64
+              - '-'
+              - 発注書の場合の application_documents.order_id。ownerType='ORDER' は使用せず、rfq_id + order_id で対象発注を特定する
+            - - stepCode
+              - string
+              - '-'
+              - ドキュメント工程コード。QUOTE_REQUEST / QUOTATION / ORDER / SCHEDULE / COMPLETE
+            - - documentCategory
+              - string
+              - ✓
+              - 見積書は QUOTATION、発注書は ORDER、完了書類は COMPLETE
+            - - documentType
+              - string
+              - ✓
+              - >-
+                画面表示用種別。院内決済書類 / 見積書 / 見積書（変更が発生した場合） / 産業廃棄物処理委託契約書 / 注文書 / 注文請書 / 廃棄物証明書（処分完了報告書） / 産業廃棄物管理票（マニフェスト） /
+                請求書 / その他
+            - - documentDate
+              - date
+              - '-'
+              - application_documents.document_date
+            - - documentNo
+              - string
+              - '-'
+              - application_documents.document_no
+            - - otherDocumentName
+              - string
+              - '-'
+              - documentType='その他' の場合のその他ドキュメント名
+            - - actualAmountExclTax
+              - decimal
+              - '-'
+              - documentType='見積書（変更が発生した場合）' の場合の実績金額（税抜）
+            - - accountDivisionCode
+              - string
+              - '-'
+              - documentType='見積書（変更が発生した場合）' の場合の勘定科目コード
+            - - storageFormat
+              - string
+              - ✓
+              - 電子取引 / スキャナ保存 / 未指定
+            - - fileName
+              - string
+              - ✓
+              - ファイル名
+            - - contentType
+              - string
+              - '-'
+              - 指定時は実際のfileパートと一致必須
+            - - fileSize
+              - int64
+              - '-'
+              - ファイルサイズ
+            - - downloadUrl
+              - string
+              - '-'
+              - 表示・ダウンロード用の認可済みURL。S3オブジェクトキー、S3バケット名、S3の直接URLは返さない
+            - - uploadedAt
+              - datetime
+              - ✓
+              - アップロード日時
+            - - uploadedByName
+              - string
+              - '-'
+              - アップロード者名
+  /disposal-task/tasks/{disposalTaskId}/vendor-requests/preview:
+    post:
+      tags:
+        - 移動・廃棄管理
+      operationId: postDisposalTaskTasksByDisposalTaskIdVendorRequestsPreview
+      summary: 廃棄見積依頼書プレビュー
+      description: STEP①で入力中の未保存の依頼先情報とご依頼事項から、業者別の見積依頼書を画面表示用に生成する。プレビュー表示だけでは業務DB・Amazon S3へ保存しない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDisposalTaskTasksByDisposalTaskIdVendorRequestsPreviewRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - vendor要素（DisposalVendorRequestInput）
+      x-word-request-subtables:
+        - Title: vendor要素（DisposalVendorRequestInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - vendorId
+              - int64
+              - '-'
+              - 業者マスタID
+            - - vendorName
+              - string
+              - ✓
+              - 依頼先業者名
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - email
+              - string
+              - ✓
+              - 依頼先情報として使用するメールアドレス。外部メール送信は行わない
+            - - phone
+              - string
+              - '-'
+              - 電話番号
+            - - dueOn
+              - date
+              - '-'
+              - 回答期限
+            - - requestNote
+              - string
+              - '-'
+              - 依頼先別補足
+      responses:
+        '200':
+          description: プレビュー生成成功
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': application/pdf
+      x-word-response-title: レスポンス（200：application/pdf）
+      x-word-response-subtable-titles: []
+      x-word-response-rows:
+        - - body
+          - binary
+          - ✓
+          - 廃棄見積依頼書PDFバイナリ。Content-Type は application/pdf
+  /disposal-task/tasks/{disposalTaskId}/cancel:
+    post:
+      tags:
+        - 移動・廃棄管理
+      operationId: postDisposalTaskTasksByDisposalTaskIdCancel
+      summary: 廃棄申請見送り
+      description: 発注前の廃棄タスクについて、選択した受付担当ユーザー情報を保存し、申請見送りとして終端する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDisposalTaskTasksByDisposalTaskIdCancelRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 見送り成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalTaskActionResponse'
+        '400':
+          description: 受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 発注済み以降、完了済み、または現在ステータス不整合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: 見送り対象の見積書S3オブジェクトを同期削除できない。DBの見送り・論理削除は確定済みで、同じ操作の再送により削除を再試行する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DisposalTaskActionResponse）
+      x-word-response-subtable-titles: []
+  /disposal-task/tasks/{disposalTaskId}/vendor-requests:
+    post:
+      tags:
+        - 移動・廃棄管理
+      operationId: postDisposalTaskTasksByDisposalTaskIdVendorRequests
+      summary: 廃棄見積依頼先登録
+      description: STEP①の業者別登録操作で、画面入力した依頼先、ご依頼事項、操作日時、操作ユーザーを保存する。依頼先は依頼操作済みのSENTとして登録するが、外部メールは送信せず、STEP①を継続する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '503'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 見積依頼先登録操作の冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDisposalTaskTasksByDisposalTaskIdVendorRequestsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles:
+        - vendor要素（DisposalVendorRequestInput）
+      x-word-request-subtables:
+        - Title: vendor要素（DisposalVendorRequestInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - vendorId
+              - int64
+              - '-'
+              - 業者マスタID
+            - - vendorName
+              - string
+              - ✓
+              - 依頼先業者名
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - email
+              - string
+              - ✓
+              - 依頼先保存時の必須メールアドレス。外部メール送信には使用しない
+            - - phone
+              - string
+              - '-'
+              - 電話番号
+            - - dueOn
+              - date
+              - '-'
+              - 回答期限
+            - - requestNote
+              - string
+              - '-'
+              - 依頼先別補足
+      responses:
+        '200':
+          description: 見積依頼先登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalVendorRequestRegistrationResponse'
+        '400':
+          description: 依頼先必須不足、メール形式不正、または冪等キー未指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 現在工程不整合、または依頼先を登録できないタスク状態
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。同じ冪等キーで再送する
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DisposalVendorRequestRegistrationResponse）
+      x-word-response-subtable-titles: []
+  /disposal-task/tasks/{disposalTaskId}/vendor-requests/complete:
+    post:
+      tags:
+        - 移動・廃棄管理
+      operationId: postDisposalTaskTasksByDisposalTaskIdVendorRequestsComplete
+      summary: 廃棄見積依頼完了
+      description: STEP①の見積依頼完了操作で、登録済みの有効な依頼先が1件以上あることを確認し、最終のご依頼事項・最早回答期限・選択した受付担当ユーザー情報を保存してSTEP②へ進める。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: transfer_disposal
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDisposalTaskTasksByDisposalTaskIdVendorRequestsCompleteRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 見積依頼完了成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalTaskActionResponse'
+        '400':
+          description: ご依頼事項の入力不正、受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 登録済みの有効な依頼先がない、現在工程不整合、または完了済み内容と異なる再送
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DisposalTaskActionResponse）
+      x-word-response-subtable-titles: []
+  /disposal-task/tasks/{disposalTaskId}/quotations:
+    post:
+      tags:
+        - 移動・廃棄管理
+      operationId: postDisposalTaskTasksByDisposalTaskIdQuotations
+      summary: 廃棄見積登録
+      description: 画面の「見積書の登録」押下時に、見積情報と選択済み見積原本を登録済み見積一覧へ追加し、見積フェーズに応じてグループと申請の状態を更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '503'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 見積登録操作の冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostDisposalTaskTasksByDisposalTaskIdQuotationsRequest'
+            encoding:
+              payload:
+                contentType: application/json
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - payload要素（DisposalQuotationRegistrationPayload）
+        - payload.document要素（QuotationDocumentInput）
+      x-word-request-subtables:
+        - Title: payload要素（DisposalQuotationRegistrationPayload）
+          Headers: [フィールド, 型, 必須, 説明]
+          Rows:
+            - [rfqVendorId, int64, ✓, STEP①で登録した依頼先ID]
+            - [quotationPhase, string, ✓, ESTIMATE / ORDER_REGISTRATION]
+            - [vendorQuotationNo, string, ✓, 画面入力の見積No.]
+            - [quotationOn, date, ✓, 見積日]
+            - [totalAmountExclTax, decimal, ✓, 見積金額（税別）]
+            - [accountDivisionCode, string, ✓, 勘定科目コード]
+            - [document, QuotationDocumentInput, ✓, 見積原本メタデータ]
+        - Title: payload.document要素（QuotationDocumentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - storageFormat
+              - string
+              - ✓
+              - ELECTRONIC_TRANSACTION / SCANNED / UNSPECIFIED
+            - - fileName
+              - string
+              - ✓
+              - アップロード時の元ファイル名。右ペインの見積書一覧に表示する
+            - - contentType
+              - string
+              - '-'
+              - 指定時は実際のfileパートと一致必須。application/pdf / image/jpeg / image/png
+            - - fileSize
+              - int64
+              - '-'
+              - 指定時は実際のfileパートと一致必須
+      responses:
+        '201':
+          description: 見積登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalQuotationResponse'
+        '400':
+          description: 入力不正、ファイル不足、許可されないファイル形式、条件付き項目不足、または冪等キー未指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 現在ステータスが見積登録可能状態ではない、見積業者が対象RFQのSENT/REPLIED依頼先ではない、または発注登録用見積が重複する
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 への見積原本保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。S3を保持し、同じ冪等キーで再送する
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：DisposalQuotationResponse）
+      x-word-response-subtable-titles: []
+  /disposal-task/tasks/{disposalTaskId}/quotations/{quotationId}:
+    delete:
+      tags:
+        - 移動・廃棄管理
+      operationId: deleteDisposalTaskTasksByDisposalTaskIdQuotationsByQuotationId
+      summary: 廃棄見積削除
+      description: 発注前の登録済み廃棄見積を論理削除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+        - name: quotationId
+          in: path
+          required: true
+          description: quotations.quotation_id
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクまたは対象見積が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 発注済み、採用済み、または現在ステータス不整合で削除不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: 論理削除後のAmazon S3同期削除に失敗した。同じDELETEを再送する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：No Content）
+      x-word-response-lines:
+        - レスポンスボディなし。
+  /disposal-task/tasks/{disposalTaskId}/quotations/{quotationId}/preview-url:
+    get:
+      tags:
+        - 移動・廃棄管理
+      operationId: getDisposalTaskTasksByDisposalTaskIdQuotationsByQuotationIdPreviewUrl
+      summary: 廃棄見積プレビュー
+      description: STEP②の「一覧表示」で取得した登録済み見積一覧から、選択した見積書を右ペインで表示するための認可済みURLを取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+        - name: quotationId
+          in: path
+          required: true
+          description: quotations.quotation_id
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: プレビューURL取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDisposalTaskTasksByDisposalTaskIdQuotationsByQuotationIdPreviewUrlResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスク、見積、または見積原本が存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': DocumentPreviewResponse
+      x-word-response-title: レスポンス（200：DocumentPreviewResponse）
+      x-word-response-subtable-titles: []
+  /disposal-task/tasks/{disposalTaskId}/order:
+    post:
+      tags:
+        - 移動・廃棄管理
+      operationId: postDisposalTaskTasksByDisposalTaskIdOrder
+      summary: 廃棄発注登録
+      description: STEP②の「発注書の発行」選択後、「発注登録」押下で、唯一の有効な発注登録用見積をサーバー側で自動採用し、発注と選択した受付担当ユーザー情報を保存して発注済へ進める。STEP②の「メール送信」はPhase2向け表示のため、Phase1では本APIを呼び出さない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '503'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 発注登録操作の冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDisposalTaskTasksByDisposalTaskIdOrderRequest'
+      x-word-request-title: リクエストボディ（application/json）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 発注登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalOrderResponse'
+        '400':
+          description: 入力不正、冪等キー未指定、受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 現在ステータス不整合、有効な発注登録用見積またはその見積明細1件が一意に決まらない、または発注重複
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: 発注書保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。S3を保持し、同じ冪等キーで再送する
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DisposalOrderResponse）
+      x-word-response-subtable-titles: []
+  /disposal-task/tasks/{disposalTaskId}/order/preview:
+    post:
+      tags:
+        - 移動・廃棄管理
+      operationId: postDisposalTaskTasksByDisposalTaskIdOrderPreview
+      summary: 廃棄発注書プレビュー
+      description: STEP②の「発注書のプレビュー」押下で、唯一の有効な発注登録用見積をサーバー側で自動採用し、発注登録前の発注書を確認する。プレビュー表示だけでは発注No.採番やDB保存を行わない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDisposalTaskTasksByDisposalTaskIdOrderPreviewRequest'
+      x-word-request-title: リクエストボディ（application/json）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 発注書プレビュー生成成功
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 発注可能なステータスではない、または有効な発注登録用見積もしくはその見積明細1件が一意に決まらない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': application/pdf
+      x-word-response-title: レスポンス（200：application/pdf）
+      x-word-response-subtable-titles: []
+      x-word-response-rows:
+        - - body
+          - binary
+          - ✓
+          - 廃棄発注書PDFバイナリ。Content-Type は application/pdf
+  /disposal-task/tasks/{disposalTaskId}/delivery-date:
+    post:
+      tags:
+        - 移動・廃棄管理
+      operationId: postDisposalTaskTasksByDisposalTaskIdDeliveryDate
+      summary: 廃棄作業日/納期登録
+      description: 廃棄予定日または作業日と選択した受付担当ユーザー情報を登録し、納期確定へ進める。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDisposalTaskTasksByDisposalTaskIdDeliveryDateRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 作業日/納期登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalTaskActionResponse'
+        '400':
+          description: 入力不正、受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 現在ステータスが日程登録可能状態ではない、または納期確定後に保存済み値と異なる日付が指定された
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DisposalTaskActionResponse）
+      x-word-response-subtable-titles: []
+  /disposal-task/tasks/{disposalTaskId}/documents:
+    post:
+      tags:
+        - 移動・廃棄管理
+      operationId: postDisposalTaskTasksByDisposalTaskIdDocuments
+      summary: 廃棄ドキュメント登録
+      description: STEP④の「ドキュメント登録」押下時に、完了書類のファイル本体と画面入力項目を登録する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '503'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 完了書類登録操作の冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostDisposalTaskTasksByDisposalTaskIdDocumentsRequest'
+            encoding:
+              payload:
+                contentType: application/json
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - payload.document要素（DocumentInput）
+      x-word-request-subtables:
+        - Title: payload.document要素（DocumentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentType
+              - string
+              - ✓
+              - >-
+                STEP④で登録する完了書類の9種別。院内決済書類 / 見積書（変更が発生した場合） / 産業廃棄物処理委託契約書 / 注文書 / 注文請書 / 廃棄物証明書（処分完了報告書） /
+                産業廃棄物管理票（マニフェスト） / 請求書 / その他。STEP②の通常見積書は見積登録APIが固定する
+            - - documentDate
+              - date
+              - '-'
+              - 画面の日付入力。application_documents.document_date に保存
+            - - documentNo
+              - string
+              - '-'
+              - 画面のドキュメントNo.。application_documents.document_no に保存
+            - - otherDocumentName
+              - string
+              - 条件付き
+              - documentType='その他' の場合に必須
+            - - actualAmountExclTax
+              - decimal
+              - 条件付き
+              - documentType='見積書（変更が発生した場合）' の場合に必須
+            - - accountDivisionCode
+              - string
+              - 条件付き
+              - documentType='見積書（変更が発生した場合）' の場合に必須
+            - - storageFormat
+              - string
+              - ✓
+              - ELECTRONIC_TRANSACTION / SCANNED / UNSPECIFIED
+            - - fileName
+              - string
+              - ✓
+              - アップロード時の元ファイル名。右ペインの完了書類一覧に表示する
+            - - contentType
+              - string
+              - '-'
+              - 指定時は実際のfileパートと一致必須。application/pdf / image/jpeg / image/png
+            - - fileSize
+              - int64
+              - '-'
+              - 指定時は実際のfileパートと一致必須
+      responses:
+        '201':
+          description: ドキュメント登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentSummary'
+        '400':
+          description: 入力不正、条件付き項目不足、許可されないドキュメント種別・ファイル形式、または冪等キー未指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 対象タスクが完了書類登録可能状態ではない、または冪等キーが競合する
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 へのドキュメント保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: DBコミット成否を確認できない。S3を保持し、同じ冪等キーで再送する
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（201：DocumentSummary）
+      x-word-response-subtable-titles: []
+  /disposal-task/tasks/{disposalTaskId}/documents/{documentId}:
+    delete:
+      tags:
+        - 移動・廃棄管理
+      operationId: deleteDisposalTaskTasksByDisposalTaskIdDocumentsByDocumentId
+      summary: 廃棄ドキュメント削除
+      description: 廃棄申請タスクに紐づくドキュメントを論理削除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+        - name: documentId
+          in: path
+          required: true
+          description: application_documents.application_document_id
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない、対象RFQの完了書類ではない、他タスクの書類である、または施設外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 確定済み工程のため削除不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: 論理削除後のAmazon S3同期削除に失敗した。同じDELETEを再送する
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：No Content）
+      x-word-response-lines:
+        - レスポンスボディなし。
+  /disposal-task/tasks/{disposalTaskId}/documents/{documentId}/preview-url:
+    get:
+      tags:
+        - 移動・廃棄管理
+      operationId: getDisposalTaskTasksByDisposalTaskIdDocumentsByDocumentIdPreviewUrl
+      summary: 廃棄ドキュメントプレビュー
+      description: STEP④の一覧表示または右ペインで選択した完了書類をプレビューするための認可済みURLを取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+        - name: documentId
+          in: path
+          required: true
+          description: application_documents.application_document_id
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: プレビューURL取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDisposalTaskTasksByDisposalTaskIdDocumentsByDocumentIdPreviewUrlResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない、対象RFQの完了書類ではない、他タスクの書類である、または施設外
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': DocumentPreviewResponse
+      x-word-response-title: レスポンス（200：DocumentPreviewResponse）
+      x-word-response-subtable-titles: []
+  /disposal-task/tasks/{disposalTaskId}/complete:
+    post:
+      tags:
+        - 移動・廃棄管理
+      operationId: postDisposalTaskTasksByDisposalTaskIdComplete
+      summary: 廃棄完了登録
+      description: STEP④で登録済み完了書類を確認し、「登録完了（タスク完了）」押下で選択した受付担当ユーザー情報を保存して廃棄申請タスクを完了する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: disposalTaskId
+          in: path
+          required: true
+          description: rfqs.rfq_id
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDisposalTaskTasksByDisposalTaskIdCompleteRequest'
+      x-word-request-title: リクエストボディ（application/json）
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 完了登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisposalTaskActionResponse'
+        '400':
+          description: 入力不正、受付担当者未指定、または作業対象施設で担当できないユーザーの指定
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 作業対象施設に対する実効 transfer_disposal なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象廃棄タスクが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 現在ステータスが完了登録可能状態ではない、または固定8種類の確認対象ドキュメントが未登録。未登録種別は details で返す
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：DisposalTaskActionResponse）
+      x-word-response-subtable-titles: []
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  headers:
+    RetryAfter:
+      description: >-
+        エラーコードが IDEMPOTENCY_REQUEST_IN_PROGRESS または
+        DISPOSAL_DB_503_COMMIT_OUTCOME_UNKNOWN の場合に返す再試行待機秒数
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+        example: 5
+  schemas:
+    DisposalReceptionAssigneeCandidateListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisposalReceptionAssigneeCandidate'
+          description: 受付担当者候補。keyword未指定時は候補に含まれるAPI実行ユーザーを先頭とし、以降は氏名、所属部署、ユーザーIDの順で安定ソートする
+          x-word-subtable-title: items要素（DisposalReceptionAssigneeCandidate）
+    DisposalReceptionAssigneeCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - name
+        - department
+        - contact
+        - accountType
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: users.user_id。画面では氏名を表示し、本値を選択値として保持する
+        name:
+          type: string
+          description: users.name
+        department:
+          type: string
+          nullable: true
+          description: users.section_name。未設定時は null とし、所属部門等で補完しない
+        contact:
+          type: string
+          nullable: true
+          description: users.phone_number。未設定時は null とし、メールアドレス等で補完しない
+        accountType:
+          type: string
+          enum: [HOSPITAL, SHIP]
+          description: 病院ユーザーまたはSHIPユーザー
+    TransferDisposalTaskListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - pendingTransferCount
+        - pendingDisposalCount
+        - transferApplications
+        - disposalApplications
+        - disposalGroups
+      properties:
+        pendingTransferCount:
+          type: integer
+          format: int32
+          description: 未承認の移動申請件数
+        pendingDisposalCount:
+          type: integer
+          format: int32
+          description: RFQグループ未作成の廃棄申請件数
+        transferApplications:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferApplicationListItem'
+          description: 移動申請行
+          x-word-subtable-title: transferApplications要素（TransferApplicationListItem）
+        disposalApplications:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisposalApplicationListItem'
+          description: 廃棄申請受付行
+          x-word-subtable-title: disposalApplications要素（DisposalApplicationListItem）
+        disposalGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisposalGroupListItem'
+          description: 廃棄RFQグループ行
+          x-word-subtable-title: disposalGroups要素（DisposalGroupListItem）
+    ApplicationAssetSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationAssetId
+        - assetLedgerId
+        - assetRole
+        - qrCodeValue
+        - itemName
+        - makerName
+        - modelName
+        - serialNo
+        - currentLocationName
+        - destinationLocationName
+        - isRegisteredAsset
+      properties:
+        applicationAssetId:
+          type: integer
+          format: int64
+          description: application_assets.application_asset_id
+        assetLedgerId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 登録済み資産の場合のみ設定
+        assetRole:
+          type: string
+          enum: [TRANSFER, DISPOSAL]
+          description: TRANSFER / DISPOSAL
+        qrCodeValue:
+          type: string
+          nullable: true
+          description: QRラベル
+        itemName:
+          type: string
+          description: 品目名
+        makerName:
+          type: string
+          nullable: true
+          description: メーカー名
+        modelName:
+          type: string
+          nullable: true
+          description: 型式
+        serialNo:
+          type: string
+          nullable: true
+          description: シリアルNo.
+        currentLocationName:
+          type: string
+          nullable: true
+          description: 現在設置場所
+        destinationLocationName:
+          type: string
+          nullable: true
+          description: 移動先設置場所
+        isRegisteredAsset:
+          type: boolean
+          description: assetLedgerId がある場合 true
+    TransferApplicationListItem:
+      type: object
+      additionalProperties: false
+      required:
+        - transferApplicationId
+        - applicationNo
+        - status
+        - statusLabel
+        - requestedOn
+        - requestedByDepartmentName
+        - requestedByName
+        - requestedByContact
+        - sourceLocationName
+        - destinationLocationName
+        - transferReason
+        - assets
+        - availableActions
+      properties:
+        transferApplicationId:
+          type: integer
+          format: int64
+          description: applications.application_id
+        applicationNo:
+          type: string
+          description: 申請番号
+        status:
+          type: string
+          description: applications.status の保存値
+        statusLabel:
+          type: string
+          description: 画面表示用ステータス
+        requestedOn:
+          type: string
+          format: date
+          description: 申請日
+        requestedByDepartmentName:
+          type: string
+          nullable: true
+          description: 申請者所属
+        requestedByName:
+          type: string
+          description: 申請者名
+        requestedByContact:
+          type: string
+          nullable: true
+          description: 申請者連絡先
+        sourceLocationName:
+          type: string
+          nullable: true
+          description: 移動元設置場所
+        destinationLocationName:
+          type: string
+          description: 移動先設置場所
+        transferReason:
+          type: string
+          nullable: true
+          description: コメント（移動理由 他）
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationAssetSummary'
+          description: 移動対象資産
+          x-word-subtable-title: assets要素（ApplicationAssetSummary）
+        availableActions:
+          type: array
+          items:
+            type: string
+          description: APPROVE_TRANSFER / VIEW_DETAIL のうち実行可能な操作
+    DisposalApplicationListItem:
+      type: object
+      additionalProperties: false
+      required:
+        - disposalApplicationId
+        - applicationNo
+        - status
+        - statusLabel
+        - requestedOn
+        - requestedByDepartmentName
+        - requestedByName
+        - requestedByContact
+        - disposalReasonCode
+        - disposalReasonText
+        - relatedRepairApplicationId
+        - relatedPurchaseApplicationId
+        - assets
+        - availableActions
+      properties:
+        disposalApplicationId:
+          type: integer
+          format: int64
+          description: applications.application_id
+        applicationNo:
+          type: string
+          description: 申請番号
+        status:
+          type: string
+          description: applications.status の保存値
+        statusLabel:
+          type: string
+          description: 画面表示用ステータス
+        requestedOn:
+          type: string
+          format: date
+          description: 申請日
+        requestedByDepartmentName:
+          type: string
+          nullable: true
+          description: 申請者所属
+        requestedByName:
+          type: string
+          description: 申請者名
+        requestedByContact:
+          type: string
+          nullable: true
+          description: 申請者連絡先
+        disposalReasonCode:
+          type: string
+          nullable: true
+          description: 廃棄理由コード
+        disposalReasonText:
+          type: string
+          nullable: true
+          description: 廃棄理由
+        relatedRepairApplicationId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 修理不能から作成された場合の元修理申請ID
+        relatedPurchaseApplicationId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 更新購入後処理から作成された場合の元購入申請ID
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationAssetSummary'
+          description: 廃棄対象資産
+          x-word-subtable-title: assets要素（ApplicationAssetSummary）
+        availableActions:
+          type: array
+          items:
+            type: string
+          description: CREATE_DISPOSAL_GROUP / VIEW_DETAIL のうち実行可能な操作
+    DisposalGroupListItem:
+      type: object
+      additionalProperties: false
+      required:
+        - disposalTaskId
+        - rfqNo
+        - groupName
+        - status
+        - rfqStatus
+        - applicationStatus
+        - statusLabel
+        - managementType
+        - workflowType
+        - applicationType
+        - receptionDepartment
+        - receptionPerson
+        - receptionUserId
+        - receptionConfirmedAt
+        - receptionContact
+        - isRemodelOrigin
+        - editListId
+        - editListItemIds
+        - vendorName
+        - vendorPerson
+        - vendorContact
+        - deadlineLabel
+        - deadlineOn
+        - applicationCount
+        - assetCount
+        - availableActions
+      properties:
+        disposalTaskId:
+          type: integer
+          format: int64
+          description: rfqs.rfq_id
+        rfqNo:
+          type: string
+          description: rfqs.rfq_no
+        groupName:
+          type: string
+          description: rfqs.rfq_group_name
+        status:
+          type: string
+          description: 画面表示用の集約ステータス
+        rfqStatus:
+          type: string
+          description: rfqs.status
+        applicationStatus:
+          type: string
+          description: 紐づく applications.status の代表値
+        statusLabel:
+          type: string
+          description: 画面表示用ステータス
+        managementType:
+          type: string
+          enum: [DISPOSAL]
+        workflowType:
+          type: string
+          enum: [RFQ]
+        applicationType:
+          type: string
+          enum: [DISPOSAL]
+        receptionDepartment:
+          type: string
+          nullable: true
+          description: 現在の受付担当ユーザーの users.section_name スナップショット。未設定時は null
+        receptionPerson:
+          type: string
+          nullable: true
+          description: 現在の受付担当ユーザーの users.name スナップショット
+        receptionUserId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 現在の受付担当ユーザーID
+        receptionConfirmedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 初回受付確定日時
+        receptionContact:
+          type: string
+          nullable: true
+          description: 現在の受付担当ユーザーの users.phone_number スナップショット。未設定時は null
+        isRemodelOrigin:
+          type: boolean
+          description: リモデル起点の場合 true
+        editListId:
+          type: integer
+          format: int64
+          nullable: true
+          description: リモデル起点の場合の編集リストID
+        editListItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: リモデル編集リスト明細ID。該当なしは空配列
+        vendorName:
+          type: string
+          nullable: true
+          description: 発注前は主依頼先、発注後は採用した発注登録用見積の業者名。業者未登録時は null
+        vendorPerson:
+          type: string
+          nullable: true
+          description: 発注前は主依頼先、発注後は採用した発注登録用見積の業者担当者名。未設定時は null
+        vendorContact:
+          type: string
+          nullable: true
+          description: 代表表示業者の電話番号。メールアドレスは使用せず、未設定時は null
+        deadlineLabel:
+          type: string
+          nullable: true
+          description: 期限列ラベル。見積提出期限 / 廃棄予定日。期限を表示しない状態は null
+        deadlineOn:
+          type: string
+          format: date
+          nullable: true
+          description: 期限列の日付。対象日付が未設定または期限を表示しない状態は null
+        applicationCount:
+          type: integer
+          format: int32
+          description: 紐づく廃棄申請件数
+        assetCount:
+          type: integer
+          format: int32
+          description: 紐づく廃棄対象資産件数
+        availableActions:
+          type: array
+          items:
+            type: string
+          description: OPEN_TASK / CANCEL のうち実行可能な操作
+    PostTransferApplicationsByTransferApplicationIdApproveRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        approvedOn:
+          type: string
+          format: date
+          description: 承認日。未指定時は業務日付
+        approvalComment:
+          type: string
+          description: 承認コメント
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 画面取得時の applications.updated_at。競合検出に使用する
+    TransferApproveResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - transferApplicationId
+        - status
+        - statusLabel
+        - updatedAssetLedgerIds
+        - updatedAt
+      properties:
+        transferApplicationId:
+          type: integer
+          format: int64
+          description: 承認した移動申請ID
+        status:
+          type: string
+          description: 完了
+        statusLabel:
+          type: string
+          description: 移動完了
+        updatedAssetLedgerIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 原本反映した資産台帳ID
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PostQuotationDataBoxTransferManagementDisposalGroupsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - groupName
+        - applicationIds
+        - receptionUserId
+      properties:
+        groupName:
+          type: string
+          minLength: 1
+          description: 画面で入力した見積依頼グループ名。前後空白を除去した結果が空文字の場合は400
+        applicationIds:
+          type: array
+          minItems: 1
+          items:
+            type: integer
+            format: int64
+          description: グループ化する廃棄申請ID。1件以上
+        receptionUserId:
+          type: integer
+          format: int64
+          description: グループ作成時の受付担当者として選択した病院ユーザーまたはSHIPユーザーのID。通常アカウントではログインユーザーを初期選択値とし、共有システム管理者は候補から通常アカウントを選択する
+    DisposalGroupCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - created
+        - skipped
+      properties:
+        created:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisposalGroupCreateResult'
+          description: 今回作成した廃棄依頼グループ。通常は1要素で、disposalTaskId、rfqNo、groupName、applicationIds、初期状態を含む
+          x-word-subtable-title: created要素（DisposalGroupCreateResult）
+        skipped:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisposalGroupSkippedResult'
+          description: 重複または対象条件不一致で今回の作成対象から除外した申請。applicationId、reasonCode、reason を含む
+          x-word-subtable-title: skipped要素（DisposalGroupSkippedResult）
+    DisposalGroupCreateResult:
+      type: object
+      additionalProperties: false
+      required:
+        - disposalTaskId
+        - rfqNo
+        - groupName
+        - applicationIds
+        - rfqStatus
+        - applicationStatus
+        - statusLabel
+        - receptionDepartment
+        - receptionPerson
+        - receptionUserId
+        - receptionConfirmedAt
+      properties:
+        disposalTaskId:
+          type: integer
+          format: int64
+          description: rfqs.rfq_id
+        rfqNo:
+          type: string
+          description: 確定時にサーバー採番した DISP-yyyyMMdd-nnnn
+        groupName:
+          type: string
+          description: 作成したグループ名
+        applicationIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 紐づけた廃棄申請ID
+        rfqStatus:
+          type: string
+          description: 見積依頼
+        applicationStatus:
+          type: string
+          description: 新規申請
+        statusLabel:
+          type: string
+          description: 画面表示ステータス
+        receptionDepartment:
+          type: string
+          nullable: true
+          description: 現在の受付担当ユーザーの users.section_name スナップショット。未設定時は null
+        receptionPerson:
+          type: string
+          nullable: true
+          description: 現在の受付担当ユーザーの users.name スナップショット
+        receptionUserId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 現在の受付担当ユーザーを示す users.user_id
+        receptionConfirmedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 初回受付情報を保存した日時
+    DisposalGroupSkippedResult:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationId
+        - reasonCode
+        - reason
+      properties:
+        applicationId:
+          type: integer
+          format: int64
+          description: 作成対象から除外した申請ID
+        reasonCode:
+          type: string
+          description: DISPOSAL_GROUP_ASSET_DUPLICATE 等の除外理由コード
+        reason:
+          type: string
+          description: 除外理由
+    DisposalTaskDetailResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - task
+        - applications
+        - steps
+        - vendorRequests
+        - quotations
+        - order
+        - documents
+        - availableActions
+        - origins
+      properties:
+        task:
+          $ref: '#/components/schemas/DisposalTaskHeader'
+          description: 廃棄タスクヘッダ
+          x-word-subtable-title: task要素（DisposalTaskHeader）
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisposalApplicationSummary'
+          description: 紐づく廃棄申請
+          x-word-subtable-title: applications要素（DisposalApplicationSummary）
+        steps:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items:
+            $ref: '#/components/schemas/DisposalTaskStep'
+          description: 画面の4工程を工程順に返す
+          x-word-subtable-title: steps要素（DisposalTaskStep）
+        vendorRequests:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisposalVendorRequest'
+          description: 見積依頼先
+          x-word-subtable-title: vendorRequests要素（DisposalVendorRequest）
+        quotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisposalQuotation'
+          description: 登録済み見積
+          x-word-subtable-title: quotations要素（DisposalQuotation）
+        order:
+          allOf:
+            - $ref: '#/components/schemas/DisposalOrder'
+          nullable: true
+          description: 発注情報。未登録時は null
+          x-word-subtable-title: order要素（DisposalOrder）
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentSummary'
+          description: 登録済みドキュメント
+          x-word-omit-subtable: true
+        availableActions:
+          type: array
+          items:
+            type: string
+          description: >-
+            PREVIEW_VENDOR_REQUEST / REGISTER_VENDOR_REQUEST / COMPLETE_VENDOR_REQUEST /
+            REGISTER_QUOTATION / PREVIEW_QUOTATION / DELETE_QUOTATION /
+            PREVIEW_ORDER / REGISTER_ORDER / CANCEL_TASK / REGISTER_DELIVERY_DATE /
+            REGISTER_DOCUMENT / PREVIEW_DOCUMENT / DELETE_DOCUMENT / COMPLETE_TASK のうち実行可能な操作。
+            PREVIEW_ORDER と REGISTER_ORDER は有効な発注登録用見積が1件だけ存在する場合に限り返す
+        origins:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisposalOrigin'
+          description: 申請・申請明細ごとの起票元
+          x-word-subtable-title: origins要素（DisposalOrigin）
+    DisposalTaskHeader:
+      type: object
+      additionalProperties: false
+      required:
+        - disposalTaskId
+        - rfqNo
+        - groupName
+        - status
+        - rfqStatus
+        - applicationStatus
+        - statusLabel
+        - managementType
+        - workflowType
+        - applicationType
+        - receptionDepartment
+        - receptionPerson
+        - receptionUserId
+        - receptionConfirmedAt
+        - receptionContact
+        - isRemodelOrigin
+        - editListId
+        - editListItemIds
+        - vendorName
+        - quotationDueOn
+        - disposalScheduledOn
+        - applicationCount
+        - assetCount
+        - requestComment
+      properties:
+        disposalTaskId:
+          type: integer
+          format: int64
+          description: rfqs.rfq_id
+        rfqNo:
+          type: string
+          description: rfqs.rfq_no
+        groupName:
+          type: string
+          description: rfqs.rfq_group_name
+        status:
+          type: string
+          description: 画面表示用の集約ステータス
+        rfqStatus:
+          type: string
+          description: rfqs.status
+        applicationStatus:
+          type: string
+          description: 紐づく applications.status の代表値
+        statusLabel:
+          type: string
+          description: 画面表示用ステータス
+        managementType:
+          type: string
+          enum: [DISPOSAL]
+        workflowType:
+          type: string
+          enum: [RFQ]
+        applicationType:
+          type: string
+          enum: [DISPOSAL]
+        receptionDepartment:
+          type: string
+          nullable: true
+          description: 現在の受付担当ユーザーの users.section_name スナップショット。未設定時は null
+        receptionPerson:
+          type: string
+          nullable: true
+          description: 現在の受付担当ユーザーの users.name スナップショット
+        receptionUserId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 現在の受付担当ユーザーID
+        receptionConfirmedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 初回受付確定日時
+        receptionContact:
+          type: string
+          nullable: true
+          description: 現在の受付担当ユーザーの users.phone_number スナップショット。未設定時は null
+        isRemodelOrigin:
+          type: boolean
+          description: リモデル起点の場合 true
+        editListId:
+          type: integer
+          format: int64
+          nullable: true
+          description: リモデル起点の場合の編集リストID
+        editListItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: リモデル編集リスト明細ID。該当なしは空配列
+        vendorName:
+          type: string
+          nullable: true
+          description: 発注前は主依頼先、発注後は採用した発注登録用見積の業者名。業者未登録時は null
+        quotationDueOn:
+          type: string
+          format: date
+          nullable: true
+          description: 見積提出期限
+        disposalScheduledOn:
+          type: string
+          format: date
+          nullable: true
+          description: 廃棄予定日
+        applicationCount:
+          type: integer
+          format: int32
+        assetCount:
+          type: integer
+          format: int32
+        requestComment:
+          type: string
+          nullable: true
+          description: rfqs.request_comment。再アクセス時は保存値を返す
+    DisposalApplicationSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - disposalApplicationId
+        - applicationNo
+        - requestedOn
+        - requestedByDepartmentName
+        - requestedByName
+        - requestedByContact
+        - disposalReasonCode
+        - disposalReasonText
+        - relatedRepairApplicationId
+        - relatedPurchaseApplicationId
+        - assets
+      properties:
+        disposalApplicationId:
+          type: integer
+          format: int64
+        applicationNo:
+          type: string
+        requestedOn:
+          type: string
+          format: date
+        requestedByDepartmentName:
+          type: string
+          nullable: true
+        requestedByName:
+          type: string
+        requestedByContact:
+          type: string
+          nullable: true
+        disposalReasonCode:
+          type: string
+          nullable: true
+        disposalReasonText:
+          type: string
+          nullable: true
+        relatedRepairApplicationId:
+          type: integer
+          format: int64
+          nullable: true
+        relatedPurchaseApplicationId:
+          type: integer
+          format: int64
+          nullable: true
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationAssetSummary'
+          x-word-subtable-title: assets要素（ApplicationAssetSummary）
+    DisposalTaskStep:
+      type: object
+      additionalProperties: false
+      required:
+        - stepCode
+        - stepName
+        - stepStatus
+        - isCurrent
+        - startedAt
+        - completedAt
+      properties:
+        stepCode:
+          type: string
+          enum: [QUOTE_REQUEST, QUOTATION_ORDER, WORK_DATE, COMPLETE]
+          description: 画面の4工程。STEP②は見積登録と発注をQUOTATION_ORDERとして一体管理する
+        stepName:
+          type: string
+        stepStatus:
+          type: string
+          enum: [NOT_STARTED, IN_PROGRESS, COMPLETED, SKIPPED, CANCELED]
+        isCurrent:
+          type: boolean
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+    DisposalVendorRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqVendorId
+        - vendorId
+        - vendorName
+        - contactPerson
+        - email
+        - phone
+        - dueOn
+        - requestNote
+        - requestStatus
+      properties:
+        rfqVendorId:
+          type: integer
+          format: int64
+        vendorId:
+          type: integer
+          format: int64
+          nullable: true
+        vendorName:
+          type: string
+        contactPerson:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        dueOn:
+          type: string
+          format: date
+          nullable: true
+        requestNote:
+          type: string
+          nullable: true
+        requestStatus:
+          type: string
+          enum: [DRAFT, SENT, REPLIED, CANCELED]
+          description: SENTは依頼送信操作の保存完了を表し、メール配信成功を意味しない
+    DisposalQuotation:
+      type: object
+      additionalProperties: false
+      required:
+        - quotationId
+        - quotationNo
+        - vendorQuotationNo
+        - vendorId
+        - vendorName
+        - quotationPhase
+        - quotationOn
+        - totalAmountExclTax
+        - accountDivisionCode
+        - storageFormat
+        - documentId
+        - fileName
+        - previewUrl
+        - status
+        - items
+      properties:
+        quotationId:
+          type: integer
+          format: int64
+        quotationNo:
+          type: string
+          description: システム採番の受領見積番号
+        vendorQuotationNo:
+          type: string
+          nullable: true
+          description: 画面入力の見積No.
+        vendorId:
+          type: integer
+          format: int64
+          nullable: true
+        vendorName:
+          type: string
+        quotationPhase:
+          type: string
+          enum: [ESTIMATE, ORDER_REGISTRATION]
+        quotationOn:
+          type: string
+          format: date
+        totalAmountExclTax:
+          type: number
+          nullable: true
+        accountDivisionCode:
+          type: string
+          nullable: true
+        storageFormat:
+          type: string
+          enum: [ELECTRONIC_TRANSACTION, SCANNED, UNSPECIFIED]
+        documentId:
+          type: integer
+          format: int64
+        fileName:
+          type: string
+          description: アップロード時の元ファイル名
+        previewUrl:
+          type: string
+          nullable: true
+          description: 見積書プレビュー用の認可済みURL
+        status:
+          type: string
+        items:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            $ref: '#/components/schemas/DisposalQuotationItem'
+          description: 見積金額・勘定科目からサーバー生成した廃棄委託費の集約明細1件
+          x-word-subtable-title: quotations配下items要素（DisposalQuotationItem）
+    DisposalQuotationItem:
+      type: object
+      additionalProperties: false
+      required:
+        - quotationItemId
+        - itemName
+        - quantity
+        - unitPrice
+        - amount
+        - accountTitle
+        - applicationAssetId
+        - editListId
+        - editListItemId
+        - linkedQuantity
+        - linkStatus
+      properties:
+        quotationItemId:
+          type: integer
+          format: int64
+        itemName:
+          type: string
+          description: サーバー生成値「廃棄委託費」
+        quantity:
+          type: integer
+          format: int32
+          description: サーバー生成値1
+        unitPrice:
+          type: number
+          nullable: true
+        amount:
+          type: number
+          nullable: true
+        accountTitle:
+          type: string
+          nullable: true
+        applicationAssetId:
+          type: integer
+          format: int64
+          nullable: true
+        editListId:
+          type: integer
+          format: int64
+          nullable: true
+        editListItemId:
+          type: integer
+          format: int64
+          nullable: true
+        linkedQuantity:
+          type: integer
+          format: int32
+          nullable: true
+        linkStatus:
+          type: string
+          nullable: true
+    DisposalOrder:
+      type: object
+      additionalProperties: false
+      required:
+        - orderId
+        - orderNo
+        - quotationId
+        - vendorName
+        - orderType
+        - settlementNo
+        - settlementOn
+        - orderDocumentDeliveryMethod
+        - orderDocumentDeliveryStatus
+        - orderDocumentSentAt
+        - orderOn
+        - totalAmount
+        - status
+        - documentId
+        - previewUrl
+      properties:
+        orderId:
+          type: integer
+          format: int64
+        orderNo:
+          type: string
+        quotationId:
+          type: integer
+          format: int64
+          description: 唯一の有効な発注登録用見積ID
+        vendorName:
+          type: string
+        orderType:
+          type: string
+          description: 廃棄委託
+        settlementNo:
+          type: string
+          nullable: true
+        settlementOn:
+          type: string
+          format: date
+          nullable: true
+        orderDocumentDeliveryMethod:
+          type: string
+          nullable: true
+          description: 外部送付を行わないため null
+        orderDocumentDeliveryStatus:
+          type: string
+          nullable: true
+          description: 外部送付を行わないため null
+        orderDocumentSentAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 外部送付を行わないため null
+        orderOn:
+          type: string
+          format: date
+        totalAmount:
+          type: number
+          nullable: true
+        status:
+          type: string
+        documentId:
+          type: integer
+          format: int64
+          nullable: true
+        previewUrl:
+          type: string
+          nullable: true
+    DisposalOrigin:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationId
+        - applicationAssetId
+        - isRemodelOrigin
+        - editListId
+        - editListItemIds
+      properties:
+        applicationId:
+          type: integer
+          format: int64
+        applicationAssetId:
+          type: integer
+          format: int64
+          nullable: true
+        isRemodelOrigin:
+          type: boolean
+        editListId:
+          type: integer
+          format: int64
+          nullable: true
+        editListItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    PostDisposalTaskTasksByDisposalTaskIdVendorRequestsPreviewRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - vendor
+      properties:
+        requestComment:
+          type: string
+          description: 画面入力中の廃棄依頼グループ単位のご依頼事項。プレビューへ一時反映し、DBへ保存しない
+        vendor:
+          $ref: '#/components/schemas/DisposalVendorRequestInput'
+          description: プレビュー対象となる画面入力中の未保存依頼先
+          x-word-subtable-title: vendor要素（DisposalVendorRequestInput）
+    DisposalTaskActionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - disposalTaskId
+        - applicationIds
+        - status
+        - rfqStatus
+        - applicationStatus
+        - statusLabel
+        - updatedAt
+      properties:
+        disposalTaskId:
+          type: integer
+          format: int64
+          description: 廃棄申請タスクID
+        applicationIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 更新対象申請ID
+        status:
+          type: string
+          description: 更新後の画面表示用集約ステータス
+        rfqStatus:
+          type: string
+          description: 更新後の rfqs.status。グループ操作時の正本
+        applicationStatus:
+          type: string
+          description: 更新後の対象 applications.status。申請操作時の正本
+        statusLabel:
+          type: string
+          description: 更新後表示ステータス
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PostDisposalTaskTasksByDisposalTaskIdVendorRequestsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - vendor
+      properties:
+        requestComment:
+          type: string
+          description: rfqs.request_comment。廃棄依頼グループ単位のご依頼事項。未指定時は保存済み値を維持する
+        vendor:
+          $ref: '#/components/schemas/DisposalVendorRequestInput'
+          description: 登録する依頼先。登録時にSENTとして保存するが、外部メールは送信しない
+          x-word-subtable-title: vendor要素（DisposalVendorRequestInput）
+    DisposalVendorRequestInput:
+      type: object
+      additionalProperties: false
+      required:
+        - vendorName
+        - email
+      properties:
+        vendorId:
+          type: integer
+          format: int64
+          description: 業者マスタID
+        vendorName:
+          type: string
+          description: 依頼先業者名
+        contactPerson:
+          type: string
+          description: 担当者名
+        email:
+          type: string
+          format: email
+          description: 依頼先保存時の必須メールアドレス。外部メール送信には使用しない
+        phone:
+          type: string
+          description: 電話番号
+        dueOn:
+          type: string
+          format: date
+          description: 回答期限
+        requestNote:
+          type: string
+          description: 依頼先別補足
+    DisposalVendorRequestRegistrationResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - disposalTaskId
+        - rfqVendorId
+        - isPrimaryVendor
+        - requestStatus
+        - requestedAt
+      properties:
+        disposalTaskId:
+          type: integer
+          format: int64
+          description: 廃棄申請タスクID。rfqs.rfq_id
+        rfqVendorId:
+          type: integer
+          format: int64
+          description: 登録した見積依頼先ID
+        isPrimaryVendor:
+          type: boolean
+          description: 主依頼先として登録した場合true
+        requestStatus:
+          type: string
+          enum: [SENT]
+          description: 依頼先情報と依頼操作の登録完了状態。外部メール配信成功を意味しない
+        requestedAt:
+          type: string
+          format: date-time
+          description: 依頼先登録操作を保存した日時
+    PostDisposalTaskTasksByDisposalTaskIdVendorRequestsCompleteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - receptionUserId
+      properties:
+        requestComment:
+          type: string
+          description: 見積依頼完了時に確定する廃棄依頼グループ単位のご依頼事項
+        receptionUserId:
+          type: integer
+          format: int64
+          description: STEP1完了時の受付担当者ユーザーID
+    PostDisposalTaskTasksByDisposalTaskIdQuotationsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload
+        - file
+      properties:
+        payload:
+          $ref: '#/components/schemas/DisposalQuotationRegistrationPayload'
+          description: 見積登録項目
+          x-word-subtable-title: payload要素（DisposalQuotationRegistrationPayload）
+        file:
+          type: string
+          format: binary
+          description: 固定名 file の見積原本ファイル本体
+    DisposalQuotationRegistrationPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqVendorId
+        - quotationPhase
+        - vendorQuotationNo
+        - quotationOn
+        - totalAmountExclTax
+        - accountDivisionCode
+        - document
+      properties:
+        rfqVendorId:
+          type: integer
+          format: int64
+          description: rfq_vendors.rfq_vendor_id。STEP①で依頼送信操作を保存したSENT/REPLIED業者から選択
+        quotationPhase:
+          type: string
+          enum: [ESTIMATE, ORDER_REGISTRATION]
+          description: ESTIMATE（参考見積） / ORDER_REGISTRATION（発注登録用見積）
+        vendorQuotationNo:
+          type: string
+          description: 画面の見積No.。quotations.vendor_quotation_no に保存
+        quotationOn:
+          type: string
+          format: date
+          description: 見積日
+        totalAmountExclTax:
+          type: number
+          description: 税抜合計金額
+        accountDivisionCode:
+          $ref: '#/components/schemas/DisposalAccountDivisionCode'
+        document:
+          $ref: '#/components/schemas/QuotationDocumentInput'
+          description: >-
+            選択した見積原本のメタデータ。documentType='見積書'、owner_type='QUOTATION'、step_code='QUOTATION'、document_category='QUOTATION'
+            はAPIが固定し、1回の登録で1ファイル
+          x-word-subtable-title: payload.document要素（QuotationDocumentInput）
+    DisposalQuotationResponse:
+      $ref: '#/components/schemas/DisposalQuotation'
+    QuotationDocumentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - storageFormat
+        - fileName
+      properties:
+        storageFormat:
+          type: string
+          enum: [ELECTRONIC_TRANSACTION, SCANNED, UNSPECIFIED]
+          description: ELECTRONIC_TRANSACTION / SCANNED / UNSPECIFIED
+        fileName:
+          type: string
+          description: アップロード時の元ファイル名。右ペインの見積書一覧に表示する
+        contentType:
+          type: string
+          enum: [application/pdf, image/jpeg, image/png]
+          description: 指定時は実際の file パートと一致必須。許可MIME TypeはPDF、JPEG、PNG
+        fileSize:
+          type: integer
+          format: int64
+          description: 指定時は実際の file パートと一致必須
+    GetDisposalTaskTasksByDisposalTaskIdQuotationsByQuotationIdPreviewUrlResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - quotationId
+        - documentId
+        - previewUrl
+        - expiresAt
+      properties:
+        quotationId:
+          type: integer
+          format: int64
+          description: 対象見積ID
+        documentId:
+          type: integer
+          format: int64
+          description: 見積原本ドキュメントID
+        previewUrl:
+          type: string
+          description: 右ペイン表示用の認可済みURL
+        expiresAt:
+          type: string
+          format: date-time
+          description: URLの有効期限
+    PostDisposalTaskTasksByDisposalTaskIdOrderRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - settlementOn
+        - receptionUserId
+      properties:
+        settlementOn:
+          type: string
+          format: date
+          description: 画面の決済日。orders.settlement_on に保存する
+        settlementNo:
+          type: string
+          description: 画面の決済No.。orders.settlement_no に保存する
+        orderOn:
+          type: string
+          format: date
+          description: 発注日。未指定時は業務日付
+        paymentTerms:
+          type: string
+          description: 支払条件
+        receptionUserId:
+          type: integer
+          format: int64
+          description: STEP2完了時の受付担当者ユーザーID
+    DisposalOrderResponse:
+      $ref: '#/components/schemas/DisposalOrder'
+    PostDisposalTaskTasksByDisposalTaskIdOrderPreviewRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - settlementOn
+      properties:
+        settlementOn:
+          type: string
+          format: date
+          description: 画面入力の決済日
+        settlementNo:
+          type: string
+          description: 画面入力の決済No.
+        orderOn:
+          type: string
+          format: date
+          description: 発注日。未指定時は業務日付
+        paymentTerms:
+          type: string
+          description: 支払条件
+    PostDisposalTaskTasksByDisposalTaskIdDeliveryDateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - disposalScheduledOn
+        - receptionUserId
+      properties:
+        disposalScheduledOn:
+          type: string
+          format: date
+          description: 廃棄予定日/作業日
+        receptionUserId:
+          type: integer
+          format: int64
+          description: STEP3完了時の受付担当者ユーザーID
+    PostDisposalTaskTasksByDisposalTaskIdDocumentsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload
+        - file
+      properties:
+        payload:
+          $ref: '#/components/schemas/DisposalDocumentRegistrationPayload'
+          description: 完了書類登録項目
+          x-word-subtable-title: payload要素（DisposalDocumentRegistrationPayload）
+        file:
+          type: string
+          format: binary
+          description: 固定名 file の完了書類ファイル本体
+    DisposalDocumentRegistrationPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - document
+      properties:
+        document:
+          $ref: '#/components/schemas/DocumentInput'
+          description: 登録する完了書類メタデータ。所有者と工程はAPIが廃棄タスクから確定する
+          x-word-subtable-title: payload.document要素（DocumentInput）
+    DocumentSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - documentId
+        - ownerType
+        - rfqId
+        - orderId
+        - stepCode
+        - documentCategory
+        - documentType
+        - documentDate
+        - documentNo
+        - otherDocumentName
+        - actualAmountExclTax
+        - accountDivisionCode
+        - storageFormat
+        - fileName
+        - contentType
+        - fileSize
+        - downloadUrl
+        - uploadedAt
+        - uploadedByName
+      properties:
+        documentId:
+          type: integer
+          format: int64
+          description: application_documents.application_document_id
+        ownerType:
+          type: string
+          description: 廃棄タスクの完了書類は RFQ、見積書は QUOTATION。ORDER は使用しない
+        rfqId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 完了書類・発注書の application_documents.rfq_id。廃棄タスクの disposalTaskId と一致
+        orderId:
+          type: integer
+          format: int64
+          nullable: true
+          description: 発注書の場合の application_documents.order_id。ownerType='ORDER' は使用せず、rfq_id + order_id で対象発注を特定する
+        stepCode:
+          type: string
+          nullable: true
+          description: ドキュメント工程コード。QUOTE_REQUEST / QUOTATION / ORDER / SCHEDULE / COMPLETE。画面4STEPのstepCodeとは別用途
+        documentCategory:
+          type: string
+          description: 見積書は QUOTATION、発注書は ORDER、完了書類は COMPLETE
+        documentType:
+          type: string
+          description: >-
+            画面表示用種別。院内決済書類 / 見積書 / 見積書（変更が発生した場合） / 産業廃棄物処理委託契約書 / 注文書 / 注文請書 / 廃棄物証明書（処分完了報告書） / 産業廃棄物管理票（マニフェスト） / 請求書
+            / その他
+        documentDate:
+          type: string
+          format: date
+          nullable: true
+          description: application_documents.document_date
+        documentNo:
+          type: string
+          nullable: true
+          description: application_documents.document_no
+        otherDocumentName:
+          type: string
+          nullable: true
+          description: documentType='その他' の場合のその他ドキュメント名
+        actualAmountExclTax:
+          type: number
+          nullable: true
+          description: documentType='見積書（変更が発生した場合）' の場合の実績金額（税抜）
+        accountDivisionCode:
+          type: string
+          nullable: true
+          description: documentType='見積書（変更が発生した場合）' の場合の勘定科目コード
+        storageFormat:
+          type: string
+          enum: [ELECTRONIC_TRANSACTION, SCANNED, UNSPECIFIED]
+          description: ELECTRONIC_TRANSACTION / SCANNED / UNSPECIFIED
+        fileName:
+          type: string
+          description: アップロード時の元ファイル名。右ペインの一覧表示に使用する
+        contentType:
+          type: string
+          nullable: true
+          description: MIMEタイプ
+        fileSize:
+          type: integer
+          format: int64
+          nullable: true
+          description: ファイルサイズ
+        downloadUrl:
+          type: string
+          nullable: true
+          description: 表示・ダウンロード用の認可済みURL。S3オブジェクトキー、S3バケット名、S3の直接URLは返さない
+        uploadedAt:
+          type: string
+          format: date-time
+          description: アップロード日時
+        uploadedByName:
+          type: string
+          nullable: true
+          description: アップロード者名
+    DocumentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - documentType
+        - storageFormat
+        - fileName
+      oneOf:
+        - properties:
+            documentType:
+              enum: [その他]
+          required:
+            - otherDocumentName
+        - properties:
+            documentType:
+              enum: [見積書（変更が発生した場合）]
+          required:
+            - actualAmountExclTax
+            - accountDivisionCode
+        - properties:
+            documentType:
+              enum:
+                - 院内決済書類
+                - 産業廃棄物処理委託契約書
+                - 注文書
+                - 注文請書
+                - 廃棄物証明書（処分完了報告書）
+                - 産業廃棄物管理票（マニフェスト）
+                - 請求書
+      properties:
+        documentType:
+          type: string
+          enum:
+            - 院内決済書類
+            - 見積書（変更が発生した場合）
+            - 産業廃棄物処理委託契約書
+            - 注文書
+            - 注文請書
+            - 廃棄物証明書（処分完了報告書）
+            - 産業廃棄物管理票（マニフェスト）
+            - 請求書
+            - その他
+          description: >-
+            STEP④で登録する完了書類の9種別。院内決済書類 / 見積書（変更が発生した場合） / 産業廃棄物処理委託契約書 / 注文書 / 注文請書 / 廃棄物証明書（処分完了報告書） / 産業廃棄物管理票（マニフェスト）
+            / 請求書 / その他。STEP②の通常見積書は見積登録APIが固定する
+        documentDate:
+          type: string
+          format: date
+          description: 画面の日付入力。application_documents.document_date に保存
+        documentNo:
+          type: string
+          description: 画面のドキュメントNo.。application_documents.document_no に保存
+        otherDocumentName:
+          type: string
+          description: documentType='その他' の場合に必須
+          x-word-required-label: 条件付き
+        actualAmountExclTax:
+          type: number
+          description: documentType='見積書（変更が発生した場合）' の場合に必須
+          x-word-required-label: 条件付き
+        accountDivisionCode:
+          allOf:
+            - $ref: '#/components/schemas/DisposalAccountDivisionCode'
+          description: documentType='見積書（変更が発生した場合）' の場合に必須
+          x-word-required-label: 条件付き
+        storageFormat:
+          type: string
+          enum: [ELECTRONIC_TRANSACTION, SCANNED, UNSPECIFIED]
+          description: ELECTRONIC_TRANSACTION / SCANNED / UNSPECIFIED
+        fileName:
+          type: string
+          description: アップロード時の元ファイル名。右ペインの完了書類一覧に表示する
+        contentType:
+          type: string
+          enum: [application/pdf, image/jpeg, image/png]
+          description: 指定時は実際の file パートと一致必須。許可MIME TypeはPDF、JPEG、PNG
+        fileSize:
+          type: integer
+          format: int64
+          description: 指定時は実際の file パートと一致必須
+    DisposalAccountDivisionCode:
+      type: string
+      enum:
+        - '01'
+        - '02'
+        - '03'
+        - '04'
+        - '05'
+        - '06'
+        - '07'
+        - '08'
+        - '09'
+        - '10'
+        - '11'
+        - '12'
+        - '13'
+        - '14'
+        - '15'
+        - '16'
+        - '17'
+      description: >-
+        勘定科目コード。表示名は01 医療機器、02 医療用具、03 鋼製小物、04 什器備品、05 家電製品、
+        06 その他器械備品、07 情報機器、08 ソフトウェア、09 車両他、10 放射線同位元素、
+        11 建物、12 建物付帯設備、13 その他、14 器械保守料、15 修繕費、16 器械賃借料、17 材料費とする
+    GetDisposalTaskTasksByDisposalTaskIdDocumentsByDocumentIdPreviewUrlResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - documentId
+        - previewUrl
+        - expiresAt
+      properties:
+        documentId:
+          type: integer
+          format: int64
+          description: 対象ドキュメントID
+        previewUrl:
+          type: string
+          description: 右ペイン表示用の認可済みURL
+        expiresAt:
+          type: string
+          format: date-time
+          description: URLの有効期限
+    PostDisposalTaskTasksByDisposalTaskIdCompleteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - confirmMissingDocuments
+        - receptionUserId
+      properties:
+        confirmMissingDocuments:
+          type: boolean
+          description: 未登録ドキュメントがある場合の確認値。初回は false、画面確認後の再送時のみ true
+        receptionUserId:
+          type: integer
+          format: int64
+          description: STEP4完了時の受付担当者ユーザーID
+    PostDisposalTaskTasksByDisposalTaskIdCancelRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - receptionUserId
+      properties:
+        receptionUserId:
+          type: integer
+          format: int64
+          description: 申請見送り時の受付担当者ユーザーID
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

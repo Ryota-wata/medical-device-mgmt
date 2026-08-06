@@ -148,7 +148,7 @@
 - 例:
   - `config_scope='FACILITY_USER'` の機能は施設提供機能更新 API で施設提供可否を管理し、ユーザー施設別機能更新 API でユーザーごとの利用可否を管理する
   - 施設側で OFF の機能をユーザー側だけ ON にできない
-  - 他施設公開設定へ登録できる機能は原則 `usage_context='EXTERNAL'` に限定する。資産一覧・資産詳細の公開設定は `機能要件.md` の正本に従い、既存の `original_list_view` を登録対象とする
+  - 他施設公開設定へ登録できる機能は原則 `usage_context='EXTERNAL'` に限定する。資産一覧・資産詳細の公開設定は認証・認可API設計に従い、既存の `original_list_view` を登録対象とする
 
 ### 3-4. 業務 API の認可
 

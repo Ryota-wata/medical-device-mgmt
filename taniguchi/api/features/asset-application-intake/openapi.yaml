@@ -1,0 +1,1829 @@
+openapi: 3.0.4
+info:
+  title: 資産申請起票 API
+  version: '1.1'
+  description: 資産申請起票で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: AssetApplicationIntake
+    description: 資産申請起票のAPI
+paths:
+  /asset-applications/context:
+    get:
+      tags:
+        - AssetApplicationIntake
+      operationId: getAssetApplicationsContext
+      summary: 申請モーダルコンテキスト取得
+      description: 資産一覧画面の申請モーダルを開く前に、申請者、対象施設、設置場所候補、選択資産スナップショット、申請種別ごとの初期ステータスを取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_application
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      parameters:
+        - name: applicationKind
+          in: query
+          required: true
+          description: NEW_PURCHASE / EXPANSION_PURCHASE / REPLACEMENT_PURCHASE / TRANSFER / DISPOSAL
+          schema:
+            type: string
+        - name: targetFacilityId
+          in: query
+          required: false
+          description: 作業対象施設ID。Bearer トークン上の作業対象施設と一致必須
+          schema:
+            type: integer
+            format: int64
+        - name: assetLedgerIds
+          in: query
+          required: false
+          description: 選択済み資産台帳ID。新規購入では空、その他では1件以上
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetApplicationContextResponse'
+        '400':
+          description: 申請種別または対象施設指定が不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_list_view + original_application なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、削除済み、または指定資産・設置場所候補が存在しない/作業対象施設に属さない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 初期ステータス定義不備
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetApplicationContextResponse）
+      x-word-response-subtable-titles:
+        - selectedAssets要素（ApplicationSourceAsset）
+        - rules要素（AssetApplicationRules）
+      x-word-response-subtables:
+        - Title: selectedAssets要素（ApplicationSourceAsset）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetLedgerId
+              - int64
+              - ✓
+              - 資産台帳ID
+            - - managementNo
+              - string
+              - '-'
+              - 管理機器番号
+            - - assetNo
+              - string
+              - '-'
+              - 固定資産番号
+            - - itemName
+              - string
+              - ✓
+              - 品目名スナップショット
+            - - makerName
+              - string
+              - '-'
+              - メーカー名スナップショット
+            - - modelName
+              - string
+              - '-'
+              - 型式スナップショット
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - unit
+              - string
+              - ✓
+              - 単位
+            - - sourceFacilityLocationId
+              - int64
+              - '-'
+              - 現設置ロケーションID
+        - Title: rules要素（AssetApplicationRules）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - maxRequestedAssets
+              - int32
+              - ✓
+              - 要望機器の最大件数。新規/更新購入では3
+            - - requiresSelectedAssets
+              - boolean
+              - ✓
+              - 選択資産必須かどうか
+            - - canAttachFiles
+              - boolean
+              - ✓
+              - 添付ファイルを受け付けるかどうか
+  /asset-applications/purchase:
+    post:
+      tags:
+        - AssetApplicationIntake
+      operationId: postAssetApplicationsPurchase
+      summary: 購入申請作成
+      description: 新規購入、増設購入、更新購入申請を作成する。更新購入で現行資産の廃棄または移動を選択した場合は、関連する廃棄申請または移動申請も同一トランザクションで作成する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_application
+      x-word-status-order:
+        - '201'
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一送信操作を識別する冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストヘッダー
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostAssetApplicationsPurchaseRequest'
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - currentAssets要素（PurchaseCurrentAssetInput）
+        - requestedAssets要素（PurchaseRequestedAssetInput）
+        - replacementActions要素（ReplacementActionInput）
+        - attachments要素（ApplicationAttachmentInput）
+      x-word-request-subtables:
+        - Title: currentAssets要素（PurchaseCurrentAssetInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetLedgerId
+              - int64
+              - ✓
+              - 対象資産台帳ID
+            - - additionalQuantity
+              - int32
+              - '-'
+              - 増設購入で追加する数量。EXPANSION の場合は1以上
+            - - lastKnownUpdatedAt
+              - datetime
+              - '-'
+              - 画面取得時点の資産更新日時。指定時は競合検知に使用
+        - Title: requestedAssets要素（PurchaseRequestedAssetInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - priorityOrder
+              - int32
+              - '-'
+              - 希望順。1..3
+            - - assetItemId
+              - int64
+              - '-'
+              - 資産マスタから選択した品目ID
+            - - itemName
+              - string
+              - ✓
+              - 品目名。assetItemId 未指定時も必須
+            - - manufacturerId
+              - int64
+              - '-'
+              - メーカーID
+            - - makerName
+              - string
+              - '-'
+              - メーカー名
+            - - modelId
+              - int64
+              - '-'
+              - 型式ID
+            - - modelName
+              - string
+              - '-'
+              - 型式
+            - - quantity
+              - int32
+              - ✓
+              - 数量。1以上
+            - - unit
+              - string
+              - ✓
+              - 単位
+        - Title: replacementActions要素（ReplacementActionInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - assetLedgerId
+              - int64
+              - ✓
+              - 更新対象資産台帳ID
+            - - action
+              - string
+              - ✓
+              - DISPOSAL / TRANSFER / CONTINUE
+            - - destinationFacilityLocationId
+              - int64
+              - '-'
+              - TRANSFER の場合の移動先
+            - - continueReason
+              - string
+              - '-'
+              - CONTINUE の場合の継続利用理由
+            - - disposalReasonText
+              - string
+              - '-'
+              - DISPOSAL の場合の廃棄補足
+        - Title: attachments要素（ApplicationAttachmentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - clientFileId
+              - string
+              - ✓
+              - クライアント側一時ID
+            - - filePartName
+              - string
+              - ✓
+              - multipart 内の添付ファイルパート名
+            - - fileName
+              - string
+              - ✓
+              - 表示用ファイル名
+            - - contentType
+              - string
+              - ✓
+              - MIME Type
+            - - fileSizeBytes
+              - int64
+              - ✓
+              - ファイルサイズ
+            - - contentHash
+              - string
+              - '-'
+              - クライアント計算ハッシュ。サーバー側でも再計算する
+      responses:
+        '200':
+          description: 同一 Idempotency-Key の再送を既存結果で受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostAssetApplicationsPurchaseResponse'
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostAssetApplicationsPurchaseResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_application なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、削除済み、または指定資産・設置場所が存在しない/作業対象施設に属さない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 更新競合、初期ステータス不備、冪等キー再利用
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 への添付ファイル保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': AssetApplicationCreateResponse
+        '201': AssetApplicationCreateResponse
+      x-word-response-title: レスポンス（201：AssetApplicationCreateResponse）
+      x-word-response-subtable-titles:
+        - linkedApplications要素（LinkedApplicationSummary）
+      x-word-response-subtables:
+        - Title: linkedApplications要素（LinkedApplicationSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - applicationId
+              - int64
+              - ✓
+              - 関連申請ID
+            - - applicationNo
+              - string
+              - ✓
+              - 関連申請番号
+            - - applicationType
+              - string
+              - ✓
+              - TRANSFER / DISPOSAL
+            - - status
+              - string
+              - ✓
+              - 初期ステータス
+  /asset-applications/transfer:
+    post:
+      tags:
+        - AssetApplicationIntake
+      operationId: postAssetApplicationsTransfer
+      summary: 移動申請作成
+      description: 資産一覧で選択した既存資産を対象に、移動先を指定して移動申請を作成する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_application
+      x-word-status-order:
+        - '201'
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一送信操作を識別する冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストヘッダー
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostAssetApplicationsTransferRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 同一 Idempotency-Key の再送を既存結果で受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostAssetApplicationsTransferResponse'
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostAssetApplicationsTransferResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_application なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、削除済み、または指定資産・移動先が存在しない/作業対象施設に属さない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 初期ステータス不備、冪等キー再利用
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': AssetApplicationCreateResponse
+        '201': AssetApplicationCreateResponse
+      x-word-response-title: レスポンス（201：AssetApplicationCreateResponse）
+  /asset-applications/disposal:
+    post:
+      tags:
+        - AssetApplicationIntake
+      operationId: postAssetApplicationsDisposal
+      summary: 廃棄申請作成
+      description: 資産一覧で選択した既存資産を対象に、廃棄理由と添付を保存して廃棄申請を作成する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_application
+      x-word-status-order:
+        - '201'
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 同一送信操作を識別する冪等キー
+          schema:
+            type: string
+      x-word-parameters-title: リクエストヘッダー
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostAssetApplicationsDisposalRequest'
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - attachments要素（ApplicationAttachmentInput）
+      x-word-request-subtables:
+        - Title: attachments要素（ApplicationAttachmentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - clientFileId
+              - string
+              - ✓
+              - クライアント側一時ID
+            - - filePartName
+              - string
+              - ✓
+              - multipart 内の添付ファイルパート名
+            - - fileName
+              - string
+              - ✓
+              - 表示用ファイル名
+            - - contentType
+              - string
+              - ✓
+              - MIME Type
+            - - fileSizeBytes
+              - int64
+              - ✓
+              - ファイルサイズ
+            - - contentHash
+              - string
+              - '-'
+              - クライアント計算ハッシュ。サーバー側でも再計算する
+      responses:
+        '200':
+          description: 同一 Idempotency-Key の再送を既存結果で受理
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostAssetApplicationsDisposalResponse'
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostAssetApplicationsDisposalResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_application なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、削除済み、または指定資産が存在しない/作業対象施設に属さない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 初期ステータス不備、冪等キー再利用
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 への添付ファイル保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': AssetApplicationCreateResponse
+        '201': AssetApplicationCreateResponse
+      x-word-response-title: レスポンス（201：AssetApplicationCreateResponse）
+  /asset-applications/{applicationId}:
+    get:
+      tags:
+        - AssetApplicationIntake
+      operationId: getAssetApplicationsByApplicationId
+      summary: 申請詳細取得
+      description: 起票済み資産申請の内容、対象資産、添付、ステータス履歴、申請種別別詳細、関連申請を取得する。申請完了後の確認、申請状況確認、後続管理へ引き渡す前の内容確認で利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-feature-code: original_application
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+      parameters:
+        - name: applicationId
+          in: path
+          required: true
+          description: 取得対象の申請ID。applications.application_id
+          schema:
+            type: integer
+            format: int64
+        - name: targetFacilityId
+          in: query
+          required: false
+          description: 対象施設ID。Bearer トークン上の作業対象施設と一致必須
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetApplicationDetailResponse'
+        '400':
+          description: 申請IDまたは対象施設指定が不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 original_application なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設または申請が存在しない、削除済み、または申請が作業対象施設に属さない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 申請共通ヘッダと種別別詳細の整合が崩れている
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：AssetApplicationDetailResponse）
+      x-word-response-subtable-titles:
+        - requester要素（RequesterSnapshot）
+        - location要素（ApplicationLocationSnapshot）
+        - purchaseDetail要素（PurchaseApplicationDetail）
+        - transferDetail要素（TransferApplicationDetail）
+        - disposalDetail要素（DisposalApplicationDetail）
+        - assets要素（ApplicationAssetDetail）
+        - attachments要素（ApplicationAttachmentSummary）
+        - statusHistories要素（ApplicationStatusHistory）
+        - linkedApplications/sourceApplication要素（LinkedApplicationSummary）
+      x-word-response-subtables:
+        - Title: requester要素（RequesterSnapshot）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - userId
+              - int64
+              - ✓
+              - 申請者ユーザーID
+            - - name
+              - string
+              - ✓
+              - 申請者名スナップショット
+            - - departmentName
+              - string
+              - '-'
+              - 申請者所属スナップショット
+            - - contact
+              - string
+              - '-'
+              - 申請者連絡先スナップショット
+        - Title: location要素（ApplicationLocationSnapshot）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - facilityLocationId
+              - int64
+              - '-'
+              - 施設ロケーションID
+            - - buildingName
+              - string
+              - '-'
+              - 棟名
+            - - floorName
+              - string
+              - '-'
+              - フロア名
+            - - departmentName
+              - string
+              - '-'
+              - 部門名
+            - - sectionName
+              - string
+              - '-'
+              - 部署名
+            - - roomName
+              - string
+              - '-'
+              - 室名
+        - Title: purchaseDetail要素（PurchaseApplicationDetail）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - purchaseType
+              - string
+              - ✓
+              - NEW / EXPANSION / REPLACEMENT
+            - - priority
+              - string
+              - '-'
+              - 優先順位
+            - - desiredDeliveryOn
+              - date
+              - '-'
+              - 希望納期
+            - - usagePurpose
+              - string
+              - '-'
+              - 使用用途
+            - - casesPerMonth
+              - int32
+              - '-'
+              - 症例数（月）
+            - - caseCountUnit
+              - string
+              - '-'
+              - 症例数単位
+            - - currentConnectionStatus
+              - string
+              - '-'
+              - 現在の接続状況
+            - - currentConnectionDestination
+              - string
+              - '-'
+              - 現在の接続先
+            - - requestConnectionStatus
+              - string
+              - '-'
+              - 要望接続状況
+            - - requestConnectionDestination
+              - string
+              - '-'
+              - 要望接続先
+            - - comment
+              - string
+              - '-'
+              - 購入申請詳細コメント
+        - Title: transferDetail要素（TransferApplicationDetail）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - relatedPurchaseApplicationId
+              - int64
+              - '-'
+              - 更新購入に伴う移動申請の場合の関連購入申請ID
+            - - sourceFacilityLocationId
+              - int64
+              - '-'
+              - 移動元施設ロケーションID
+            - - destinationFacilityLocationId
+              - int64
+              - '-'
+              - 移動先施設ロケーションID
+            - - destinationLocation
+              - ApplicationLocationSnapshot
+              - '-'
+              - 移動先スナップショット
+            - - transferReason
+              - string
+              - '-'
+              - 移動理由
+        - Title: disposalDetail要素（DisposalApplicationDetail）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - disposalReasonCode
+              - string
+              - '-'
+              - END_OF_LIFE / UNREPAIRABLE / REPLACEMENT / OTHER
+            - - disposalReasonText
+              - string
+              - '-'
+              - 廃棄理由詳細
+            - - relatedPurchaseApplicationId
+              - int64
+              - '-'
+              - 更新購入に伴う廃棄申請の場合の関連購入申請ID
+            - - relatedRepairApplicationId
+              - int64
+              - '-'
+              - 修理申請経由廃棄の場合の関連修理申請ID。資産一覧起点では通常null
+            - - vendorId
+              - int64
+              - '-'
+              - 廃棄業者ID。起票時は未設定で、後続の廃棄管理APIが更新する
+            - - vendorName
+              - string
+              - '-'
+              - 廃棄業者名。起票時は未設定で、後続の廃棄管理APIが更新する
+        - Title: assets要素（ApplicationAssetDetail）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - applicationAssetId
+              - int64
+              - ✓
+              - 申請明細ID
+            - - lineNo
+              - int32
+              - ✓
+              - 行番号
+            - - assetRole
+              - string
+              - ✓
+              - CURRENT / REQUEST / TRANSFER / DISPOSAL
+            - - assetLedgerId
+              - int64
+              - '-'
+              - 既存資産台帳ID
+            - - itemName
+              - string
+              - ✓
+              - 品目名スナップショット
+            - - makerName
+              - string
+              - '-'
+              - メーカー名スナップショット
+            - - modelName
+              - string
+              - '-'
+              - 型式スナップショット
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - unit
+              - string
+              - ✓
+              - 単位
+            - - sourceLocation
+              - ApplicationLocationSnapshot
+              - '-'
+              - 現設置場所スナップショット
+            - - destinationLocation
+              - ApplicationLocationSnapshot
+              - '-'
+              - 設置予定/移動先スナップショット
+            - - replacementAction
+              - string
+              - '-'
+              - 更新購入後処理区分。DISPOSAL / TRANSFER / CONTINUE
+        - Title: attachments要素（ApplicationAttachmentSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentId
+              - int64
+              - ✓
+              - 添付メタデータID
+            - - documentCategory
+              - string
+              - ✓
+              - ATTACHMENT
+            - - documentType
+              - string
+              - ✓
+              - APPLICATION_ATTACHMENT
+            - - fileName
+              - string
+              - ✓
+              - 表示用ファイル名
+            - - contentType
+              - string
+              - ✓
+              - MIME Type
+            - - fileSizeBytes
+              - int64
+              - ✓
+              - ファイルサイズ
+            - - uploadedAt
+              - datetime
+              - ✓
+              - アップロード日時
+        - Title: statusHistories要素（ApplicationStatusHistory）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - historyId
+              - int64
+              - ✓
+              - 履歴ID
+            - - fromStatus
+              - string
+              - '-'
+              - 遷移元ステータス
+            - - toStatus
+              - string
+              - ✓
+              - 遷移先ステータス
+            - - changedByUserId
+              - int64
+              - '-'
+              - 変更者ユーザーID
+            - - changedByName
+              - string
+              - '-'
+              - 変更者名
+            - - changedAt
+              - datetime
+              - ✓
+              - 変更日時
+            - - comment
+              - string
+              - '-'
+              - コメント
+        - Title: linkedApplications/sourceApplication要素（LinkedApplicationSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - applicationId
+              - int64
+              - ✓
+              - 関連申請ID
+            - - applicationNo
+              - string
+              - ✓
+              - 関連申請番号
+            - - applicationType
+              - string
+              - ✓
+              - PURCHASE / TRANSFER / DISPOSAL
+            - - status
+              - string
+              - ✓
+              - 現在ステータス
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    AssetApplicationContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - targetFacilityId
+        - requester
+        - applicationKind
+        - initialStatus
+        - selectedAssets
+        - locationOptions
+        - rules
+      properties:
+        targetFacilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID
+        requester:
+          $ref: '#/components/schemas/RequesterSnapshot'
+          description: 申請者初期値
+          x-word-omit-subtable: true
+        applicationKind:
+          type: string
+          description: 受け付けた申請種別
+        initialStatus:
+          type: string
+          description: 申請作成時に設定する初期ステータス
+        selectedAssets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationSourceAsset'
+          description: 選択資産スナップショット
+          x-word-subtable-title: selectedAssets要素（ApplicationSourceAsset）
+        locationOptions:
+          type: array
+          items:
+            type: string
+          description: 設置先/移動先候補
+        rules:
+          $ref: '#/components/schemas/AssetApplicationRules'
+          description: 画面入力制約
+          x-word-subtable-title: rules要素（AssetApplicationRules）
+    ApplicationSourceAsset:
+      type: object
+      additionalProperties: false
+      required:
+        - assetLedgerId
+        - itemName
+        - quantity
+        - unit
+      properties:
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 資産台帳ID
+        managementNo:
+          type: string
+          description: 管理機器番号
+        assetNo:
+          type: string
+          description: 固定資産番号
+        itemName:
+          type: string
+          description: 品目名スナップショット
+        makerName:
+          type: string
+          description: メーカー名スナップショット
+        modelName:
+          type: string
+          description: 型式スナップショット
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+        unit:
+          type: string
+          description: 単位
+        sourceFacilityLocationId:
+          type: integer
+          format: int64
+          description: 現設置ロケーションID
+    AssetApplicationRules:
+      type: object
+      additionalProperties: false
+      required:
+        - maxRequestedAssets
+        - requiresSelectedAssets
+        - canAttachFiles
+      properties:
+        maxRequestedAssets:
+          type: integer
+          format: int32
+          description: 要望機器の最大件数。新規/更新購入では3
+        requiresSelectedAssets:
+          type: boolean
+          description: 選択資産必須かどうか
+        canAttachFiles:
+          type: boolean
+          description: 添付ファイルを受け付けるかどうか
+    PostAssetApplicationsPurchaseRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload.purchaseType
+      properties:
+        payload.targetFacilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID。Bearer トークン上の作業対象施設と一致必須
+        payload.purchaseType:
+          type: string
+          description: NEW / EXPANSION / REPLACEMENT
+        payload.requestedOn:
+          type: string
+          format: date
+          description: 申請日。未指定時はサーバー日付
+        payload.managementDepartmentName:
+          type: string
+          description: 管理部署スナップショット
+        payload.installationLocationId:
+          type: integer
+          format: int64
+          description: 設置先ロケーションID。新規/増設/更新購入の設置先
+        payload.priority:
+          type: string
+          description: 優先順位
+        payload.desiredDeliveryOn:
+          type: string
+          format: date
+          description: 希望納期
+        payload.usagePurpose:
+          type: string
+          description: 使用用途
+        payload.casesPerMonth:
+          type: integer
+          format: int32
+          description: 症例数（月）
+        payload.caseCountUnit:
+          type: string
+          description: 件/月など
+        payload.requestComment:
+          type: string
+          description: 必要理由、コメント
+        payload.currentConnectionStatus:
+          type: string
+          description: 現在の接続状況。増設/更新購入で利用
+        payload.currentConnectionDestination:
+          type: string
+          description: 現在の接続先
+        payload.requestConnectionStatus:
+          type: string
+          description: 要望接続状況
+        payload.requestConnectionDestination:
+          type: string
+          description: 要望接続先
+        payload.currentAssets:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseCurrentAssetInput'
+          description: 増設/更新購入の対象既存資産
+          x-word-subtable-title: currentAssets要素（PurchaseCurrentAssetInput）
+        payload.requestedAssets:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseRequestedAssetInput'
+          description: 新規/更新購入の要望機器。最大3件
+          x-word-subtable-title: requestedAssets要素（PurchaseRequestedAssetInput）
+        payload.replacementActions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReplacementActionInput'
+          description: 更新購入対象資産の廃棄/移動/継続利用指定
+          x-word-subtable-title: replacementActions要素（ReplacementActionInput）
+        payload.attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationAttachmentInput'
+          description: 添付ファイルメタデータ。各要素の filePartName で対応するファイルパートを指定する
+          x-word-subtable-title: attachments要素（ApplicationAttachmentInput）
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: payload.attachments[].filePartName で参照される添付ファイル本体
+    PostAssetApplicationsPurchaseResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationId
+        - applicationNo
+        - applicationType
+        - purchaseType
+        - status
+        - createdAssetCount
+        - createdAttachmentCount
+        - linkedApplications
+      properties:
+        applicationId:
+          type: integer
+          format: int64
+          description: 作成した購入申請ID
+        applicationNo:
+          type: string
+          description: 作成した購入申請番号
+        applicationType:
+          type: string
+          description: PURCHASE
+        purchaseType:
+          type: string
+          description: NEW / EXPANSION / REPLACEMENT
+        status:
+          type: string
+          description: 初期ステータス
+        createdAssetCount:
+          type: integer
+          format: int32
+          description: 作成した購入申請明細数
+        createdAttachmentCount:
+          type: integer
+          format: int32
+          description: 作成した添付数
+        linkedApplications:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkedApplicationSummary'
+          description: 更新購入に伴って作成した移動/廃棄申請一覧
+          x-word-subtable-title: linkedApplications要素（LinkedApplicationSummary）
+    PurchaseCurrentAssetInput:
+      type: object
+      additionalProperties: false
+      required:
+        - assetLedgerId
+      properties:
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 対象資産台帳ID
+        additionalQuantity:
+          type: integer
+          format: int32
+          description: 増設購入で追加する数量。EXPANSION の場合は1以上
+        lastKnownUpdatedAt:
+          type: string
+          format: date-time
+          description: 画面取得時点の資産更新日時。指定時は競合検知に使用
+    PurchaseRequestedAssetInput:
+      type: object
+      additionalProperties: false
+      required:
+        - itemName
+        - quantity
+        - unit
+      properties:
+        priorityOrder:
+          type: integer
+          format: int32
+          description: 希望順。1..3
+        assetItemId:
+          type: integer
+          format: int64
+          description: 資産マスタから選択した品目ID
+        itemName:
+          type: string
+          description: 品目名。assetItemId 未指定時も必須
+        manufacturerId:
+          type: integer
+          format: int64
+          description: メーカーID
+        makerName:
+          type: string
+          description: メーカー名
+        modelId:
+          type: integer
+          format: int64
+          description: 型式ID
+        modelName:
+          type: string
+          description: 型式
+        quantity:
+          type: integer
+          format: int32
+          description: 数量。1以上
+        unit:
+          type: string
+          description: 単位
+    ReplacementActionInput:
+      type: object
+      additionalProperties: false
+      required:
+        - assetLedgerId
+        - action
+      properties:
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 更新対象資産台帳ID
+        action:
+          type: string
+          description: DISPOSAL / TRANSFER / CONTINUE
+        destinationFacilityLocationId:
+          type: integer
+          format: int64
+          description: TRANSFER の場合の移動先
+        continueReason:
+          type: string
+          description: CONTINUE の場合の継続利用理由
+        disposalReasonText:
+          type: string
+          description: DISPOSAL の場合の廃棄補足
+    ApplicationAttachmentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - clientFileId
+        - filePartName
+        - fileName
+        - contentType
+        - fileSizeBytes
+      properties:
+        clientFileId:
+          type: string
+          description: クライアント側一時ID
+        filePartName:
+          type: string
+          description: multipart 内の添付ファイルパート名
+        fileName:
+          type: string
+          description: 表示用ファイル名
+        contentType:
+          type: string
+          description: MIME Type
+        fileSizeBytes:
+          type: integer
+          format: int64
+          description: ファイルサイズ
+        contentHash:
+          type: string
+          description: クライアント計算ハッシュ。サーバー側でも再計算する
+    LinkedApplicationSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationId
+        - applicationNo
+        - applicationType
+        - status
+      properties:
+        applicationId:
+          type: integer
+          format: int64
+          description: 関連申請ID
+        applicationNo:
+          type: string
+          description: 関連申請番号
+        applicationType:
+          type: string
+          description: PURCHASE / TRANSFER / DISPOSAL
+        status:
+          type: string
+          description: 現在ステータス
+    PostAssetApplicationsTransferRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - assetLedgerIds
+        - destinationFacilityLocationId
+      properties:
+        targetFacilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID。Bearer トークン上の作業対象施設と一致必須
+        assetLedgerIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 移動対象の資産台帳ID。1件以上
+        destinationFacilityLocationId:
+          type: integer
+          format: int64
+          description: 移動先施設ロケーションID
+        transferReason:
+          type: string
+          description: 移動理由/コメント
+        requestedOn:
+          type: string
+          format: date
+          description: 申請日。未指定時はサーバー日付
+    PostAssetApplicationsTransferResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationId
+        - applicationNo
+        - applicationType
+        - status
+        - createdAssetCount
+      properties:
+        applicationId:
+          type: integer
+          format: int64
+          description: 作成した移動申請ID
+        applicationNo:
+          type: string
+          description: 作成した移動申請番号
+        applicationType:
+          type: string
+          description: TRANSFER
+        status:
+          type: string
+          description: 初期ステータス
+        createdAssetCount:
+          type: integer
+          format: int32
+          description: 作成した申請明細数
+    PostAssetApplicationsDisposalRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload.assetLedgerIds
+      properties:
+        payload.targetFacilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID。Bearer トークン上の作業対象施設と一致必須
+        payload.assetLedgerIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 廃棄対象の資産台帳ID。1件以上
+        payload.disposalReasonCode:
+          type: string
+          description: END_OF_LIFE / UNREPAIRABLE / REPLACEMENT / OTHER。画面入力がコメントのみの場合は OTHER
+        payload.disposalReasonText:
+          type: string
+          description: 廃棄理由詳細。画面のコメントを保存する
+        payload.requestedOn:
+          type: string
+          format: date
+          description: 申請日。未指定時はサーバー日付
+        payload.attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationAttachmentInput'
+          description: 添付ファイルメタデータ。各要素の filePartName で対応するファイルパートを指定する
+          x-word-subtable-title: attachments要素（ApplicationAttachmentInput）
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: payload.attachments[].filePartName で参照される添付ファイル本体
+    PostAssetApplicationsDisposalResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationId
+        - applicationNo
+        - applicationType
+        - status
+        - createdAssetCount
+        - createdAttachmentCount
+      properties:
+        applicationId:
+          type: integer
+          format: int64
+          description: 作成した廃棄申請ID
+        applicationNo:
+          type: string
+          description: 作成した廃棄申請番号
+        applicationType:
+          type: string
+          description: DISPOSAL
+        status:
+          type: string
+          description: 初期ステータス
+        createdAssetCount:
+          type: integer
+          format: int32
+          description: 作成した申請明細数
+        createdAttachmentCount:
+          type: integer
+          format: int32
+          description: 作成した添付数
+    AssetApplicationDetailResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationId
+        - applicationNo
+        - applicationType
+        - targetFacilityId
+        - status
+        - requestedOn
+        - requester
+        - assets
+        - attachments
+        - statusHistories
+        - linkedApplications
+      properties:
+        applicationId:
+          type: integer
+          format: int64
+          description: 申請ID
+        applicationNo:
+          type: string
+          description: 申請番号
+        applicationType:
+          type: string
+          description: PURCHASE / TRANSFER / DISPOSAL
+        purchaseType:
+          type: string
+          description: 購入申請の場合の NEW / EXPANSION / REPLACEMENT
+        targetFacilityId:
+          type: integer
+          format: int64
+          description: 対象施設ID
+        status:
+          type: string
+          description: 現在ステータス
+        requestedOn:
+          type: string
+          format: date
+          description: 申請日
+        requester:
+          $ref: '#/components/schemas/RequesterSnapshot'
+          description: 申請者スナップショット
+          x-word-subtable-title: requester要素（RequesterSnapshot）
+        location:
+          $ref: '#/components/schemas/ApplicationLocationSnapshot'
+          description: 設置先または移動先のスナップショット
+          x-word-subtable-title: location要素（ApplicationLocationSnapshot）
+        purchaseDetail:
+          $ref: '#/components/schemas/PurchaseApplicationDetail'
+          description: 購入申請詳細。購入申請の場合のみ返却する
+          x-word-subtable-title: purchaseDetail要素（PurchaseApplicationDetail）
+        transferDetail:
+          $ref: '#/components/schemas/TransferApplicationDetail'
+          description: 移動申請詳細。移動申請の場合のみ返却する
+          x-word-subtable-title: transferDetail要素（TransferApplicationDetail）
+        disposalDetail:
+          $ref: '#/components/schemas/DisposalApplicationDetail'
+          description: 廃棄申請詳細。廃棄申請の場合のみ返却する
+          x-word-subtable-title: disposalDetail要素（DisposalApplicationDetail）
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationAssetDetail'
+          description: 申請対象資産・要望機器の明細
+          x-word-subtable-title: assets要素（ApplicationAssetDetail）
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationAttachmentSummary'
+          description: 添付ファイルメタデータ。S3キー/URLは含めない
+          x-word-subtable-title: attachments要素（ApplicationAttachmentSummary）
+        statusHistories:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationStatusHistory'
+          description: 申請ステータス履歴
+          x-word-subtable-title: statusHistories要素（ApplicationStatusHistory）
+        linkedApplications:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkedApplicationSummary'
+          description: 更新購入に伴う関連移動/廃棄申請一覧
+          x-word-subtable-title: linkedApplications/sourceApplication要素（LinkedApplicationSummary）
+        sourceApplication:
+          $ref: '#/components/schemas/LinkedApplicationSummary'
+          description: 移動/廃棄申請が更新購入から作成された場合の起点購入申請
+          x-word-omit-subtable: true
+    RequesterSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - userId
+        - name
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: 申請者ユーザーID
+        name:
+          type: string
+          description: 申請者名スナップショット
+        departmentName:
+          type: string
+          description: 申請者所属スナップショット
+        contact:
+          type: string
+          description: 申請者連絡先スナップショット
+    ApplicationLocationSnapshot:
+      type: object
+      additionalProperties: false
+      properties:
+        facilityLocationId:
+          type: integer
+          format: int64
+          description: 施設ロケーションID
+        buildingName:
+          type: string
+          description: 棟名
+        floorName:
+          type: string
+          description: フロア名
+        departmentName:
+          type: string
+          description: 部門名
+        sectionName:
+          type: string
+          description: 部署名
+        roomName:
+          type: string
+          description: 室名
+    PurchaseApplicationDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - purchaseType
+      properties:
+        purchaseType:
+          type: string
+          description: NEW / EXPANSION / REPLACEMENT
+        priority:
+          type: string
+          description: 優先順位
+        desiredDeliveryOn:
+          type: string
+          format: date
+          description: 希望納期
+        usagePurpose:
+          type: string
+          description: 使用用途
+        casesPerMonth:
+          type: integer
+          format: int32
+          description: 症例数（月）
+        caseCountUnit:
+          type: string
+          description: 症例数単位
+        currentConnectionStatus:
+          type: string
+          description: 現在の接続状況
+        currentConnectionDestination:
+          type: string
+          description: 現在の接続先
+        requestConnectionStatus:
+          type: string
+          description: 要望接続状況
+        requestConnectionDestination:
+          type: string
+          description: 要望接続先
+        comment:
+          type: string
+          description: 購入申請詳細コメント
+    TransferApplicationDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        relatedPurchaseApplicationId:
+          type: integer
+          format: int64
+          description: 更新購入に伴う移動申請の場合の関連購入申請ID
+        sourceFacilityLocationId:
+          type: integer
+          format: int64
+          description: 移動元施設ロケーションID
+        destinationFacilityLocationId:
+          type: integer
+          format: int64
+          description: 移動先施設ロケーションID
+        destinationLocation:
+          $ref: '#/components/schemas/ApplicationLocationSnapshot'
+          description: 移動先スナップショット
+          x-word-subtable-title: location要素（ApplicationLocationSnapshot）
+        transferReason:
+          type: string
+          description: 移動理由
+    DisposalApplicationDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        disposalReasonCode:
+          type: string
+          description: END_OF_LIFE / UNREPAIRABLE / REPLACEMENT / OTHER
+        disposalReasonText:
+          type: string
+          description: 廃棄理由詳細
+        relatedPurchaseApplicationId:
+          type: integer
+          format: int64
+          description: 更新購入に伴う廃棄申請の場合の関連購入申請ID
+        relatedRepairApplicationId:
+          type: integer
+          format: int64
+          description: 修理申請経由廃棄の場合の関連修理申請ID。資産一覧起点では通常null
+        vendorId:
+          type: integer
+          format: int64
+          description: 廃棄業者ID。起票時は未設定で、後続の廃棄管理APIが更新する
+        vendorName:
+          type: string
+          description: 廃棄業者名。起票時は未設定で、後続の廃棄管理APIが更新する
+    ApplicationAssetDetail:
+      type: object
+      additionalProperties: false
+      required:
+        - applicationAssetId
+        - lineNo
+        - assetRole
+        - itemName
+        - quantity
+        - unit
+      properties:
+        applicationAssetId:
+          type: integer
+          format: int64
+          description: 申請明細ID
+        lineNo:
+          type: integer
+          format: int32
+          description: 行番号
+        assetRole:
+          type: string
+          description: CURRENT / REQUEST / TRANSFER / DISPOSAL
+        assetLedgerId:
+          type: integer
+          format: int64
+          description: 既存資産台帳ID
+        itemName:
+          type: string
+          description: 品目名スナップショット
+        makerName:
+          type: string
+          description: メーカー名スナップショット
+        modelName:
+          type: string
+          description: 型式スナップショット
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+        unit:
+          type: string
+          description: 単位
+        sourceLocation:
+          $ref: '#/components/schemas/ApplicationLocationSnapshot'
+          description: 現設置場所スナップショット
+          x-word-subtable-title: location要素（ApplicationLocationSnapshot）
+        destinationLocation:
+          $ref: '#/components/schemas/ApplicationLocationSnapshot'
+          description: 設置予定/移動先スナップショット
+          x-word-omit-subtable: true
+        replacementAction:
+          type: string
+          description: 更新購入後処理区分。DISPOSAL / TRANSFER / CONTINUE
+    ApplicationAttachmentSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - documentId
+        - documentCategory
+        - documentType
+        - fileName
+        - contentType
+        - fileSizeBytes
+        - uploadedAt
+      properties:
+        documentId:
+          type: integer
+          format: int64
+          description: 添付メタデータID
+        documentCategory:
+          type: string
+          description: ATTACHMENT
+        documentType:
+          type: string
+          description: APPLICATION_ATTACHMENT
+        fileName:
+          type: string
+          description: 表示用ファイル名
+        contentType:
+          type: string
+          description: MIME Type
+        fileSizeBytes:
+          type: integer
+          format: int64
+          description: ファイルサイズ
+        uploadedAt:
+          type: string
+          format: date-time
+          description: アップロード日時
+    ApplicationStatusHistory:
+      type: object
+      additionalProperties: false
+      required:
+        - historyId
+        - toStatus
+        - changedAt
+      properties:
+        historyId:
+          type: integer
+          format: int64
+          description: 履歴ID
+        fromStatus:
+          type: string
+          description: 遷移元ステータス
+        toStatus:
+          type: string
+          description: 遷移先ステータス
+        changedByUserId:
+          type: integer
+          format: int64
+          description: 変更者ユーザーID
+        changedByName:
+          type: string
+          description: 変更者名
+        changedAt:
+          type: string
+          format: date-time
+          description: 変更日時
+        comment:
+          type: string
+          description: コメント
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

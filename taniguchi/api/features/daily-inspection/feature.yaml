@@ -1,0 +1,53 @@
+$schema: ../../feature.schema.json
+id: API-004
+slug: daily-inspection
+title: 日常点検
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /inspection-prep
+  - /daily-inspection
+  - /inspection-result
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/daily-inspection.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_日常点検.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-006
+  - API-030
+
+dbTables:
+  - asset_ledgers
+  - qr_codes
+  - inspection_menus
+  - inspection_menu_items
+  - inspection_tasks
+  - inspection_results
+  - application_documents
+  - asset_documents
+  - lending_devices
+  - lending_device_status_definitions
+  - lending_device_status_transitions
+  - users
+  - facilities
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+
+permissionCodes:
+  - daily_inspection

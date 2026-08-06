@@ -1,0 +1,4087 @@
+openapi: 3.0.4
+info:
+  title: リモデル管理 API API
+  version: '1.1'
+  description: リモデル管理で利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: リモデル管理
+    description: リモデル管理 APIのAPI
+paths:
+  /quotation-data-box/remodel-management/context:
+    get:
+      tags:
+        - リモデル管理
+      operationId: getQuotationDataBoxRemodelManagementContext
+      summary: リモデル管理コンテキスト取得
+      description: リモデル管理タブの初期表示に必要なリモデル編集リスト候補、絞り込み選択肢、権限、既定戻り先を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-codes:
+        - remodel_purchase
+        - remodel_order
+        - remodel_acceptance
+        - transfer_disposal
+      parameters:
+        - name: editListId
+          in: query
+          required: false
+          description: 選択中のリモデル編集リストID。未指定時は選択なし状態で返す
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQuotationDataBoxRemodelManagementContextResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/remodel-management/tasks:
+    get:
+      tags:
+        - リモデル管理
+      operationId: getQuotationDataBoxRemodelManagementTasks
+      summary: リモデル管理タスク一覧取得
+      description: 編集リストから作成済みの通常リモデルRFQと、リモデル編集リスト起点の廃棄申請グループを一覧取得する。廃棄後続操作はNo.27へ委譲する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-codes:
+        - remodel_purchase
+        - remodel_order
+        - remodel_acceptance
+        - transfer_disposal
+      parameters:
+        - name: editListId
+          in: query
+          required: false
+          description: 指定時は当該リモデル編集リストに紐づく行だけを返す
+          schema:
+            type: integer
+            format: int64
+        - name: quotationType
+          in: query
+          required: false
+          description: 見積区分。指定時、未指定RFQは除外する
+          schema:
+            type: string
+        - name: quotationPhase
+          in: query
+          required: false
+          description: 見積フェーズ。指定時、未指定RFQは除外する
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: ステータス
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          required: false
+          description: ページングカーソル
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: 既定50、最大200
+          schema:
+            type: integer
+            format: int32
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQuotationDataBoxRemodelManagementTasksResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles:
+        - RemodelTaskSummary
+        - RfqVendorSummary
+      x-word-response-subtables:
+        - Title: RemodelTaskSummary
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - rfqGroupId
+              - int64
+              - ✓
+              - rfqs.rfq_id
+            - - rfqNo
+              - string
+              - ✓
+              - rfqs.rfq_no。RFQは RFQ-、廃棄は DISP-、移動は TRAN- の採番値
+            - - rfqGroupName
+              - string
+              - ✓
+              - rfqs.rfq_group_name
+            - - editListId
+              - int64
+              - '-'
+              - 通常リモデルRFQは rfqs.edit_list_id、リモデル起点廃棄は rfq_applications.edit_list_id から導出
+            - - managementType
+              - string
+              - ✓
+              - REMODEL（通常リモデルRFQ） / DISPOSAL（リモデル起点廃棄グループ）
+            - - workflowType
+              - string
+              - ✓
+              - 通常リモデルRFQ・廃棄は RFQ。移設の既存ワークフローは別途定義に従う
+            - - quotationType
+              - string
+              - '-'
+              - >-
+                PURCHASE / LEASE / INSTALLMENT / RENTAL / TRIAL / BORROW / REPAIR / MAINTENANCE / INSPECTION /
+                OTHER。未指定可
+            - - quotationPhase
+              - string
+              - '-'
+              - LIST_PRICE / ESTIMATE / ORDER_REGISTRATION / FINAL_ASSET_REGISTRATION。未指定可
+            - - status
+              - string
+              - ✓
+              - rfq_status_definitions の表示値
+            - - deadlineLabel
+              - string
+              - '-'
+              - 見積提出期限、発注期限、登録期限、納入期限、納入年月日、検収年月日、却下日、承認日、完了日
+            - - deadlineOn
+              - date
+              - '-'
+              - ステータスに対応する期限日または実績日
+            - - applicationIds
+              - int64[]
+              - ✓
+              - rfq_applications.application_id の重複排除配列
+            - - isRemodelOrigin
+              - boolean
+              - ✓
+              - DISPOSAL/RFQ の場合、rfq_applications.edit_list_id / edit_list_item_id から判定
+            - - editListItemIds
+              - int64[]
+              - ✓
+              - リモデル起点廃棄の編集リスト明細ID。該当なしは空配列
+            - - remodelCloseImpact
+              - object
+              - ✓
+              - リモデルクローズへの影響。通常RFQ・対象外の場合は空の影響情報
+            - - vendorRows
+              - RfqVendorSummary[]
+              - ✓
+              - RFQは業者行へ展開、廃棄/移動は空配列または代表行
+            - - amount
+              - decimal
+              - '-'
+              - 採用見積または発注の合計金額
+            - - ownerName
+              - string
+              - '-'
+              - 作成者または担当者表示名
+            - - availableActions
+              - string[]
+              - ✓
+              - ステータス・管理種別・実効権限から導出。DISPOSAL/RFQ は OPEN_DISPOSAL_TASK のみ返し、No.24の承認・見積・発注操作は返さない
+        - Title: RfqVendorSummary
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - rfqVendorId
+              - int64
+              - ✓
+              - rfq_vendors.rfq_vendor_id
+            - - vendorId
+              - int64
+              - '-'
+              - 業者マスタID。手入力業者は null
+            - - vendorName
+              - string
+              - ✓
+              - 見積業者名
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - email
+              - string
+              - '-'
+              - メールアドレス
+            - - phone
+              - string
+              - '-'
+              - 電話番号
+            - - dueOn
+              - date
+              - '-'
+              - 見積提出期限
+            - - requestNote
+              - string
+              - '-'
+              - 依頼メモ
+            - - requestStatus
+              - string
+              - ✓
+              - DRAFT / SENT / REPLIED / CANCELED。Phase1では SENT を送信完了正本として更新せず、取得済み見積の登録確定時に必要に応じて REPLIED を利用する
+            - - requestedAt
+              - datetime
+              - '-'
+              - Phase2のOutlook連携または送信管理を持つ他業務で利用する依頼連携日時
+  /quotation-data-box/remodel-management/rfq-groups/{rfqGroupId}/deadlines:
+    patch:
+      tags:
+        - リモデル管理
+      operationId: patchQuotationDataBoxRemodelManagementRfqGroupsByRfqGroupIdDeadlines
+      summary: リモデル管理期限更新
+      description: 一覧の期限欄から、ステータスに応じた期限または実績日を更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-codes:
+        - remodel_purchase
+        - remodel_order
+        - remodel_acceptance
+        - transfer_disposal
+      parameters:
+        - name: rfqGroupId
+          in: path
+          required: true
+          description: 対象RFQグループID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchQuotationDataBoxRemodelManagementRfqGroupsByRfqGroupIdDeadlinesRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchQuotationDataBoxRemodelManagementRfqGroupsByRfqGroupIdDeadlinesResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/remodel-dashboard:
+    get:
+      tags:
+        - リモデル管理
+      operationId: getQuotationDataBoxRemodelDashboard
+      summary: リモデルダッシュボード取得
+      description: 編集リスト単位で、方針別内訳、進捗、クローズ可否、クローズ不可理由を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-codes:
+        - remodel_purchase
+        - remodel_order
+        - remodel_acceptance
+        - transfer_disposal
+      parameters:
+        - name: editListId
+          in: query
+          required: false
+          description: 対象リモデル編集リストID。未指定時は既定候補を返す
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQuotationDataBoxRemodelDashboardResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/rfq-groups/{rfqGroupId}:
+    get:
+      tags:
+        - リモデル管理
+      operationId: getQuotationDataBoxRfqGroupsByRfqGroupId
+      summary: RFQグループ詳細取得
+      description: リモデル管理タブから遷移したRFQ、廃棄、移動ワークフローの詳細と共通後続画面の文脈を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-codes:
+        - remodel_purchase
+        - remodel_order
+        - remodel_acceptance
+        - transfer_disposal
+      parameters:
+        - name: rfqGroupId
+          in: path
+          required: true
+          description: 対象RFQグループID
+          schema:
+            type: integer
+            format: int64
+        - name: managementType
+          in: query
+          required: false
+          description: 指定時は REMODEL（通常RFQ）または DISPOSAL（リモデル起点廃棄）と正本値一致を検証する
+          schema:
+            type: string
+        - name: returnTo
+          in: query
+          required: false
+          description: 未指定時は /quotation-data-box/remodel-management を返す
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQuotationDataBoxRfqGroupsByRfqGroupIdResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles:
+        - EditListItemSummary
+      x-word-response-subtables:
+        - Title: EditListItemSummary
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - editListItemId
+              - int64
+              - ✓
+              - edit_list_items.edit_list_item_id
+            - - rowNo
+              - int32
+              - ✓
+              - 編集リスト内表示順
+            - - sourceType
+              - string
+              - ✓
+              - BASE_ASSET / APPLICATION / MANUAL / QUOTATION
+            - - remodelDecision
+              - string
+              - ✓
+              - UNDECIDED / NEW / REPLACE / ADDITION / DISPOSAL / TRANSFER
+            - - targetFacilityId
+              - int64
+              - '-'
+              - edit_list_items.target_facility_id
+            - - targetBuildingName
+              - string
+              - '-'
+              - target_building_name
+            - - targetFloorName
+              - string
+              - '-'
+              - target_floor_name
+            - - targetDepartmentName
+              - string
+              - '-'
+              - target_department_name
+            - - targetSectionName
+              - string
+              - '-'
+              - target_section_name
+            - - targetRoomName
+              - string
+              - '-'
+              - target_room_name
+            - - targetInstallationLocation
+              - string
+              - '-'
+              - target_installation_location
+            - - itemName
+              - string
+              - '-'
+              - 品目名
+            - - makerName
+              - string
+              - '-'
+              - メーカー名
+            - - modelName
+              - string
+              - '-'
+              - 型式
+            - - reflectionStatus
+              - string
+              - ✓
+              - PENDING / REFLECTED / SKIPPED / ERROR
+  /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action:
+    post:
+      tags:
+        - リモデル管理
+      operationId: postQuotationDataBoxRfqGroupsByRfqGroupIdWorkflowAction
+      summary: 移動ワークフロー操作（廃棄は旧データ移行境界）
+      description: 移動ワークフローの承認、却下、完了を実行する。新モデルの廃棄申請（DISPOSAL/RFQ）に対する承認・却下・完了は本APIでは実行せず、No.27へ委譲する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: transfer_disposal
+      parameters:
+        - name: rfqGroupId
+          in: path
+          required: true
+          description: 対象移動ワークフローID。新モデルの廃棄申請タスクには使用しない
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxRfqGroupsByRfqGroupIdWorkflowActionRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxRfqGroupsByRfqGroupIdWorkflowActionResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests:
+    post:
+      tags:
+        - リモデル管理
+      operationId: postQuotationDataBoxRfqGroupsByRfqGroupIdVendorRequests
+      summary: 見積登録先業者保存
+      description: RFQプロセス画面で取得済み見積書の登録先となる業者行を登録または更新する。業者への見積依頼送信は行わない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_purchase
+      parameters:
+        - name: rfqGroupId
+          in: path
+          required: true
+          description: 対象RFQグループID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxRfqGroupsByRfqGroupIdVendorRequestsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxRfqGroupsByRfqGroupIdVendorRequestsResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles:
+        - RfqVendorSummary
+      x-word-response-subtables:
+        - Title: RfqVendorSummary
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - rfqVendorId
+              - int64
+              - ✓
+              - rfq_vendors.rfq_vendor_id
+            - - vendorId
+              - int64
+              - '-'
+              - 業者マスタID。手入力業者は null
+            - - vendorName
+              - string
+              - ✓
+              - 見積業者名
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - email
+              - string
+              - '-'
+              - メールアドレス
+            - - phone
+              - string
+              - '-'
+              - 電話番号
+            - - dueOn
+              - date
+              - '-'
+              - 見積提出期限
+            - - requestNote
+              - string
+              - '-'
+              - 依頼メモ
+            - - requestStatus
+              - string
+              - ✓
+              - DRAFT / SENT / REPLIED / CANCELED。Phase1では SENT を送信完了正本として更新せず、取得済み見積の登録確定時に必要に応じて REPLIED を利用する
+            - - requestedAt
+              - datetime
+              - '-'
+              - Phase2のOutlook連携または送信管理を持つ他業務で利用する依頼連携日時
+  /quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests/{rfqVendorId}:
+    delete:
+      tags:
+        - リモデル管理
+      operationId: deleteQuotationDataBoxRfqGroupsByRfqGroupIdVendorRequestsByRfqVendorId
+      summary: 見積登録先業者削除
+      description: RFQプロセスで未確定の見積登録先業者行を削除する。業者への見積依頼送信は行わない。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_purchase
+      parameters:
+        - name: rfqGroupId
+          in: path
+          required: true
+          description: 対象RFQグループID
+          schema:
+            type: integer
+            format: int64
+        - name: rfqVendorId
+          in: path
+          required: true
+          description: 対象見積登録先業者ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteQuotationDataBoxRfqGroupsByRfqGroupIdVendorRequestsByRfqVendorIdResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/rfq-groups/{rfqGroupId}/quotation-drafts:
+    post:
+      tags:
+        - リモデル管理
+      operationId: postQuotationDataBoxRfqGroupsByRfqGroupIdQuotationDrafts
+      summary: 見積登録ドラフト作成
+      description: RFQプロセスから見積登録ドラフトを作成し、共通見積登録画面へ渡す文脈を保存する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '500'
+      x-feature-code: remodel_purchase
+      parameters:
+        - name: rfqGroupId
+          in: path
+          required: true
+          description: 対象RFQグループID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxRfqGroupsByRfqGroupIdQuotationDraftsRequest'
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - documents要素（DocumentInput）
+      x-word-request-subtables:
+        - Title: documents要素（DocumentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentType
+              - string
+              - ✓
+              - 'application_documents.document_type。例: 見積原本 / 検収写真'
+            - - filePartName
+              - string
+              - ✓
+              - multipart/form-data 内のファイルパート名。ファイル実体とメタデータを対応付ける
+            - - fileName
+              - string
+              - '-'
+              - 画面表示用ファイル名。未指定時はアップロードファイル名
+            - - contentType
+              - string
+              - '-'
+              - MIME Type。未指定時はアップロードファイルまたはサーバー判定値を使用する
+            - - fileSizeBytes
+              - int64
+              - '-'
+              - 画面側検証用ファイルサイズ。保存時はサーバーがファイル実体から算出した値を正本にする
+            - - contentHash
+              - string
+              - '-'
+              - クライアント計算ハッシュ。サーバー側でも再計算する
+            - - title
+              - string
+              - '-'
+              - 表示タイトル
+            - - documentDate
+              - date
+              - '-'
+              - 文書日付
+            - - takenAt
+              - datetime
+              - '-'
+              - 写真撮影日時。見積原本では使用しない
+            - - isPrimary
+              - boolean
+              - '-'
+              - 検収写真を代表写真として扱う場合 true
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotationDraftCreateResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象RFQなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 への見積原本保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/quotation-drafts/{draftId}:
+    get:
+      tags:
+        - リモデル管理
+      operationId: getQuotationDataBoxQuotationDraftsByDraftId
+      summary: 見積登録ドラフト取得
+      description: OCR確認、明細区分登録、資産マスタ登録、個体登録/金額按分、登録確認の各画面で使うドラフトを取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_purchase
+      parameters:
+        - name: draftId
+          in: path
+          required: true
+          description: 見積登録ドラフトID
+          schema:
+            type: integer
+            format: int64
+        - name: lineScope
+          in: query
+          required: false
+          description: ALL / INDIVIDUAL_MANAGED。未指定は ALL
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQuotationDataBoxQuotationDraftsByDraftIdResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles:
+        - QuotationDraftItem
+      x-word-response-subtables:
+        - Title: QuotationDraftItem
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - quotationItemId
+              - int64
+              - '-'
+              - quotation_items.quotation_item_id。ドラフト行は null 可
+            - - rowNo
+              - int32
+              - ✓
+              - 見積書上の行番号
+            - - originalItemName
+              - string
+              - ✓
+              - 原文品目
+            - - originalMakerName
+              - string
+              - '-'
+              - 原文メーカー
+            - - originalModelName
+              - string
+              - '-'
+              - 原文型式
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - itemType
+              - string
+              - '-'
+              - 明細代表 / 内訳代表 / 親明細 / 子明細 / 孫明細 / その他 / 値引き
+            - - categoryCode
+              - string
+              - '-'
+              - 会計区分 01〜17
+            - - shipAssetMasterId
+              - int64
+              - '-'
+              - 採用したSHIP資産マスタID
+            - - unit
+              - string
+              - '-'
+              - 台 / 個 / 本 / 枚 / 組 / セット / 式
+            - - taxType
+              - string
+              - '-'
+              - 課税 / 非課税
+            - - seqId
+              - string
+              - '-'
+              - 親子関係SEQ
+            - - parentSeqId
+              - string
+              - '-'
+              - 親SEQ
+            - - excluded
+              - boolean
+              - ✓
+              - 登録除外行かどうか
+  /quotation-data-box/quotation-drafts/{draftId}/ocr-confirmation:
+    patch:
+      tags:
+        - リモデル管理
+      operationId: patchQuotationDataBoxQuotationDraftsByDraftIdOcrConfirmation
+      summary: OCR確認結果保存
+      description: OCR確認画面で修正した見積基本情報と見積明細を保存する。外部OCR実行は対象外とする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_purchase
+      parameters:
+        - name: draftId
+          in: path
+          required: true
+          description: 見積登録ドラフトID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchQuotationDataBoxQuotationDraftsByDraftIdOcrConfirmationRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchQuotationDataBoxQuotationDraftsByDraftIdOcrConfirmationResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/quotation-drafts/{draftId}/line-categories:
+    patch:
+      tags:
+        - リモデル管理
+      operationId: patchQuotationDataBoxQuotationDraftsByDraftIdLineCategories
+      summary: 明細区分登録保存
+      description: 明細区分登録画面でカテゴリ、明細区分、登録/未登録、除外行を保存する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_purchase
+      parameters:
+        - name: draftId
+          in: path
+          required: true
+          description: 見積登録ドラフトID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchQuotationDataBoxQuotationDraftsByDraftIdLineCategoriesRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchQuotationDataBoxQuotationDraftsByDraftIdLineCategoriesResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/quotation-drafts/{draftId}/asset-master-matches:
+    patch:
+      tags:
+        - リモデル管理
+      operationId: patchQuotationDataBoxQuotationDraftsByDraftIdAssetMasterMatches
+      summary: 資産マスタ照合結果保存
+      description: AI候補採用または資産マスタ手動選択の結果を保存する。AI推論サービス自体は対象外とする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_purchase
+      parameters:
+        - name: draftId
+          in: path
+          required: true
+          description: 見積登録ドラフトID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchQuotationDataBoxQuotationDraftsByDraftIdAssetMasterMatchesRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchQuotationDataBoxQuotationDraftsByDraftIdAssetMasterMatchesResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/quotation-drafts/{draftId}/price-allocations:
+    patch:
+      tags:
+        - リモデル管理
+      operationId: patchQuotationDataBoxQuotationDraftsByDraftIdPriceAllocations
+      summary: 個体登録・金額按分保存
+      description: 親子明細、個体単位数量、税区分、按分金額、見積明細との紐づけを保存する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_purchase
+      parameters:
+        - name: draftId
+          in: path
+          required: true
+          description: 見積登録ドラフトID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchQuotationDataBoxQuotationDraftsByDraftIdPriceAllocationsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchQuotationDataBoxQuotationDraftsByDraftIdPriceAllocationsResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/quotation-drafts/{draftId}/confirm:
+    post:
+      tags:
+        - リモデル管理
+      operationId: postQuotationDataBoxQuotationDraftsByDraftIdConfirm
+      summary: 見積登録確定
+      description: リモデル見積登録または発注見積登録を確定し、見積ヘッダー、見積明細、紐づけを作成/更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_purchase
+      parameters:
+        - name: draftId
+          in: path
+          required: true
+          description: 見積登録ドラフトID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxQuotationDraftsByDraftIdConfirmRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxQuotationDraftsByDraftIdConfirmResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/order-registration/orders:
+    post:
+      tags:
+        - リモデル管理
+      operationId: postQuotationDataBoxOrderRegistrationOrders
+      summary: 発注登録
+      description: 発注登録画面の入力内容から発注ヘッダーと発注明細を作成し、RFQを発注済へ進める。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxOrderRegistrationOrdersRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxOrderRegistrationOrdersResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/inspection-registration/records:
+    post:
+      tags:
+        - リモデル管理
+      operationId: postQuotationDataBoxInspectionRegistrationRecords
+      summary: 納品検収予定日登録
+      description: 納品検収予定日、明細別納品日、検収書種別を登録し、RFQを納期確定へ進める。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_acceptance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxInspectionRegistrationRecordsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxInspectionRegistrationRecordsResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/asset-provisional-registration/context:
+    get:
+      tags:
+        - リモデル管理
+      operationId: getQuotationDataBoxAssetProvisionalRegistrationContext
+      summary: 検収登録コンテキスト取得
+      description: 資産仮登録/検収登録画面の対象発注明細、既存登録状況、初期候補、戻り先を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_acceptance
+      parameters:
+        - name: rfqGroupId
+          in: query
+          required: true
+          description: 対象RFQグループID
+          schema:
+            type: integer
+            format: int64
+        - name: mode
+          in: query
+          required: false
+          description: mobile / pc。未指定時は mobile
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQuotationDataBoxAssetProvisionalRegistrationContextResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles:
+        - OrderItemForInspection
+      x-word-response-subtables:
+        - Title: OrderItemForInspection
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - orderItemId
+              - int64
+              - ✓
+              - order_items.order_item_id
+            - - quotationItemId
+              - int64
+              - ✓
+              - quotation_items.quotation_item_id
+            - - registrationType
+              - string
+              - ✓
+              - 本体 / 付属品
+            - - itemName
+              - string
+              - ✓
+              - 品目名
+            - - makerName
+              - string
+              - '-'
+              - メーカー名
+            - - modelName
+              - string
+              - '-'
+              - 型式
+            - - quantity
+              - int32
+              - ✓
+              - 数量
+            - - unitPrice
+              - decimal
+              - '-'
+              - 単価
+            - - amount
+              - decimal
+              - '-'
+              - 金額
+            - - deliveryOn
+              - date
+              - '-'
+              - 明細別納品日
+  /quotation-data-box/asset-provisional-registration/items/{orderItemId}:
+    patch:
+      tags:
+        - リモデル管理
+      operationId: patchQuotationDataBoxAssetProvisionalRegistrationItemsByOrderItemId
+      summary: 検収登録明細保存
+      description: 検収登録の明細単位入力を保存する。モバイル1品目登録とPC一覧編集の双方で利用する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '502'
+        - '500'
+      x-feature-code: remodel_acceptance
+      parameters:
+        - name: orderItemId
+          in: path
+          required: true
+          description: 対象発注明細ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchQuotationDataBoxAssetProvisionalRegistrationItemsByOrderItemIdRequest'
+      x-word-request-title: リクエストボディ（multipart/form-data）
+      x-word-request-subtable-titles:
+        - photoDocuments要素（DocumentInput）
+      x-word-request-subtables:
+        - Title: photoDocuments要素（DocumentInput）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - documentType
+              - string
+              - ✓
+              - 'application_documents.document_type。例: 見積原本 / 検収写真'
+            - - filePartName
+              - string
+              - ✓
+              - multipart/form-data 内のファイルパート名。ファイル実体とメタデータを対応付ける
+            - - fileName
+              - string
+              - '-'
+              - 画面表示用ファイル名。未指定時はアップロードファイル名
+            - - contentType
+              - string
+              - '-'
+              - MIME Type。未指定時はアップロードファイルまたはサーバー判定値を使用する
+            - - fileSizeBytes
+              - int64
+              - '-'
+              - 画面側検証用ファイルサイズ。保存時はサーバーがファイル実体から算出した値を正本にする
+            - - contentHash
+              - string
+              - '-'
+              - クライアント計算ハッシュ。サーバー側でも再計算する
+            - - title
+              - string
+              - '-'
+              - 表示タイトル
+            - - documentDate
+              - date
+              - '-'
+              - 文書日付
+            - - takenAt
+              - datetime
+              - '-'
+              - 写真撮影日時。見積原本では使用しない
+            - - isPrimary
+              - boolean
+              - '-'
+              - 検収写真を代表写真として扱う場合 true
+      responses:
+        '200':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetProvisionalItemSaveResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象発注明細またはRFQなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Amazon S3 への検収写真保存またはロールバック削除に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/asset-provisional-registration/complete:
+    post:
+      tags:
+        - リモデル管理
+      operationId: postQuotationDataBoxAssetProvisionalRegistrationComplete
+      summary: 検収登録完了
+      description: 全対象明細の検収登録完了を確定し、個体中間データを作成/更新してRFQを検収済へ進める。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_acceptance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxAssetProvisionalRegistrationCompleteRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxAssetProvisionalRegistrationCompleteResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles:
+        - IndividualSummary
+      x-word-response-subtables:
+        - Title: IndividualSummary
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - individualId
+              - int64
+              - '-'
+              - individuals.individual_id
+            - - orderItemId
+              - int64
+              - ✓
+              - order_items.order_item_id
+            - - qrCodeValue
+              - string
+              - '-'
+              - QRコード値
+            - - serialNo
+              - string
+              - '-'
+              - シリアルNo.
+            - - itemName
+              - string
+              - ✓
+              - 品目名
+            - - makerName
+              - string
+              - '-'
+              - メーカー名
+            - - modelName
+              - string
+              - '-'
+              - 型式
+            - - acquisitionAmount
+              - decimal
+              - '-'
+              - 取得金額
+            - - acquiredOn
+              - date
+              - '-'
+              - 取得日
+            - - facilityLocationId
+              - int64
+              - '-'
+              - 設置ロケーションID
+            - - departmentName
+              - string
+              - '-'
+              - 部門
+            - - sectionName
+              - string
+              - '-'
+              - 部署
+            - - roomName
+              - string
+              - '-'
+              - 室名
+            - - photoDocumentIds
+              - int64[]
+              - '-'
+              - 検収登録中に保存した写真ドキュメントID。原本資産登録時に該当資産写真へ複製する対象
+            - - fixedAssetNo
+              - string
+              - '-'
+              - 固定資産番号
+            - - registrationStatus
+              - string
+              - ✓
+              - INSPECTED / REGISTERED
+  /quotation-data-box/asset-registration/context:
+    get:
+      tags:
+        - リモデル管理
+      operationId: getQuotationDataBoxAssetRegistrationContext
+      summary: 原本登録コンテキスト取得
+      description: 原本登録対象の検収済個体、発注/見積情報、固定資産番号入力状況、会計区分、勘定科目を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_acceptance
+      parameters:
+        - name: rfqGroupId
+          in: query
+          required: true
+          description: 対象RFQグループID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQuotationDataBoxAssetRegistrationContextResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/asset-registration/register-bulk:
+    post:
+      tags:
+        - リモデル管理
+      operationId: postQuotationDataBoxAssetRegistrationRegisterBulk
+      summary: 原本資産登録
+      description: 固定資産番号、会計区分、勘定科目、取得価額、設置場所、個体情報を原本へ反映し、RFQを完了へ進める。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_acceptance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxAssetRegistrationRegisterBulkRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxAssetRegistrationRegisterBulkResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+  /quotation-data-box/remodel-management/edit-lists/{editListId}/close:
+    post:
+      tags:
+        - リモデル管理
+      operationId: postQuotationDataBoxRemodelManagementEditListsByEditListIdClose
+      summary: リモデルクローズ
+      description: 編集リスト単位でリモデル完了を確定し、編集リスト、編集明細、個別部署マスタ、原本資産、履歴を同一トランザクションで更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '409'
+        - '500'
+      x-feature-code: remodel_acceptance
+      parameters:
+        - name: editListId
+          in: path
+          required: true
+          description: 対象リモデル編集リストID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostQuotationDataBoxRemodelManagementEditListsByEditListIdCloseRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 正常終了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostQuotationDataBoxRemodelManagementEditListsByEditListIdCloseResponse'
+        '400':
+          description: 入力値不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 権限なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 対象データなし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 状態不整合または競合更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': 各APIの成功レスポンス
+      x-word-response-title: レスポンス（成功時）
+      x-word-response-subtable-titles: []
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    GetQuotationDataBoxRemodelManagementContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - editLists
+        - quotationTypes
+        - quotationPhases
+        - statuses
+        - permissions
+        - returnTo
+      properties:
+        editLists:
+          type: array
+          items:
+            type: string
+          description: リモデル編集リスト候補
+        defaultDashboardEditListId:
+          type: integer
+          format: int64
+          description: ダッシュボード既定候補
+        quotationTypes:
+          type: array
+          items:
+            type: string
+          description: 見積区分候補
+        quotationPhases:
+          type: array
+          items:
+            type: string
+          description: 見積フェーズ候補
+        statuses:
+          type: array
+          items:
+            type: string
+          description: RFQ/DISPOSAL/TRANSFER の状態候補
+        permissions:
+          type: object
+          additionalProperties: true
+          description: 操作別可否
+        returnTo:
+          type: string
+          description: /quotation-data-box/remodel-management
+    GetQuotationDataBoxRemodelManagementTasksResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+          description: リモデル管理一覧行
+        emptyMessage:
+          type: string
+          description: 該当なし時の空状態メッセージ
+        nextCursor:
+          type: string
+          description: 次ページカーソル
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: rfqs.rfq_id
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+          x-word-required-label: ✓
+        rfqNo:
+          type: string
+          description: rfqs.rfq_no。RFQは RFQ-、廃棄は DISP-、移動は TRAN- の採番値
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+          x-word-required-label: ✓
+        rfqGroupName:
+          type: string
+          description: rfqs.rfq_group_name
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+          x-word-required-label: ✓
+        editListId:
+          type: integer
+          format: int64
+          description: 通常リモデルRFQは rfqs.edit_list_id、リモデル起点廃棄は rfq_applications.edit_list_id から導出
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+        managementType:
+          type: string
+          description: REMODEL（通常リモデルRFQ） / DISPOSAL（リモデル起点廃棄グループ）
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+          x-word-required-label: ✓
+        workflowType:
+          type: string
+          description: 通常リモデルRFQ・廃棄は RFQ。移設の既存ワークフローは別途定義に従う
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+          x-word-required-label: ✓
+        quotationType:
+          type: string
+          description: PURCHASE / LEASE / INSTALLMENT / RENTAL / TRIAL / BORROW / REPAIR / MAINTENANCE / INSPECTION / OTHER。未指定可
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+        quotationPhase:
+          type: string
+          description: LIST_PRICE / ESTIMATE / ORDER_REGISTRATION / FINAL_ASSET_REGISTRATION。未指定可
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+        status:
+          type: string
+          description: rfq_status_definitions の表示値
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+          x-word-required-label: ✓
+        deadlineLabel:
+          type: string
+          description: 見積提出期限、発注期限、登録期限、納入期限、納入年月日、検収年月日、却下日、承認日、完了日
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+        deadlineOn:
+          type: string
+          format: date
+          description: ステータスに対応する期限日または実績日
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+        applicationIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: rfq_applications.application_id の重複排除配列
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+          x-word-required-label: ✓
+        isRemodelOrigin:
+          type: boolean
+          description: DISPOSAL/RFQ の場合、rfq_applications.edit_list_id / edit_list_item_id から判定
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+          x-word-required-label: ✓
+        editListItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: リモデル起点廃棄の編集リスト明細ID。該当なしは空配列
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+          x-word-required-label: ✓
+        remodelCloseImpact:
+          type: object
+          additionalProperties: true
+          description: リモデルクローズへの影響。通常RFQ・対象外の場合は空の影響情報
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+          x-word-required-label: ✓
+        vendorRows:
+          type: array
+          items:
+            type: string
+          description: RFQは業者行へ展開、廃棄/移動は空配列または代表行
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+          x-word-required-label: ✓
+        amount:
+          type: number
+          description: 採用見積または発注の合計金額
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+        ownerName:
+          type: string
+          description: 作成者または担当者表示名
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+        availableActions:
+          type: array
+          items:
+            type: string
+          description: ステータス・管理種別・実効権限から導出。DISPOSAL/RFQ は OPEN_DISPOSAL_TASK のみ返し、No.24の承認・見積・発注操作は返さない
+          x-word-omit-row: true
+          x-required-when: RemodelTaskSummary
+          x-word-required-label: ✓
+        rfqVendorId:
+          type: integer
+          format: int64
+          description: rfq_vendors.rfq_vendor_id
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+          x-word-required-label: ✓
+        vendorId:
+          type: integer
+          format: int64
+          description: 業者マスタID。手入力業者は null
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+        vendorName:
+          type: string
+          description: 見積業者名
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+          x-word-required-label: ✓
+        contactPerson:
+          type: string
+          description: 担当者名
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+        email:
+          type: string
+          description: メールアドレス
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+        phone:
+          type: string
+          description: 電話番号
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+        dueOn:
+          type: string
+          format: date
+          description: 見積提出期限
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+        requestNote:
+          type: string
+          description: 依頼メモ
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+        requestStatus:
+          type: string
+          description: DRAFT / SENT / REPLIED / CANCELED。Phase1では SENT を送信完了正本として更新せず、取得済み見積の登録確定時に必要に応じて REPLIED を利用する
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+          x-word-required-label: ✓
+        requestedAt:
+          type: string
+          format: date-time
+          description: Phase2のOutlook連携または送信管理を持つ他業務で利用する依頼連携日時
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+    PatchQuotationDataBoxRemodelManagementRfqGroupsByRfqGroupIdDeadlinesRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - deadlineOn
+      properties:
+        deadlineOn:
+          type: string
+          format: date
+          description: 更新する期限日または実績日
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用
+    PatchQuotationDataBoxRemodelManagementRfqGroupsByRfqGroupIdDeadlinesResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqGroupId
+        - deadlineLabel
+        - deadlineOn
+        - updatedAt
+      properties:
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象RFQグループID
+        deadlineLabel:
+          type: string
+          description: 画面表示ラベル
+        deadlineOn:
+          type: string
+          format: date
+          description: 更新後日付
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    GetQuotationDataBoxRemodelDashboardResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - decisionCounts
+        - locationInputStatus
+        - workflowStatus
+        - originalRegistrationStatus
+        - canClose
+        - closeBlockers
+      properties:
+        editListId:
+          type: integer
+          format: int64
+          description: 対象編集リストID
+        editListName:
+          type: string
+          description: 編集リスト名
+        decisionCounts:
+          type: object
+          additionalProperties: true
+          description: 方針別件数
+        locationInputStatus:
+          type: object
+          additionalProperties: true
+          description: 新設置場所入力状況
+        workflowStatus:
+          type: object
+          additionalProperties: true
+          description: RFQ/廃棄/移動の終端状況
+        originalRegistrationStatus:
+          type: object
+          additionalProperties: true
+          description: 原本登録状況
+        canClose:
+          type: boolean
+          description: クローズ可能か
+        closeBlockers:
+          type: array
+          items:
+            type: string
+          description: クローズ不可理由
+    GetQuotationDataBoxRfqGroupsByRfqGroupIdResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - context
+        - rfq
+        - editListItems
+        - vendors
+        - quotations
+        - individuals
+      properties:
+        context:
+          type: string
+          description: 管理区分、戻り先、次画面候補
+        rfq:
+          type: string
+          description: RFQ/ワークフロー概要
+        editListItems:
+          type: array
+          items:
+            type: string
+          description: 紐づく編集リスト明細
+        vendors:
+          type: array
+          items:
+            type: string
+          description: 見積業者行
+        quotations:
+          type: array
+          items:
+            type: string
+          description: 登録済み見積
+        order:
+          type: string
+          description: 発注済みの場合の発注ヘッダー
+        individuals:
+          type: array
+          items:
+            type: string
+          description: 検収登録済み個体
+        editListItemId:
+          type: integer
+          format: int64
+          description: edit_list_items.edit_list_item_id
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+          x-word-required-label: ✓
+        rowNo:
+          type: integer
+          format: int32
+          description: 編集リスト内表示順
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+          x-word-required-label: ✓
+        sourceType:
+          type: string
+          description: BASE_ASSET / APPLICATION / MANUAL / QUOTATION
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+          x-word-required-label: ✓
+        remodelDecision:
+          type: string
+          description: UNDECIDED / NEW / REPLACE / ADDITION / DISPOSAL / TRANSFER
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+          x-word-required-label: ✓
+        targetFacilityId:
+          type: integer
+          format: int64
+          description: edit_list_items.target_facility_id
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+        targetBuildingName:
+          type: string
+          description: target_building_name
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+        targetFloorName:
+          type: string
+          description: target_floor_name
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+        targetDepartmentName:
+          type: string
+          description: target_department_name
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+        targetSectionName:
+          type: string
+          description: target_section_name
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+        targetRoomName:
+          type: string
+          description: target_room_name
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+        targetInstallationLocation:
+          type: string
+          description: target_installation_location
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+        itemName:
+          type: string
+          description: 品目名
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+        makerName:
+          type: string
+          description: メーカー名
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+        modelName:
+          type: string
+          description: 型式
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+        reflectionStatus:
+          type: string
+          description: PENDING / REFLECTED / SKIPPED / ERROR
+          x-word-omit-row: true
+          x-required-when: EditListItemSummary
+          x-word-required-label: ✓
+    PostQuotationDataBoxRfqGroupsByRfqGroupIdWorkflowActionRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          description: APPROVE / REJECT / COMPLETE_TRANSFER。COMPLETE_DISPOSAL は新規APIでは受け付けない
+        comment:
+          type: string
+          description: 画面入力欄はないため任意。指定時のみ備考として保存
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用
+    PostQuotationDataBoxRfqGroupsByRfqGroupIdWorkflowActionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqGroupId
+        - workflowType
+        - status
+        - updatedAt
+      properties:
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象ID
+        workflowType:
+          type: string
+          description: TRANSFER。新モデルの廃棄は DISPOSAL/RFQ としてNo.27で管理
+        status:
+          type: string
+          description: 更新後ステータス
+        approvedOn:
+          type: string
+          format: date
+          description: 承認日
+        rejectedOn:
+          type: string
+          format: date
+          description: 却下日
+        completedOn:
+          type: string
+          format: date
+          description: 完了日
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PostQuotationDataBoxRfqGroupsByRfqGroupIdVendorRequestsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - vendors
+      properties:
+        vendors:
+          type: array
+          items:
+            type: string
+          description: 保存する見積登録先業者行
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用
+    PostQuotationDataBoxRfqGroupsByRfqGroupIdVendorRequestsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqGroupId
+        - vendors
+        - updatedAt
+      properties:
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象RFQグループID
+        vendors:
+          type: array
+          items:
+            type: string
+          description: 保存後の業者行
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+        rfqVendorId:
+          type: integer
+          format: int64
+          description: rfq_vendors.rfq_vendor_id
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+          x-word-required-label: ✓
+        vendorId:
+          type: integer
+          format: int64
+          description: 業者マスタID。手入力業者は null
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+        vendorName:
+          type: string
+          description: 見積業者名
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+          x-word-required-label: ✓
+        contactPerson:
+          type: string
+          description: 担当者名
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+        email:
+          type: string
+          description: メールアドレス
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+        phone:
+          type: string
+          description: 電話番号
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+        dueOn:
+          type: string
+          format: date
+          description: 見積提出期限
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+        requestNote:
+          type: string
+          description: 依頼メモ
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+        requestStatus:
+          type: string
+          description: DRAFT / SENT / REPLIED / CANCELED。Phase1では SENT を送信完了正本として更新せず、取得済み見積の登録確定時に必要に応じて REPLIED を利用する
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+          x-word-required-label: ✓
+        requestedAt:
+          type: string
+          format: date-time
+          description: Phase2のOutlook連携または送信管理を持つ他業務で利用する依頼連携日時
+          x-word-omit-row: true
+          x-required-when: RfqVendorSummary
+    DeleteQuotationDataBoxRfqGroupsByRfqGroupIdVendorRequestsByRfqVendorIdResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - deleted
+        - rfqVendorId
+      properties:
+        deleted:
+          type: boolean
+          description: 削除した場合 true
+        rfqVendorId:
+          type: integer
+          format: int64
+          description: 削除対象ID
+    PostQuotationDataBoxRfqGroupsByRfqGroupIdQuotationDraftsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload.quotationPhase
+      properties:
+        payload.quotationPhase:
+          type: string
+          description: LIST_PRICE / ESTIMATE / ORDER_REGISTRATION
+        payload.storageFormat:
+          type: string
+          description: 電子取引 / スキャナ保存 / 未指定。ファイル保存先ではなく保存形式を表す
+        payload.registrationDueOn:
+          type: string
+          format: date
+          description: 登録期限
+        payload.vendorId:
+          type: integer
+          format: int64
+          description: 見積業者ID
+        payload.manualBasicInfo:
+          type: string
+          description: 手入力した見積基本情報
+        payload.documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentInput'
+          description: 添付見積書メタデータ。各要素の filePartName で対応するファイルパートを指定する
+          x-word-subtable-title: documents要素（DocumentInput）
+        payload.returnTo:
+          type: string
+          description: 既定 /quotation-data-box/remodel-management
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: payload.documents[].filePartName で参照される見積原本ファイル本体
+    QuotationDraftCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - draftId
+        - nextRoute
+        - managementType
+        - returnTo
+      properties:
+        draftId:
+          type: integer
+          format: int64
+          description: 作成した見積登録ドラフトID
+        nextRoute:
+          type: string
+          description: 次画面URL
+        managementType:
+          type: string
+          description: REMODEL
+        returnTo:
+          type: string
+          description: 戻り先
+    DocumentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - documentType
+        - filePartName
+      properties:
+        documentType:
+          type: string
+          description: 'application_documents.document_type。例: 見積原本 / 検収写真'
+        filePartName:
+          type: string
+          description: multipart/form-data 内のファイルパート名。ファイル実体とメタデータを対応付ける
+        fileName:
+          type: string
+          description: 画面表示用ファイル名。未指定時はアップロードファイル名
+        contentType:
+          type: string
+          description: MIME Type。未指定時はアップロードファイルまたはサーバー判定値を使用する
+        fileSizeBytes:
+          type: integer
+          format: int64
+          description: 画面側検証用ファイルサイズ。保存時はサーバーがファイル実体から算出した値を正本にする
+        contentHash:
+          type: string
+          description: クライアント計算ハッシュ。サーバー側でも再計算する
+        title:
+          type: string
+          description: 表示タイトル
+        documentDate:
+          type: string
+          format: date
+          description: 文書日付
+        takenAt:
+          type: string
+          format: date-time
+          description: 写真撮影日時。見積原本では使用しない
+        isPrimary:
+          type: boolean
+          description: 検収写真を代表写真として扱う場合 true
+    GetQuotationDataBoxQuotationDraftsByDraftIdResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - draftId
+        - rfqGroupId
+        - managementType
+        - returnTo
+        - quotationPhase
+        - basicInfo
+        - items
+        - progress
+        - counts
+      properties:
+        draftId:
+          type: integer
+          format: int64
+          description: 見積登録ドラフトID。quotations.quotation_id を使用し、確定前は quotations.status='DRAFT' として扱う
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: rfqs.rfq_id
+        managementType:
+          type: string
+          description: REMODEL
+        returnTo:
+          type: string
+          description: /quotation-data-box/remodel-management
+        quotationPhase:
+          type: string
+          description: LIST_PRICE / ESTIMATE / ORDER_REGISTRATION
+        storageFormat:
+          type: string
+          description: 電子取引 / スキャナ保存 / 未指定
+        registrationDueOn:
+          type: string
+          format: date
+          description: 登録期限
+        basicInfo:
+          type: string
+          description: 見積基本情報
+        items:
+          type: array
+          items:
+            type: string
+          description: 見積明細
+        progress:
+          type: string
+          description: 共通画面の進捗状態
+        counts:
+          type: object
+          additionalProperties: true
+          description: 全明細件数、個体管理対象件数、紐付け済み件数
+        quotationItemId:
+          type: integer
+          format: int64
+          description: quotation_items.quotation_item_id。ドラフト行は null 可
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+        rowNo:
+          type: integer
+          format: int32
+          description: 見積書上の行番号
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+          x-word-required-label: ✓
+        originalItemName:
+          type: string
+          description: 原文品目
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+          x-word-required-label: ✓
+        originalMakerName:
+          type: string
+          description: 原文メーカー
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+        originalModelName:
+          type: string
+          description: 原文型式
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+          x-word-required-label: ✓
+        itemType:
+          type: string
+          description: 明細代表 / 内訳代表 / 親明細 / 子明細 / 孫明細 / その他 / 値引き
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+        categoryCode:
+          type: string
+          description: 会計区分 01〜17
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+        shipAssetMasterId:
+          type: integer
+          format: int64
+          description: 採用したSHIP資産マスタID
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+        unit:
+          type: string
+          description: 台 / 個 / 本 / 枚 / 組 / セット / 式
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+        taxType:
+          type: string
+          description: 課税 / 非課税
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+        seqId:
+          type: string
+          description: 親子関係SEQ
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+        parentSeqId:
+          type: string
+          description: 親SEQ
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+        excluded:
+          type: boolean
+          description: 登録除外行かどうか
+          x-word-omit-row: true
+          x-required-when: QuotationDraftItem
+          x-word-required-label: ✓
+    PatchQuotationDataBoxQuotationDraftsByDraftIdOcrConfirmationRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - basicInfo
+        - items
+      properties:
+        basicInfo:
+          type: string
+          description: 見積日付、納期、見積有効期限、合計金額など
+        items:
+          type: array
+          items:
+            type: string
+          description: 確認済み明細
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用
+    PatchQuotationDataBoxQuotationDraftsByDraftIdOcrConfirmationResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - draftId
+        - updatedAt
+        - nextStep
+      properties:
+        draftId:
+          type: integer
+          format: int64
+          description: ドラフトID
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+        nextStep:
+          type: string
+          description: 次工程コード
+    PatchQuotationDataBoxQuotationDraftsByDraftIdLineCategoriesRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+          description: 明細区分登録結果
+        allowIncomplete:
+          type: boolean
+          description: 未登録行が残る場合でもドラフト保存するか
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用
+    PatchQuotationDataBoxQuotationDraftsByDraftIdLineCategoriesResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - draftId
+        - registeredCount
+        - unregisteredCount
+        - updatedAt
+      properties:
+        draftId:
+          type: integer
+          format: int64
+          description: ドラフトID
+        registeredCount:
+          type: integer
+          format: int32
+          description: 登録済み行数
+        unregisteredCount:
+          type: integer
+          format: int32
+          description: 未登録行数
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PatchQuotationDataBoxQuotationDraftsByDraftIdAssetMasterMatchesRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+          description: 採用結果
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用
+    PatchQuotationDataBoxQuotationDraftsByDraftIdAssetMasterMatchesResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - draftId
+        - matchedCount
+        - unmatchedCount
+        - updatedAt
+      properties:
+        draftId:
+          type: integer
+          format: int64
+          description: ドラフトID
+        matchedCount:
+          type: integer
+          format: int32
+          description: 紐付け済み件数
+        unmatchedCount:
+          type: integer
+          format: int32
+          description: 未紐付け件数
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PatchQuotationDataBoxQuotationDraftsByDraftIdPriceAllocationsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+          description: 按分結果
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用
+    PatchQuotationDataBoxQuotationDraftsByDraftIdPriceAllocationsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - draftId
+        - allocatedCount
+        - totalAmount
+        - updatedAt
+      properties:
+        draftId:
+          type: integer
+          format: int64
+          description: ドラフトID
+        allocatedCount:
+          type: integer
+          format: int32
+          description: 按分済み件数
+        totalAmount:
+          type: number
+          description: 按分後合計金額
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PostQuotationDataBoxQuotationDraftsByDraftIdConfirmRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        confirmedByUserId:
+          type: integer
+          format: int64
+          description: 未指定時はログインユーザー
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用
+    PostQuotationDataBoxQuotationDraftsByDraftIdConfirmResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - quotationId
+        - quotationNo
+        - rfqGroupId
+        - rfqStatus
+        - nextRoute
+      properties:
+        quotationId:
+          type: integer
+          format: int64
+          description: 確定した見積ID
+        quotationNo:
+          type: string
+          description: 受領見積番号
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象RFQグループID
+        rfqStatus:
+          type: string
+          description: 見積DB登録済 または 発注見積登録済
+        nextRoute:
+          type: string
+          description: 次画面または戻り先
+    PostQuotationDataBoxOrderRegistrationOrdersRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqGroupId
+        - quotationId
+        - orderType
+        - orderOn
+        - deliveryDueOn
+        - paymentTerms
+        - items
+      properties:
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象RFQグループID
+        quotationId:
+          type: integer
+          format: int64
+          description: 採用する発注登録用見積ID
+        settlementNo:
+          type: string
+          description: 院内決済No.
+        orderType:
+          type: string
+          description: 購入 / 割賦 / リース（オペレーティング） / リース（ファイナンス）
+        orderOn:
+          type: string
+          format: date
+          description: 発注日
+        deliveryDueOn:
+          type: string
+          format: date
+          description: 納品予定日
+        paymentTerms:
+          type: string
+          description: 支払条件。締日、支払日、日サイト等
+        paymentMethod:
+          type: string
+          description: でんさい / 銀行振込 / クレジット / 現金。orders.payment_method に保存
+        leaseStartOn:
+          type: string
+          format: date
+          description: リース系選択時のみ
+        leaseEndOn:
+          type: string
+          format: date
+          description: リース系選択時のみ
+        comment:
+          type: string
+          description: コメント
+        inspectionCertType:
+          type: string
+          description: 未指定時 本体のみ
+        storageFormat:
+          type: string
+          description: 未指定時 未指定
+        items:
+          type: array
+          items:
+            type: string
+          description: 発注明細
+    PostQuotationDataBoxOrderRegistrationOrdersResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - orderId
+        - orderNo
+        - rfqGroupId
+        - rfqStatus
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          description: 作成した発注ID
+        orderNo:
+          type: string
+          description: 発注番号
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象RFQグループID
+        rfqStatus:
+          type: string
+          description: 発注済
+        printContext:
+          type: object
+          additionalProperties: true
+          description: 登録後印刷に必要なキー
+    PostQuotationDataBoxInspectionRegistrationRecordsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqGroupId
+        - orderId
+        - inspectionOn
+        - inspectionCertType
+      properties:
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象RFQグループID
+        orderId:
+          type: integer
+          format: int64
+          description: 対象発注ID
+        inspectionOn:
+          type: string
+          format: date
+          description: 納品検収予定日
+        inspectionCertType:
+          type: string
+          description: 本体のみ / 付属品含む
+        items:
+          type: array
+          items:
+            type: string
+          description: 明細別納品日
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用
+    PostQuotationDataBoxInspectionRegistrationRecordsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqGroupId
+        - orderId
+        - rfqStatus
+        - canExportInspectionSheet
+        - canIssueQrLabels
+      properties:
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象RFQグループID
+        orderId:
+          type: integer
+          format: int64
+          description: 対象発注ID
+        rfqStatus:
+          type: string
+          description: 納期確定
+        canExportInspectionSheet:
+          type: boolean
+          description: 検収書Excel出力可否
+        canIssueQrLabels:
+          type: boolean
+          description: QRラベル発行可否
+    GetQuotationDataBoxAssetProvisionalRegistrationContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - context
+        - order
+        - items
+        - classificationCandidates
+        - locationCandidates
+      properties:
+        context:
+          type: string
+          description: 管理区分、戻り先、入力モード
+        order:
+          type: string
+          description: 対象発注
+        items:
+          type: array
+          items:
+            type: string
+          description: 発注明細と登録状況
+        classificationCandidates:
+          type: object
+          additionalProperties: true
+          description: 分類初期候補
+        locationCandidates:
+          type: object
+          additionalProperties: true
+          description: 設置場所初期候補
+        orderItemId:
+          type: integer
+          format: int64
+          description: order_items.order_item_id
+          x-word-omit-row: true
+          x-required-when: OrderItemForInspection
+          x-word-required-label: ✓
+        quotationItemId:
+          type: integer
+          format: int64
+          description: quotation_items.quotation_item_id
+          x-word-omit-row: true
+          x-required-when: OrderItemForInspection
+          x-word-required-label: ✓
+        registrationType:
+          type: string
+          description: 本体 / 付属品
+          x-word-omit-row: true
+          x-required-when: OrderItemForInspection
+          x-word-required-label: ✓
+        itemName:
+          type: string
+          description: 品目名
+          x-word-omit-row: true
+          x-required-when: OrderItemForInspection
+          x-word-required-label: ✓
+        makerName:
+          type: string
+          description: メーカー名
+          x-word-omit-row: true
+          x-required-when: OrderItemForInspection
+        modelName:
+          type: string
+          description: 型式
+          x-word-omit-row: true
+          x-required-when: OrderItemForInspection
+        quantity:
+          type: integer
+          format: int32
+          description: 数量
+          x-word-omit-row: true
+          x-required-when: OrderItemForInspection
+          x-word-required-label: ✓
+        unitPrice:
+          type: number
+          description: 単価
+          x-word-omit-row: true
+          x-required-when: OrderItemForInspection
+        amount:
+          type: number
+          description: 金額
+          x-word-omit-row: true
+          x-required-when: OrderItemForInspection
+        deliveryOn:
+          type: string
+          format: date
+          description: 明細別納品日
+          x-word-omit-row: true
+          x-required-when: OrderItemForInspection
+    PatchQuotationDataBoxAssetProvisionalRegistrationItemsByOrderItemIdRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - payload.rfqGroupId
+      properties:
+        payload.rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象RFQグループID
+        payload.serialNo:
+          type: string
+          description: シリアル番号
+        payload.qrCodeValue:
+          type: string
+          description: QRコード
+        payload.photoDocumentIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 既存写真ファイルID。以前保存済みのRFQ工程写真を継続利用する場合に指定する
+        payload.photoDocuments:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentInput'
+          description: 新規写真メタデータ。各要素の filePartName で対応するファイルパートを指定する
+          x-word-subtable-title: photoDocuments要素（DocumentInput）
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: payload.photoDocuments[].filePartName で参照される写真ファイル本体
+        payload.labelAttached:
+          type: boolean
+          description: ラベル貼付有無
+        payload.buildingName:
+          type: string
+          description: 棟
+        payload.floorName:
+          type: string
+          description: 階
+        payload.departmentName:
+          type: string
+          description: 部門
+        payload.sectionName:
+          type: string
+          description: 部署
+        payload.roomName:
+          type: string
+          description: 室名
+        payload.dimensionText:
+          type: string
+          description: 寸法
+        payload.remarks:
+          type: string
+          description: 備考
+        payload.shipAssetMasterId:
+          type: integer
+          format: int64
+          description: SHIP分類
+    AssetProvisionalItemSaveResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - orderItemId
+        - saved
+        - updatedAt
+      properties:
+        orderItemId:
+          type: integer
+          format: int64
+          description: 対象発注明細ID
+        photoDocumentIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 保存後に当該発注明細へ紐付く検収写真ドキュメントID
+        saved:
+          type: boolean
+          description: 保存結果
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+    PostQuotationDataBoxAssetProvisionalRegistrationCompleteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqGroupId
+        - orderId
+      properties:
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象RFQグループID
+        orderId:
+          type: integer
+          format: int64
+          description: 対象発注ID
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用
+    PostQuotationDataBoxAssetProvisionalRegistrationCompleteResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqGroupId
+        - rfqStatus
+        - individuals
+      properties:
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象RFQグループID
+        rfqStatus:
+          type: string
+          description: 検収済
+        individuals:
+          type: array
+          items:
+            type: string
+          description: 作成/更新した個体
+        individualId:
+          type: integer
+          format: int64
+          description: individuals.individual_id
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        orderItemId:
+          type: integer
+          format: int64
+          description: order_items.order_item_id
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+          x-word-required-label: ✓
+        qrCodeValue:
+          type: string
+          description: QRコード値
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        serialNo:
+          type: string
+          description: シリアルNo.
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        itemName:
+          type: string
+          description: 品目名
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+          x-word-required-label: ✓
+        makerName:
+          type: string
+          description: メーカー名
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        modelName:
+          type: string
+          description: 型式
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        acquisitionAmount:
+          type: number
+          description: 取得金額
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        acquiredOn:
+          type: string
+          format: date
+          description: 取得日
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        facilityLocationId:
+          type: integer
+          format: int64
+          description: 設置ロケーションID
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        departmentName:
+          type: string
+          description: 部門
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        sectionName:
+          type: string
+          description: 部署
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        roomName:
+          type: string
+          description: 室名
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        photoDocumentIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 検収登録中に保存した写真ドキュメントID。原本資産登録時に該当資産写真へ複製する対象
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        fixedAssetNo:
+          type: string
+          description: 固定資産番号
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+        registrationStatus:
+          type: string
+          description: INSPECTED / REGISTERED
+          x-word-omit-row: true
+          x-required-when: IndividualSummary
+          x-word-required-label: ✓
+    GetQuotationDataBoxAssetRegistrationContextResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - context
+        - order
+        - individuals
+        - accountCategories
+        - accountTitles
+        - canRegister
+      properties:
+        context:
+          type: string
+          description: 管理区分、戻り先
+        order:
+          type: string
+          description: 発注情報
+        individuals:
+          type: array
+          items:
+            type: string
+          description: 原本登録対象個体
+        accountCategories:
+          type: array
+          items:
+            type: string
+          description: 会計区分候補
+        accountTitles:
+          type: array
+          items:
+            type: string
+          description: 勘定科目候補
+        canRegister:
+          type: boolean
+          description: 登録可能か
+    PostQuotationDataBoxAssetRegistrationRegisterBulkRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqGroupId
+        - individuals
+      properties:
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象RFQグループID
+        individuals:
+          type: array
+          items:
+            type: string
+          description: 原本登録対象個体
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用
+    PostQuotationDataBoxAssetRegistrationRegisterBulkResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - rfqGroupId
+        - rfqStatus
+        - createdAssetLedgerIds
+        - returnTo
+      properties:
+        rfqGroupId:
+          type: integer
+          format: int64
+          description: 対象RFQグループID
+        rfqStatus:
+          type: string
+          description: 完了
+        createdAssetLedgerIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: 作成/更新した原本資産ID
+        returnTo:
+          type: string
+          description: /quotation-data-box/remodel-management
+    PostQuotationDataBoxRemodelManagementEditListsByEditListIdCloseRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        closeNote:
+          type: string
+          description: クローズ備考
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 競合検知用
+    PostQuotationDataBoxRemodelManagementEditListsByEditListIdCloseResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - editListId
+        - status
+        - closedAt
+        - closedByUserId
+        - reflectedCount
+        - skippedCount
+        - closeBlockers
+        - remodelCloseImpact
+      properties:
+        editListId:
+          type: integer
+          format: int64
+          description: 対象編集リストID
+        status:
+          type: string
+          description: CLOSED
+        closedAt:
+          type: string
+          format: date-time
+          description: クローズ日時
+        closedByUserId:
+          type: integer
+          format: int64
+          description: 実行者ユーザーID
+        reflectedCount:
+          type: integer
+          format: int32
+          description: 通常リモデルの原本反映件数。廃棄資産の廃棄済み更新はNo.27で実施済み
+        skippedCount:
+          type: integer
+          format: int32
+          description: 反映不要件数
+        closeBlockers:
+          type: array
+          items:
+            type: string
+          description: 空配列。未達時は REMODEL_CLOSE_NOT_READY と不足対象を返す
+        remodelCloseImpact:
+          type: object
+          additionalProperties: true
+          description: No.27完了登録から引き継いだリモデル起点廃棄の終端・資産状態・原本登録状況
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

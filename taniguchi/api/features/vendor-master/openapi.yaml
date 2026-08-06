@@ -1,0 +1,632 @@
+openapi: 3.0.4
+info:
+  title: 業者マスタ API API
+  version: '1.1'
+  description: 業者マスタで利用するAPI群。
+servers:
+  - url: /api
+tags:
+  - name: 業者マスタ
+    description: 業者マスタ APIのAPI
+paths:
+  /vendor-master/vendors:
+    get:
+      tags:
+        - 業者マスタ
+      operationId: getVendorMasterVendors
+      summary: 業者一覧取得
+      description: 業者一覧と表示件数を取得する。担当施設名、業者名、キーワードで絞り込み可能とする。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: vendor_master_list
+      parameters:
+        - name: facilityName
+          in: query
+          required: false
+          description: 担当施設名の部分一致条件
+          schema:
+            type: string
+        - name: vendorName
+          in: query
+          required: false
+          description: 業者名の部分一致条件
+          schema:
+            type: string
+        - name: keyword
+          in: query
+          required: false
+          description: インボイス登録番号、住所、役職、役割、氏名、連絡先、メールの横断検索
+          schema:
+            type: string
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VendorListResponse'
+        '400':
+          description: 検索条件不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 vendor_master_list なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（200：VendorListResponse）
+      x-word-response-subtable-titles:
+        - items要素（VendorSummary）
+      x-word-response-subtables:
+        - Title: items要素（VendorSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - vendorId
+              - int64
+              - ✓
+              - 業者ID
+            - - facilityId
+              - int64
+              - '-'
+              - 担当施設ID
+            - - facilityName
+              - string
+              - '-'
+              - 担当施設名
+            - - invoiceRegistrationNo
+              - string
+              - '-'
+              - インボイス登録番号
+            - - vendorName
+              - string
+              - ✓
+              - 業者名
+            - - address
+              - string
+              - '-'
+              - 住所
+            - - positionName
+              - string
+              - '-'
+              - 役職
+            - - roleName
+              - string
+              - '-'
+              - 役割
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - phone
+              - string
+              - '-'
+              - 電話番号
+            - - email
+              - string
+              - '-'
+              - メール
+            - - isPrimaryContact
+              - boolean
+              - ✓
+              - 主担当フラグ
+    post:
+      tags:
+        - 業者マスタ
+      operationId: postVendorMasterVendors
+      summary: 業者新規作成
+      description: 担当施設、連絡先、業者情報を含む業者マスタを新規登録する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '201'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: vendor_master_edit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostVendorMasterVendorsRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostVendorMasterVendorsResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 vendor_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設または担当施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '201': VendorResponse
+      x-word-response-title: レスポンス（201：VendorResponse）
+      x-word-response-subtable-titles:
+        - item要素（VendorSummary）
+      x-word-response-subtables:
+        - Title: item要素（VendorSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - vendorId
+              - int64
+              - ✓
+              - 業者ID
+            - - facilityId
+              - int64
+              - '-'
+              - 担当施設ID
+            - - facilityName
+              - string
+              - '-'
+              - 担当施設名
+            - - invoiceRegistrationNo
+              - string
+              - '-'
+              - インボイス登録番号
+            - - vendorName
+              - string
+              - ✓
+              - 業者名
+            - - address
+              - string
+              - '-'
+              - 住所
+            - - positionName
+              - string
+              - '-'
+              - 役職
+            - - roleName
+              - string
+              - '-'
+              - 役割
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - phone
+              - string
+              - '-'
+              - 電話番号
+            - - email
+              - string
+              - '-'
+              - メール
+            - - isPrimaryContact
+              - boolean
+              - ✓
+              - 主担当フラグ
+  /vendor-master/vendors/{vendorId}:
+    put:
+      tags:
+        - 業者マスタ
+      operationId: putVendorMasterVendorsByVendorId
+      summary: 業者更新
+      description: 指定した業者マスタを更新する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '200'
+        - '400'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: vendor_master_edit
+      parameters:
+        - name: vendorId
+          in: path
+          required: true
+          description: 更新対象の業者ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutVendorMasterVendorsByVendorIdRequest'
+      x-word-request-title: リクエストボディ
+      x-word-request-subtable-titles: []
+      x-word-request-subtables: []
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutVendorMasterVendorsByVendorIdResponse'
+        '400':
+          description: 入力不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 vendor_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設、対象業者、または担当施設が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-schema-labels:
+        '200': VendorResponse
+      x-word-response-title: レスポンス（200：VendorResponse）
+      x-word-response-subtable-titles:
+        - item要素（VendorSummary）
+      x-word-response-subtables:
+        - Title: item要素（VendorSummary）
+          Headers:
+            - フィールド
+            - 型
+            - 必須
+            - 説明
+          Rows:
+            - - vendorId
+              - int64
+              - ✓
+              - 業者ID
+            - - facilityId
+              - int64
+              - '-'
+              - 担当施設ID
+            - - facilityName
+              - string
+              - '-'
+              - 担当施設名
+            - - invoiceRegistrationNo
+              - string
+              - '-'
+              - インボイス登録番号
+            - - vendorName
+              - string
+              - ✓
+              - 業者名
+            - - address
+              - string
+              - '-'
+              - 住所
+            - - positionName
+              - string
+              - '-'
+              - 役職
+            - - roleName
+              - string
+              - '-'
+              - 役割
+            - - contactPerson
+              - string
+              - '-'
+              - 担当者名
+            - - phone
+              - string
+              - '-'
+              - 電話番号
+            - - email
+              - string
+              - '-'
+              - メール
+            - - isPrimaryContact
+              - boolean
+              - ✓
+              - 主担当フラグ
+    delete:
+      tags:
+        - 業者マスタ
+      operationId: deleteVendorMasterVendorsByVendorId
+      summary: 業者削除
+      description: 指定した業者マスタを論理削除する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: feature-code
+      x-word-status-order:
+        - '204'
+        - '401'
+        - '403'
+        - '404'
+        - '500'
+      x-feature-code: vendor_master_edit
+      parameters:
+        - name: vendorId
+          in: path
+          required: true
+          description: 削除対象の業者ID
+          schema:
+            type: integer
+            format: int64
+      x-word-parameters-title: リクエストパラメータ
+      responses:
+        '204':
+          description: 削除成功
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 通常アカウントで作業対象施設に対する実効 vendor_master_edit なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 作業対象施設または対象業者が存在しない、または削除済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-word-response-title: レスポンス（204：No Content）
+      x-word-response-lines:
+        - Body は返却しない。
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+  schemas:
+    VendorListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - totalCount
+        - items
+      properties:
+        totalCount:
+          type: integer
+          format: int32
+          description: 絞り込み後の一覧件数
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VendorSummary'
+          description: 業者一覧
+          x-word-subtable-title: items要素（VendorSummary）
+    VendorSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - vendorId
+        - vendorName
+        - isPrimaryContact
+      properties:
+        vendorId:
+          type: integer
+          format: int64
+          description: 業者ID
+        facilityId:
+          type: integer
+          format: int64
+          description: 担当施設ID
+        facilityName:
+          type: string
+          description: 担当施設名
+        invoiceRegistrationNo:
+          type: string
+          description: インボイス登録番号
+        vendorName:
+          type: string
+          description: 業者名
+        address:
+          type: string
+          description: 住所
+        positionName:
+          type: string
+          description: 役職
+        roleName:
+          type: string
+          description: 役割
+        contactPerson:
+          type: string
+          description: 担当者名
+        phone:
+          type: string
+          description: 電話番号
+        email:
+          type: string
+          description: メール
+        isPrimaryContact:
+          type: boolean
+          description: 主担当フラグ
+    PostVendorMasterVendorsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - invoiceRegistrationNo
+        - vendorName
+        - contactPerson
+        - phone
+        - email
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 担当施設ID
+        invoiceRegistrationNo:
+          type: string
+          description: インボイス登録番号
+        vendorName:
+          type: string
+          description: 業者名
+        address:
+          type: string
+          description: 住所
+        positionName:
+          type: string
+          description: 役職
+        roleName:
+          type: string
+          description: 役割
+        contactPerson:
+          type: string
+          description: 担当者名
+        phone:
+          type: string
+          description: 電話番号
+        email:
+          type: string
+          description: メール
+        isPrimaryContact:
+          type: boolean
+          description: 主担当フラグ。未指定時は false
+    PostVendorMasterVendorsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/VendorSummary'
+          description: 登録後の業者情報
+          x-word-subtable-title: item要素（VendorSummary）
+    PutVendorMasterVendorsByVendorIdRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - facilityId
+        - invoiceRegistrationNo
+        - vendorName
+        - contactPerson
+        - phone
+        - email
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          description: 担当施設ID
+        invoiceRegistrationNo:
+          type: string
+          description: インボイス登録番号
+        vendorName:
+          type: string
+          description: 業者名
+        address:
+          type: string
+          description: 住所
+        positionName:
+          type: string
+          description: 役職
+        roleName:
+          type: string
+          description: 役割
+        contactPerson:
+          type: string
+          description: 担当者名
+        phone:
+          type: string
+          description: 電話番号
+        email:
+          type: string
+          description: メール
+        isPrimaryContact:
+          type: boolean
+          description: 主担当フラグ
+    PutVendorMasterVendorsByVendorIdResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+      properties:
+        item:
+          $ref: '#/components/schemas/VendorSummary'
+          description: 更新後の業者情報
+          x-word-subtable-title: item要素（VendorSummary）
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml

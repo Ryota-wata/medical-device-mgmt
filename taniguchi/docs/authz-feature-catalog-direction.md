@@ -1,7 +1,7 @@
 # 認証認可 再設計方針メモ（機能カタログ・施設単位制御）
 
 本メモは、2026-04-01 のクライアント合意内容を受けて、認証認可の見直し方針を整理するための作業メモである。  
-現時点では [機能要件.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/機能要件.md) と [db-schema.puml](/C:/Projects/mock/medical-device-mgmt/taniguchi/db/db-schema.puml) の正本更新前の整理資料として扱う。
+現時点では、内部作業メモである[機能要件.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/機能要件.md)、API設計、[db-schema.puml](/C:/Projects/mock/medical-device-mgmt/taniguchi/db/db-schema.puml)への反映前に用いる整理資料として扱う。
 
 ## 背景
 

@@ -1,0 +1,66 @@
+$schema: ../../feature.schema.json
+id: API-027
+slug: transfer-disposal-management
+title: 移動・廃棄管理
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /quotation-data-box/transfer-management
+  - /disposal-task
+  - /quotation-data-box/disposal-management
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/transfer-disposal-management.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_移動・廃棄管理.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.2"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/7
+  revisionSummary: 受付担当者の選択・更新仕様を反映
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-005
+  - API-013
+  - API-023
+  - API-024
+  - API-028
+
+dbTables:
+  - applications
+  - application_assets
+  - transfer_application_details
+  - disposal_application_details
+  - application_status_histories
+  - application_task_steps
+  - rfqs
+  - rfq_applications
+  - rfq_status_histories
+  - rfq_vendors
+  - quotations
+  - quotation_items
+  - quotation_item_application_links
+  - orders
+  - order_items
+  - application_documents
+  - asset_ledgers
+  - asset_ledger_histories
+  - facilities
+  - facility_locations
+  - users
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+  - api_idempotency_records
+
+permissionCodes:
+  - transfer_disposal

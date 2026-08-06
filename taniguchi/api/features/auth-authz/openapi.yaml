@@ -1,0 +1,559 @@
+openapi: 3.0.4
+info:
+  title: 認証／認可 API
+  version: 1.2.0
+  description: ログイン、ログアウト、トークン再発行、ログインユーザー情報、施設別認可コンテキスト、パスワード再設定、動的認可判定を提供する。
+servers:
+  - url: /api
+tags:
+  - name: Authentication
+    description: 認証、セッション、パスワード再設定
+  - name: Authorization
+    description: 作業対象施設に対する認可コンテキストと動的判定
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      operationId: postAuthLogin
+      summary: ログイン
+      description: メールアドレスとパスワードで利用者認証を行い、アクセストークンを発行する。rememberMeがtrueの場合はcurrent device用のremember tokenをcookieとして発行する。
+      security: []
+      x-authorization-mode: system-fixed
+      x-feature-code: auth_login
+      x-word-request-title: リクエストボディ（AuthLoginRequest）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+      responses:
+        "200":
+          description: 認証成功
+          headers:
+            Set-Cookie:
+              $ref: "#/components/headers/RememberTokenSetCookie"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          description: メールアドレスまたはパスワード不正
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: アカウント無効またはロック中
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      operationId: postAuthLogout
+      summary: ログアウト
+      description: 現在のセッションとcurrent deviceのトークンを失効する。
+      security:
+        - BearerAuth: []
+        - RememberTokenCookie: []
+      x-authorization-mode: authenticated
+      responses:
+        "204":
+          description: ログアウト成功。レスポンスボディは返却しない。
+          headers:
+            Set-Cookie:
+              $ref: "#/components/headers/RememberTokenSetCookie"
+        "401":
+          description: 認証情報が未付与、無効、または期限切れ
+          headers:
+            Set-Cookie:
+              $ref: "#/components/headers/RememberTokenSetCookie"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      operationId: postAuthRefresh
+      summary: トークン再発行
+      description: HttpOnly cookieのremember tokenを検証し、アクセストークンを再発行する。
+      security:
+        - RememberTokenCookie: []
+      x-authorization-mode: authenticated
+      x-word-request-title: リクエストボディ（なし）
+      x-word-request-rows:
+        - ["-", "-", "-", "リクエストボディは使用しない。再発行対象の remember token は HttpOnly cookie から取得する"]
+      responses:
+        "200":
+          description: 再発行成功
+          headers:
+            Set-Cookie:
+              $ref: "#/components/headers/RememberTokenSetCookie"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthRefreshResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          description: remember tokenが不正、期限切れ、または失効済み
+          headers:
+            Set-Cookie:
+              $ref: "#/components/headers/RememberTokenSetCookie"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /auth/me:
+    get:
+      tags: [Authentication]
+      operationId: getAuthMe
+      summary: ログインユーザー基本情報取得
+      description: ログイン中ユーザーの基本情報、担当施設一覧、既定施設を取得する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: authenticated
+      responses:
+        "200":
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthMeResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /auth/context:
+    get:
+      tags: [Authorization]
+      operationId: getAuthContext
+      summary: 認可コンテキスト取得
+      description: 選択した作業対象施設に対する実効feature_codeとcolumn_codeを返却する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: system-fixed
+      x-feature-code: facility_select
+      parameters:
+        - $ref: "#/components/parameters/ActingFacilityId"
+      responses:
+        "200":
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthContextResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: 通常アカウントが担当施設外の施設を指定
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 施設が存在しない、または論理削除済み
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /auth/password/forgot:
+    post:
+      tags: [Authentication]
+      operationId: postAuthPasswordForgot
+      summary: パスワード再設定申請
+      description: パスワード再設定用URLの送信要求を受け付け、ユーザーの存在有無を推測できない共通応答を返す。
+      security: []
+      x-authorization-mode: public
+      x-word-request-title: リクエストボディ（PasswordForgotRequest）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordForgotRequest"
+      responses:
+        "200":
+          description: 受け付け成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PasswordForgotResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /auth/password/reset:
+    post:
+      tags: [Authentication]
+      operationId: postAuthPasswordReset
+      summary: パスワード更新
+      description: 再設定トークンを用いてパスワードを更新し、既存セッションとログイン情報記憶トークンを失効する。
+      security: []
+      x-authorization-mode: public
+      x-word-request-title: リクエストボディ（PasswordResetRequest）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetRequest"
+      responses:
+        "204":
+          description: 更新成功。レスポンスボディは返却しない。
+          headers:
+            Set-Cookie:
+              $ref: "#/components/headers/RememberTokenSetCookie"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          description: 再設定トークンが不正または期限切れ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: 再設定トークンが使用済み
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /authorization/check:
+    post:
+      tags: [Authorization]
+      operationId: postAuthorizationCheck
+      summary: 認可可否判定
+      description: 認証済みユーザーに対して、指定した施設文脈、機能、カラムの実行可否を補助判定する。
+      security:
+        - BearerAuth: []
+      x-authorization-mode: dynamic
+      x-word-request-title: リクエストボディ（AuthorizationCheckRequest）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthorizationCheckRequest"
+      responses:
+        "200":
+          description: 判定成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationCheckResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: 作業対象施設外または判定対象外
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 施設または機能コードが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common/security/bearer-auth.yaml
+    RememberTokenCookie:
+      $ref: ../../common/security/remember-token-cookie.yaml
+  parameters:
+    ActingFacilityId:
+      name: actingFacilityId
+      in: query
+      required: true
+      description: 作業対象施設ID
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  headers:
+    RememberTokenSetCookie:
+      description: remember token cookieの発行、ローテーション、または削除に用いるSet-Cookie。cookie名とDomainは環境設定、Path=/auth、HttpOnly、Secure、SameSite=Laxを基本とする。発行しない場合は省略できる。
+      schema:
+        type: string
+  schemas:
+    AuthLoginRequest:
+      type: object
+      additionalProperties: false
+      required: [emailAddress, password]
+      properties:
+        emailAddress:
+          type: string
+          format: email
+          minLength: 1
+          description: ログインIDとして利用するメールアドレス
+        password:
+          type: string
+          format: password
+          minLength: 1
+          writeOnly: true
+          description: 平文パスワード
+        rememberMe:
+          type: boolean
+          default: false
+          description: current deviceのログイン状態を保持する場合はtrue
+    AuthLoginResponse:
+      type: object
+      additionalProperties: false
+      required: [accessToken, tokenType]
+      properties:
+        accessToken:
+          type: string
+          minLength: 1
+          description: アクセストークン
+        tokenType:
+          type: string
+          enum: [Bearer]
+          description: トークン種別
+    AuthRefreshResponse:
+      type: object
+      additionalProperties: false
+      required: [accessToken, tokenType]
+      properties:
+        accessToken:
+          type: string
+          minLength: 1
+          description: 再発行したアクセストークン
+        tokenType:
+          type: string
+          enum: [Bearer]
+          description: トークン種別
+    AssignedFacility:
+      type: object
+      additionalProperties: false
+      required: [facilityId, facilityName, assignmentType, isDefault, systemContractStatus]
+      properties:
+        facilityId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 担当施設ID
+        facilityName:
+          type: string
+          minLength: 1
+          description: 施設名
+        assignmentType:
+          type: string
+          enum: [PRIMARY, SECONDARY]
+          description: 担当施設の割当種別
+        isDefault:
+          type: boolean
+          description: 既定担当施設フラグ
+        systemContractStatus:
+          type: string
+          minLength: 1
+          description: 施設契約状態
+        validFrom:
+          type: string
+          format: date
+          description: 適用開始日
+        validTo:
+          type: string
+          format: date
+          description: 適用終了日
+    AuthMeResponse:
+      type: object
+      additionalProperties: false
+      required: [userId, name, emailAddress, accountType, assignedFacilities]
+      properties:
+        userId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: ログインユーザーID
+        name:
+          type: string
+          minLength: 1
+          description: ユーザー氏名
+        emailAddress:
+          type: string
+          format: email
+          description: メールアドレス
+        accountType:
+          type: string
+          enum: [HOSPITAL, SHIP, SYSTEM_ADMIN]
+          description: アカウント種別
+        establishmentId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 設立母体ID
+        facilityId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 主所属施設ID
+        defaultFacilityId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 既定担当施設ID
+        assignedFacilities:
+          type: array
+          description: 担当施設一覧。SYSTEM_ADMINでは未削除の全施設を返す。
+          items:
+            $ref: "#/components/schemas/AssignedFacility"
+    AuthContextResponse:
+      type: object
+      additionalProperties: false
+      required: [actingFacilityId, actingFacilityName, featureCodes, columnCodes]
+      properties:
+        actingFacilityId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 作業対象施設ID
+        actingFacilityName:
+          type: string
+          minLength: 1
+          description: 作業対象施設名
+        featureCodes:
+          type: array
+          uniqueItems: true
+          description: 実効feature_code一覧
+          items:
+            type: string
+            minLength: 1
+        columnCodes:
+          type: array
+          uniqueItems: true
+          description: 実効column_code一覧
+          items:
+            type: string
+            minLength: 1
+    PasswordForgotRequest:
+      type: object
+      additionalProperties: false
+      required: [emailAddress]
+      properties:
+        emailAddress:
+          type: string
+          format: email
+          description: 対象ユーザーのメールアドレス
+    PasswordForgotResponse:
+      type: object
+      additionalProperties: false
+      required: [accepted, message]
+      properties:
+        accepted:
+          type: boolean
+          enum: [true]
+          description: 受け付け結果
+        message:
+          type: string
+          minLength: 1
+          description: ユーザーの存在有無を推測できない共通案内メッセージ
+    PasswordResetRequest:
+      type: object
+      additionalProperties: false
+      required: [token, newPassword]
+      properties:
+        token:
+          type: string
+          minLength: 1
+          writeOnly: true
+          description: パスワード再設定トークン
+        newPassword:
+          type: string
+          format: password
+          minLength: 1
+          writeOnly: true
+          description: 新しいパスワード
+    AuthorizationCheckRequest:
+      type: object
+      additionalProperties: false
+      required: [actingFacilityId, featureCode]
+      properties:
+        actingFacilityId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 作業対象施設ID
+        targetFacilityId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 閲覧対象施設ID。作業対象施設と異なる場合は他施設閲覧条件を判定する。
+        featureCode:
+          type: string
+          minLength: 1
+          description: 判定対象feature_code
+        columnCodes:
+          type: array
+          uniqueItems: true
+          description: 同時判定するcolumn_code一覧
+          items:
+            type: string
+            minLength: 1
+    AuthorizationCheckResponse:
+      type: object
+      additionalProperties: false
+      required: [isAllowed, evaluatedFeatureCode]
+      properties:
+        isAllowed:
+          type: boolean
+          description: 総合判定結果
+        evaluatedFeatureCode:
+          type: string
+          minLength: 1
+          description: 評価したfeature_code
+        allowedColumnCodes:
+          type: array
+          uniqueItems: true
+          description: 許可されたcolumn_code一覧
+          items:
+            type: string
+            minLength: 1
+        deniedReasons:
+          type: array
+          uniqueItems: true
+          description: 拒否理由コード一覧
+          items:
+            type: string
+    ErrorResponse:
+      $ref: ../../common/schemas/error-response.yaml
+  responses:
+    ValidationError:
+      description: 入力値が不正
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: 認証情報が未付与、無効、または期限切れ
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"

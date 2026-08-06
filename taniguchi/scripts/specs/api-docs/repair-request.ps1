@@ -60,8 +60,11 @@ $repairRequestCreatedRows = @(
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_修理申請.docx'
   ScreenLabel = '修理申請'
-  CoverDateText = '2026年5月20日'
-  RevisionDateText = '2026/5/20'
+  CoverDateText = '2026年7月27日'
+  CoverVersionText = '1.1'
+  RevisionVersionText = '1.1'
+  RevisionDateText = '2026/7/27'
+  RevisionSummaryText = '申請時の代替機3値を保持し修理管理の対応判断と分離'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -74,15 +77,16 @@ $repairRequestCreatedRows = @(
       '未登録資産を資産台帳へ登録せず、申請内スナップショットとして保持する方針',
       '未登録資産の対象スコープを修理申請と修理申請経由の廃棄申請のみに限定する方針',
       '修理依頼時の機器写真・添付を `application_documents` に保存する方針',
+      '申請時の代替機選択 `NOT_NEEDED` / `NEEDED` / `REQUESTED` を後続の修理管理判断から分離して保持する方針',
       '修理管理（`/quotation-data-box/repair-requests`、`/repair-task`）との feature_code とAPI設計書の分離'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
-    @{ Type = 'Paragraph'; Text = '修理申請は、現場担当者がメニュー画面から修理依頼画面へ遷移し、登録済み資産または資産台帳に登録されていない物品の修理依頼を起票する機能である。起票後の受付判定、院内/院外修理の振り分け、見積、発注、検収、完了、却下、廃棄申請接続は No.27 修理管理API設計書で扱う。' },
+    @{ Type = 'Paragraph'; Text = '修理申請は、現場担当者がメニュー画面から修理依頼画面へ遷移し、登録済み資産または資産台帳に登録されていない物品の修理依頼を起票する機能である。起票後の受付判定、院内/院外修理の振り分け、見積、発注、検収、完了、却下、廃棄申請接続は No.28 修理管理API設計書で扱う。' },
     @{ Type = 'Paragraph'; Text = '修理申請では、資産台帳に登録済みの資産だけでなく未登録資産も受け付ける。ただし未登録資産は `asset_ledgers` へ登録せず、申請内の手入力情報および `application_assets` の表示用スナップショットとして保持する。本システム未登録資産の対象スコープは修理申請と修理申請経由の廃棄申請のみであり、未登録資産の修理が完了しても資産台帳に対する CRUD は行わない。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('修理申請', 'メニュー画面から `/repair-request` で起票する現場依頼。`repair_request_create` で認可する'),
-      @('修理管理', 'タスク管理配下で修理申請を受付・進行する業務。`repair_management` で認可し、No.27 修理管理API設計書で扱う'),
+      @('修理管理', 'タスク管理配下で修理申請を受付・進行する業務。`repair_management` で認可し、No.28 修理管理API設計書で扱う'),
       @('登録済み資産', '資産台帳 `asset_ledgers` に存在し、`application_assets.asset_ledger_id` を保持する修理対象'),
       @('未登録資産', '資産台帳に登録せず、`repair_request_details.manual_item_name` 等の手入力列と `application_assets` スナップショットで保持する修理対象'),
       @('依頼受付', '画面表示上の受付状態。保存値にはせず、起票直後の `applications.status` は `新規申請` とする')
@@ -95,7 +99,7 @@ $repairRequestCreatedRows = @(
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'API の位置づけ' },
     @{ Type = 'Paragraph'; Text = '本API群は、修理申請の起票前準備と起票登録までを扱う。点検結果から修理申請へ遷移する場合は、日常点検APIまたは点検管理APIが返す初期値を `/repair-request` へ渡し、本書の修理依頼起票APIで `repair_request_details.inspection_result_id` として保存する。' },
-    @{ Type = 'Paragraph'; Text = '起票後の修理管理タブ表示、修理タスク詳細、受付判定、却下、見積依頼、見積登録、発注、検収、完了、修理不能からの廃棄申請接続は No.27 修理管理API設計書を正本とし、本書では定義しない。修理申請を経由しない未登録資産の単独廃棄申請はPhase1対象外であり、本書にも入口UI/APIを設けない。' },
+    @{ Type = 'Paragraph'; Text = '起票後の修理管理タブ表示、修理タスク詳細、受付判定、却下、見積依頼、見積登録、発注、検収、完了、修理不能からの廃棄申請接続は No.28 修理管理API設計書を正本とし、本書では定義しない。修理申請を経由しない未登録資産の単独廃棄申請はPhase1対象外であり、本書にも入口UI/APIを設けない。' },
     @{ Type = 'Heading2'; Text = '画面と API の関係' },
     @{ Type = 'Table'; Headers = @('画面操作', 'API', '補足'); Rows = @(
       @('修理依頼画面初期表示', '`GET /repair-request/context`', 'ログインユーザー由来の申請者情報、連携元点検結果、採番候補を返す'),
@@ -105,7 +109,7 @@ $repairRequestCreatedRows = @(
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル名', '利用種別', '用途'); Rows = @(
       @('`applications`', 'CREATE', '修理申請ヘッダー、申請者情報、状態、申請日、申請時刻'),
-      @('`repair_request_details`', 'CREATE', '登録済/未登録区分、症状、代替機要否、点検結果ID、未登録資産の手入力情報。`repair_category` は起票時には設定せず、修理管理STEP1で設定する'),
+      @('`repair_request_details`', 'CREATE', '登録済/未登録区分、症状、申請時の代替機選択、点検結果ID、未登録資産の手入力情報。`alternative_device_handling_required_flag` と `repair_category` は起票時には設定せず、修理管理で設定する'),
       @('`application_assets`', 'CREATE', '修理対象機器の明細。登録済み資産は `asset_ledger_id`、未登録資産は表示用スナップショットを保持する'),
       @('`application_documents`', 'CREATE', '修理依頼時の機器写真・添付メタデータ。写真は `document_category=''PHOTO''` として保存する'),
       @('`application_status_histories`', 'CREATE', '起票時の初期ステータス履歴'),
@@ -138,8 +142,10 @@ $repairRequestCreatedRows = @(
       '起票APIは `applications.application_type=''REPAIR''`、`applications.status=''新規申請''` で申請を作成する',
       '画面表示上の `依頼受付` は保存値にしない',
       '起票時点では院内修理/院外修理の振り分けを行わないため、`repair_request_details.repair_category` は未設定とする',
+      '申請者が選択した代替機状態は `repair_request_details.alternative_device_status` に `NOT_NEEDED` / `NEEDED` / `REQUESTED` の申請時点値として保存し、No.28 修理管理APIはこの値を上書きしない',
+      '修理管理担当者による代替機対応の必要／不要は `repair_request_details.alternative_device_handling_required_flag` の責務とし、本APIでは設定しない',
       '申請部署、申請者、申請者連絡先はログインユーザー情報から自動取得し、リクエスト本文からは受け取らない',
-      '起票後のステータス遷移と工程は No.27 修理管理API設計書で扱う'
+      '起票後のステータス遷移と工程は No.28 修理管理API設計書で扱う'
     ) },
     @{ Type = 'Heading2'; Text = '登録済み資産・未登録資産の扱い' },
     @{ Type = 'Bullets'; Items = @(
@@ -147,7 +153,7 @@ $repairRequestCreatedRows = @(
       '未登録資産は `asset_ledgers` へ登録しない。`repair_request_details.manual_item_name`、`manual_maker_name`、`manual_model_name`、`manual_serial_no`、`manual_department_name`、`manual_room_name` と `application_assets` の表示用スナップショットに保持する',
       '登録済み資産と未登録資産のどちらでも修理依頼時の機器写真・添付を保存できる',
       '未登録資産の修理申請が完了しても資産台帳に対する CRUD は行わない',
-      '未登録資産が修理不能となった場合の廃棄申請接続は No.27 修理管理API設計書で扱い、元修理申請の手入力情報と `application_assets` スナップショットを廃棄対象物品情報として引き継ぐ'
+      '未登録資産が修理不能となった場合の廃棄申請接続は No.28 修理管理API設計書で扱い、元修理申請の手入力情報と `application_assets` スナップショットを廃棄対象物品情報として引き継ぐ'
     ) },
     @{ Type = 'Heading2'; Text = 'エラーレスポンス仕様' },
     @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = @(
@@ -270,7 +276,7 @@ $repairRequestCreatedRows = @(
           @('payload.manualDepartmentName', 'string', '-', '未登録資産の設置部署'),
           @('payload.manualRoomName', 'string', '-', '未登録資産の室名'),
           @('payload.symptomText', 'string', '✓', '症状詳細'),
-          @('payload.alternativeDeviceStatus', 'string', '-', '`NEEDED` / `NOT_NEEDED` / `REQUESTED`'),
+          @('payload.alternativeDeviceStatus', 'string', '-', '申請時の代替機選択。`NEEDED` / `NOT_NEEDED` / `REQUESTED`'),
           @('payload.freeComment', 'string', '-', 'フリーコメント'),
           @('payload.inspectionResultId', 'int64', '-', '点検結果から遷移した場合の連携元点検結果ID'),
           @('payload.photoDocuments', 'DocumentCreateInput[]', '-', '修理依頼時の機器写真メタデータ。各要素の `filePartName` で対応するファイルパートを指定する'),
@@ -283,8 +289,9 @@ $repairRequestCreatedRows = @(
           '`applications` を `application_type=''REPAIR''`、`status=''新規申請''`、作業対象施設ID、申請者情報、申請日、申請時刻で作成する',
           '登録済み資産の場合は `asset_ledger_id` を必須とし、作業対象施設内の資産であることを検証する',
           '未登録資産の場合は `asset_ledger_id` を保持せず、資産台帳 `asset_ledgers` への登録・更新は行わない',
-          '`repair_request_details` に `application_type=''REPAIR''`、`is_registered_asset`、症状、代替機要否、点検結果ID、手入力 `manual_item_name`、`manual_maker_name`、`manual_model_name`、`manual_serial_no`、`manual_department_name`、`manual_room_name` を保存する',
-          '`repair_request_details.repair_category` は起票時には設定しない。院内修理/院外修理の振り分けは No.27 修理管理API設計書のSTEP1で登録する',
+          '`repair_request_details` に `application_type=''REPAIR''`、`is_registered_asset`、症状、申請時の代替機選択を `alternative_device_status`、点検結果ID、手入力 `manual_item_name`、`manual_maker_name`、`manual_model_name`、`manual_serial_no`、`manual_department_name`、`manual_room_name` として保存する',
+          '`repair_request_details.alternative_device_handling_required_flag` は修理管理STEP1の管理判断用であるため、本APIではNULLとし、申請時の `alternative_device_status` と二重更新しない',
+          '`repair_request_details.repair_category` は起票時には設定しない。院内修理/院外修理の振り分けは No.28 修理管理API設計書のSTEP1で登録する',
           '`application_assets` に `asset_role=''REPAIR''`、行番号1、`quantity=1`、`unit=''台''`、登録済み資産または未登録資産の表示用スナップショットを保存する',
           '`payload.photoDocuments` / `payload.attachmentDocuments` の各 `filePartName` が multipart のファイルパートに存在することを検証し、不一致なら 400 (`REPAIR_REQUEST_INPUT_INVALID`) を返す',
           'ファイル本体を Amazon S3 へ PutObject する。S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{拡張子}` 形式でAPI側が生成する。keyは保存場所識別子であり、`application_id` や `application_asset_id` などの業務IDを含めない',
@@ -323,6 +330,7 @@ $repairRequestCreatedRows = @(
     @{ Type = 'Bullets'; Items = @(
       '`isRegisteredAsset=true` の場合は `assetLedgerId` を必須とし、未登録資産用の手入力品目名は保存正本にしない',
       '`isRegisteredAsset=false` の場合は `manualItemName` を必須とし、`assetLedgerId` を受け付けない',
+      '`alternativeDeviceStatus` を指定する場合は `NOT_NEEDED` / `NEEDED` / `REQUESTED` のいずれかとし、申請時点値として保存する',
       '申請者情報はログインユーザー情報から自動取得するため、画面入力項目としては扱わない',
       '修理依頼写真は登録済み資産・未登録資産のどちらでも添付できる',
       '未登録資産の修理申請では資産台帳・個別原本・QRへの登録や更新を行わない'
@@ -330,8 +338,9 @@ $repairRequestCreatedRows = @(
     @{ Type = 'Heading2'; Text = '他機能との責務境界' },
     @{ Type = 'Bullets'; Items = @(
       '日常点検APIと点検管理APIは修理申請連携用の初期値までを返し、修理申請の作成は本書の `POST /repair-request/requests` を正本とする',
-      '修理申請起票後の受付判定、院内/院外振り分け、見積、発注、検収、完了、却下、廃棄申請接続は No.27 修理管理API設計書を正本とする',
-      '未登録資産が修理不能となった場合は、No.27 修理管理API設計書の廃棄申請接続APIで修理申請経由の廃棄申請を作成する',
+      '申請時の `alternative_device_status` は本書を正本とし、No.28 修理管理APIは別列 `alternative_device_handling_required_flag` に管理担当者の必要／不要を保存する',
+      '修理申請起票後の受付判定、院内/院外振り分け、見積、発注、検収、完了、却下、廃棄申請接続は No.28 修理管理API設計書を正本とする',
+      '未登録資産が修理不能となった場合は、No.28 修理管理API設計書の廃棄申請接続APIで修理申請経由の廃棄申請を作成する',
       '修理申請を経由しない未登録資産の単独廃棄申請はPhase1対象外であり、本書では定義しない'
     ) },
 

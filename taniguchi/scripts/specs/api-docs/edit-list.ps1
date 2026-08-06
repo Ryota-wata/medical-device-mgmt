@@ -961,7 +961,7 @@ $endpointBlocks = @(
 
   New-EndpointBlock `
     -Title '廃棄・移設申請一括作成（/edit-lists/{editListId}/applications/disposal-transfer）' `
-    -Overview 'リモデル編集リストで選択した廃棄予定または移設明細から、廃棄申請・移設申請とリモデル管理ワークフロー行を一括作成する。' `
+    -Overview 'リモデル編集リストで選択した廃棄予定または移設明細から、廃棄申請・移設申請の申請正本を一括作成する。廃棄依頼グループと後続処理は移動・廃棄管理側へ委譲する。' `
     -Method 'POST' `
     -Path '/edit-lists/{editListId}/applications/disposal-transfer' `
     -Auth '要（Bearer）' `
@@ -978,12 +978,11 @@ $endpointBlocks = @(
       '通常編集リスト（`PURCHASE`）からの作成は拒否する。',
       '選択行のうち `remodel_decision=''DISPOSAL''` または `TRANSFER` の未申請行だけを作成対象とする。',
       '購入系行、方針未設定行、申請済み行が混在する場合は行単位でスキップし、`skipped[]` に理由を返す。',
-      '`applications` / `application_assets` を作成し、`rfqs.management_type=''REMODEL''`、`workflow_type=''DISPOSAL'' / ''TRANSFER''` のワークフロー行を作成する。',
-      '`application_status_histories` に廃棄/移設申請の作成履歴を記録する。',
-      '廃棄ワークフローの `rfqs.rfq_no` は `DISP-yyyyMMdd-nnnn`、移設ワークフローは `TRAN-yyyyMMdd-nnnn` 形式でサーバー採番する。',
-      '`rfqs.rfq_group_name` は廃棄または移設の既定形式でサーバー生成する。',
-      '`rfq_applications` には `application_id`、`application_asset_id`、`edit_list_id`、`edit_list_item_id` をすべて保持する。',
-      '未削除RFQかつ同一 `workflow_type` かつ同一 `edit_list_item_id` の有効リンクがある場合は重複作成せずスキップする。',
+      '`applications` / `application_assets` を作成し、廃棄は `application_type=''DISPOSAL''` / `asset_role=''DISPOSAL''`、移設は `application_type=''TRANSFER''` / `asset_role=''TRANSFER''` として保存する。リモデル起点の廃棄申請では `applications.edit_list_id`、`application_assets.edit_list_item_id` を必須とする。',
+      '申請作成直後の保存値は廃棄・移設とも申請単位の `新規申請` とし、`application_status_histories` に作成履歴を登録する。',
+      '本APIは `rfqs`、`rfq_applications`、廃棄依頼グループ、廃棄承認ワークフロー行を作成しない。廃棄申請は作成後、移動・廃棄管理の受付一覧で選択され、No.27のグループ作成APIへ引き渡す。',
+      'レスポンスの `created[]` は `applicationId`、`applicationAssetIds`、`applicationType`、`editListItemIds`、次の遷移先コンテキストを返し、RFQ No.や廃棄タスクIDは返さない。',
+      '同一 `edit_list_item_id` に対する未削除・未終端の有効申請がある場合は重複申請を作成せず `skipped[]` に理由を返す。廃棄グループ間の資産重複は本APIではなくNo.27のグループ作成トランザクションで検証する。',
       'リモデル編集リスト起点の移設申請は作成時点の移設先未入力を許容し、リモデルクローズ前に新設置場所を必須検証する。'
     ) `
     -ResponseRows @(
@@ -1013,8 +1012,8 @@ $endpointBlocks = @(
     ) `
     -PermissionLines $disposalTransferPermissionLines `
     -ProcessingLines @(
-      '`remodel_decision=''DISPOSAL''` の明細だけを対象とし、採番形式は `DISP-yyyyMMdd-nnnn` とする。',
-      'レスポンス形式、重複判定、`rfq_applications` 保存方針は一括APIと同じとする。'
+      '`remodel_decision=''DISPOSAL''` の明細だけを対象とし、廃棄申請正本を作成する。',
+      'RFQ No.、廃棄タスクID、`rfqs`、`rfq_applications` は作成せず、レスポンス形式と申請重複判定は一括APIと同じとする。'
     ) `
     -ResponseRows @(
       @('created', 'DisposalTransferCreatedItem[]', '✓', '作成結果'),
@@ -1043,7 +1042,7 @@ $endpointBlocks = @(
     -ProcessingLines @(
       '`remodel_decision=''TRANSFER''` の明細だけを対象とし、採番形式は `TRAN-yyyyMMdd-nnnn` とする。',
       '申請作成時点の移設先未入力を許容し、リモデルクローズ前に新設置場所を必須検証する。',
-      'レスポンス形式、重複判定、`rfq_applications` 保存方針は一括APIと同じとする。'
+      'レスポンス形式と申請重複判定は一括APIと同じとする。`rfq_applications` は作成せず、移設後続は移動管理側へ委譲する。'
     ) `
     -ResponseRows @(
       @('created', 'DisposalTransferCreatedItem[]', '✓', '作成結果'),
@@ -1304,8 +1303,8 @@ $endpointBlocks = @(
       @('`vendors`', 'READ', '業者Master Data Link'),
       @('`applications` / `purchase_application_details` / `application_assets`', 'CREATE / READ / UPDATE', 'インライン新規要望、廃棄・移設申請、申請由来明細'),
       @('`application_status_histories`', 'CREATE', 'インライン新規要望、廃棄・移設申請の状態履歴'),
-      @('`rfqs`', 'CREATE / READ / UPDATE', 'RFQグループ、廃棄/移設ワークフロー、見積DB Link候補'),
-      @('`rfq_applications`', 'CREATE / READ', 'RFQ・廃棄・移設に採用した編集リスト明細と申請明細のリンク'),
+      @('`rfqs`', 'CREATE / READ / UPDATE', '通常RFQグループと見積DB Link候補。廃棄/移設申請起票APIでは作成しない'),
+      @('`rfq_applications`', 'CREATE / READ', '通常RFQ作成時の採用明細リンク。廃棄/移設申請起票では作成せず、廃棄はNo.27のグループ作成時に作成する'),
       @('`quotations` / `quotation_items`', 'READ', '見積DB Linkの候補、転記元'),
       @('`quotation_item_application_links`', 'READ / CREATE / DELETE', '見積明細と編集リスト明細の1対1リンク'),
       @('`user_column_settings`', 'READ / CREATE / UPDATE', 'ユーザー別表示カラム設定'),
@@ -1331,7 +1330,7 @@ $endpointBlocks = @(
       @('`remodel_edit_list`', 'リモデル編集リスト一覧・作成・入場・編集', 'リモデル用編集リストの基本権限'),
       @('`normal_purchase`', '通常編集リスト起点RFQ作成', '通常購入RFQを作成する追加権限'),
       @('`remodel_purchase`', 'リモデル編集リスト起点RFQ作成', 'リモデルRFQを作成する追加権限'),
-      @('`transfer_disposal`', 'リモデル編集リスト起点の廃棄・移設申請作成', '廃棄/移設ワークフロー作成の追加権限')
+      @('`transfer_disposal`', 'リモデル編集リスト起点の廃棄・移設申請作成', '廃棄/移設の申請正本作成の追加権限。後続グループ・ワークフロー操作は各管理APIへ委譲')
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
@@ -1382,7 +1381,7 @@ $endpointBlocks = @(
       @('23-19', '見積DB Link候補取得', 'GET', '/edit-lists/{editListId}/quotation-link/candidates', 'RFQ/見積明細候補取得', 'normal_edit_list / remodel_edit_list'),
       @('23-20', '見積DB Link適用', 'POST', '/edit-lists/{editListId}/quotation-link/apply', '1対1紐付け、転記、新規行追加', 'normal_edit_list / remodel_edit_list'),
       @('23-21', '見積DB Link解除', 'DELETE', '/edit-lists/{editListId}/quotation-link/{editListItemId}', '見積明細リンク解除', 'normal_edit_list / remodel_edit_list'),
-      @('23-22', '廃棄・移設申請一括作成', 'POST', '/edit-lists/{editListId}/applications/disposal-transfer', 'リモデル廃棄/移設ワークフロー作成', 'remodel_edit_list + transfer_disposal'),
+      @('23-22', '廃棄・移設申請一括作成', 'POST', '/edit-lists/{editListId}/applications/disposal-transfer', 'リモデル廃棄/移設の申請正本作成。廃棄依頼グループはNo.27へ委譲', 'remodel_edit_list + transfer_disposal'),
       @('23-23', '廃棄申請個別作成', 'POST', '/edit-lists/{editListId}/applications/disposal', '廃棄対象だけの互換/個別作成', 'remodel_edit_list + transfer_disposal'),
       @('23-24', '移設申請個別作成', 'POST', '/edit-lists/{editListId}/applications/transfer', '移設対象だけの互換/個別作成', 'remodel_edit_list + transfer_disposal'),
       @('23-25', 'RFQグループ作成', 'POST', '/edit-lists/{editListId}/rfq-groups', '編集リスト選択行からRFQ作成', 'normal_purchase / remodel_purchase'),
@@ -1401,7 +1400,7 @@ $endpointBlocks = @(
     @{ Type = 'Bullets'; Items = @(
       '資産詳細/資産カルテ参照は No.12 資産一覧・資産詳細 API を利用し、本書では新規APIを定義しない',
       '購入管理タブの申請受付一覧から行う通常編集リスト新規作成・購入申請取り込み、および既存通常編集リストへの購入申請取り込みは No.25 購入管理 API を正本とする。ただし既存編集リストへの取り込みは編集リスト作業ロックの `lockToken` 検証対象とする',
-      'リモデルダッシュボード、リモデル管理一覧、廃棄/移動承認ワークフローの進行、リモデルクローズと原本反映は No.24 リモデル管理 API を正本とする',
+      'リモデルダッシュボード、リモデル管理一覧、リモデルクローズと原本反映は No.24 リモデル管理 API を正本とする。廃棄申請の見積・発注・作業日・完了はNo.27、移動後続は移動・廃棄管理の正本とする',
       'タスク管理側で既存RFQを進行・削除するAPIは編集リスト作業ロックの対象外とし、作業ロック中でも実行できる',
       '`API連携` は本書の対象外とし、新規エンドポイントを定義しない。連携仕様を定義する場合は、連携先、同期方向、認証方式、更新対象カラム、監査要否を確定する',
       '`Excel/PDF出力` と `印刷` は本書の対象外とし、帳票/ファイル生成APIを新設しない。帳票出力をAPI化する場合は、出力形式、対象範囲、列設定反映有無、監査要否を定義する'
@@ -1424,12 +1423,12 @@ $endpointBlocks = @(
     ) },
     @{ Type = 'Heading2'; Text = 'RFQ・廃棄・移設ルール' },
     @{ Type = 'Bullets'; Items = @(
-      'RFQ No.は作成確定時だけサーバー採番し、キャンセル/閉じるでは採番予約やRFQヘッダ作成を行わない',
+      'RFQ No.は通常RFQグループ作成確定時だけサーバー採番する。廃棄/移設申請の起票では採番予約やRFQヘッダ作成を行わない',
       'リモデルRFQでは購入系の `NEW` / `REPLACE` / `ADDITION` 行だけを対象とし、廃棄予定、移設、方針未設定、申請済み行は行単位でスキップする',
       '同じ編集リスト明細に複数RFQを紐づけることは許容し、編集リスト上のRFQ No./グループ名は最新作成分で上書き表示する',
       '廃棄/移設申請はリモデル編集リスト限定とし、通常編集リストからの作成を拒否する',
-      '廃棄/移設ワークフローの表示番号は `rfqs.rfq_no` として、廃棄は `DISP-yyyyMMdd-nnnn`、移設は `TRAN-yyyyMMdd-nnnn` をサーバー採番する',
-      '同一編集リスト明細・同一 `workflow_type` の有効リンクが既に存在する場合は、行単位でスキップする'
+      '廃棄/移設申請の起票レスポンスには `applicationId` / `applicationAssetId` を返し、廃棄依頼グループNo.はNo.27のグループ作成確定時に `DISP-yyyyMMdd-nnnn` として採番する',
+      '同一編集リスト明細に対する未削除・未終端の有効申請が既に存在する場合は、行単位でスキップする。廃棄依頼グループ間の資産重複はNo.27で検証する'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },

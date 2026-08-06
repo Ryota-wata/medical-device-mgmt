@@ -1,0 +1,215 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://medical-device-mgmt.local/schemas/api-feature.schema.json",
+  "title": "API feature manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "id",
+    "slug",
+    "title",
+    "phase",
+    "status",
+    "authoringMode",
+    "screens",
+    "sources"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^API-[0-9]{3}[A-Z]?$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "phase": {
+      "type": "integer",
+      "enum": [1, 2]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["Fix", "作成済み", "未着手", "不要", "旧版"]
+    },
+    "authoringMode": {
+      "type": "string",
+      "enum": ["legacy-ps1", "openapi", "none"]
+    },
+    "screens": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^/"
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirements", "database"],
+      "properties": {
+        "requirements": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Internal working-memo reference for traceability; not part of the developer handoff or implementation source of truth."
+        },
+        "database": {
+          "type": "string",
+          "minLength": 1
+        },
+        "legacySpec": {
+          "type": "string",
+          "minLength": 1
+        },
+        "openapi": {
+          "type": "string",
+          "minLength": 1
+        },
+        "design": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "deliverable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["word", "version"],
+      "properties": {
+        "word": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Delivery output path or last approved Word snapshot; presence does not mean it is synchronized during normal development."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        "template": {
+          "type": "string",
+          "minLength": 1
+        },
+        "coverDate": {
+          "type": "string",
+          "pattern": "^[0-9]{4}年[0-9]{1,2}月[0-9]{1,2}日$"
+        },
+        "revisionDate": {
+          "type": "string",
+          "pattern": "^[0-9]{4}/[0-9]{1,2}/[0-9]{1,2}$"
+        },
+        "revisionSummary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revisionAuthor": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "relatedFeatures": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^API-[0-9]{3}[A-Z]?$"
+      }
+    },
+    "dbTables": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      }
+    },
+    "permissionCodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      }
+    },
+    "migrationParity": {
+      "type": "string",
+      "enum": ["strict", "contract"]
+    },
+    "migrationNotes": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "authoringMode": {
+            "const": "legacy-ps1"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "sources": {
+            "type": "object",
+            "required": ["legacySpec"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "authoringMode": {
+            "const": "openapi"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "sources": {
+            "type": "object",
+            "required": ["openapi", "design"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "authoringMode": {
+            "const": "none"
+          }
+        }
+      },
+      "then": {
+        "required": ["rationale"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "Fix"
+          }
+        }
+      },
+      "then": {
+        "required": ["deliverable"]
+      }
+    }
+  ]
+}

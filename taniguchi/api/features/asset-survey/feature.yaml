@@ -1,0 +1,56 @@
+$schema: ../../feature.schema.json
+id: API-009
+slug: asset-survey
+title: 現有品調査
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /offline-prep
+  - /registration-edit
+  - /asset-survey
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/asset-survey.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_現有品調査.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-005
+  - API-012
+  - API-013
+
+dbTables:
+  - facilities
+  - facility_locations
+  - asset_categories
+  - asset_large_classes
+  - asset_medium_classes
+  - asset_items
+  - manufacturers
+  - models
+  - ship_asset_masters
+  - users
+  - asset_survey_sessions
+  - asset_survey_records
+  - application_documents
+  - asset_survey_photos
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+
+permissionCodes:
+  - existing_survey
+  - survey_data_edit

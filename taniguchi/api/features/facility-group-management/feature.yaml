@@ -1,0 +1,44 @@
+$schema: ../../feature.schema.json
+id: API-017
+slug: facility-group-management
+title: 施設グループ管理
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /facility-group-management
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/facility-group-management.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_施設グループ管理.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-001
+  - API-012
+  - API-015
+  - API-016
+
+dbTables:
+  - users
+  - facilities
+  - establishments
+  - column_catalogs
+  - facility_collaboration_groups
+  - facility_collaboration_group_facilities
+  - facility_external_view_settings
+  - facility_external_column_settings
+
+permissionCodes: []

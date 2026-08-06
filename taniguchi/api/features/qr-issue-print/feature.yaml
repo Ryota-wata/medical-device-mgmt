@@ -1,0 +1,43 @@
+$schema: ../../feature.schema.json
+id: API-008
+slug: qr-issue-print
+title: QR発行・ラベル印刷
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /qr-issue
+  - /qr-print
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/qr-issue-print.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_QR発行・ラベル印刷.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.1"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: OpenAPI方式へ移行
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-012
+
+dbTables:
+  - qr_codes
+  - qr_print_jobs
+  - qr_print_job_items
+  - facilities
+  - users
+  - user_facility_assignments
+  - facility_feature_settings
+  - user_facility_feature_settings
+
+permissionCodes:
+  - qr_issue

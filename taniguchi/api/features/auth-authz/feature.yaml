@@ -1,0 +1,54 @@
+$schema: ../../feature.schema.json
+id: API-001
+slug: auth-authz
+title: 認証／認可
+phase: 1
+status: Fix
+authoringMode: openapi
+
+screens:
+  - /login
+  - /password-reset
+  - /facility-select
+  - /main
+
+sources:
+  requirements: ../../../機能要件.md
+  database: ../../../db/db-schema.puml
+  legacySpec: ../../../scripts/specs/api-docs/auth-authz.ps1
+  openapi: ./openapi.yaml
+  design: ./design.md
+
+deliverable:
+  word: ../../Fix/API設計書_認証／認可.docx
+  template: ../../テンプレート/API設計書_標準テンプレート.docx
+  version: "1.2"
+  coverDate: 2026年8月4日
+  revisionDate: 2026/8/4
+  revisionSummary: normal_ship_requestをPhase2候補へ変更
+  revisionAuthor: "-"
+
+relatedFeatures:
+  - API-002
+  - API-003
+
+dbTables:
+  - feature_catalogs
+  - column_catalogs
+  - users
+  - user_remember_tokens
+  - password_reset_tokens
+  - user_facility_assignments
+  - facilities
+  - facility_feature_settings
+  - facility_column_settings
+  - user_facility_feature_settings
+  - user_facility_column_settings
+  - facility_collaboration_groups
+  - facility_collaboration_group_facilities
+  - facility_external_view_settings
+  - facility_external_column_settings
+
+permissionCodes:
+  - auth_login
+  - facility_select

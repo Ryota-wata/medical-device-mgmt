@@ -1,0 +1,400 @@
+# 認証／認可 API内部設計
+
+## 第1章 概要
+
+### 本書の目的
+
+本書は、ログイン画面（`/login`）、パスワード再設定URL送信画面（`/password-reset`）、作業対象施設選択画面（`/facility-select`）、ホーム画面（`/main`）で利用する認証／認可 API の設計内容を整理し、クライアント、開発者、運用担当者が共通認識を持つことを目的とする。
+
+特に以下を明確にする。
+
+- ログイン、ログアウト、トークン再発行、パスワード再設定の I/F
+- `/auth/me` と `/auth/context` を使った担当施設選択、画面表示制御の成立条件
+- `feature_code` / `column_code` を正本とした認可判定ルール
+- 共有システム管理者アカウント（`users.account_type='SYSTEM_ADMIN'`）の全施設・全機能利用例外
+- 施設権限管理画面（`/permission-management`）を `feature_code` ではなく `users.account_type='SYSTEM_ADMIN'` で直接制御する例外ルール
+- 他施設閲覧時に必要な協業グループと公開元施設設定の判定条件
+
+### 対象システム概要
+
+本 API 群は、認証基盤、施設選択導線、ホーム/各業務画面の表示制御を支える横断 API である。ログイン後は `GET /auth/me` で担当施設一覧と既定施設を取得し、施設決定後に `GET /auth/context?actingFacilityId=...` を呼び出して実効 `feature_code` / `column_code` を取得する。
+
+認可正本はロールではなく、`feature_catalogs` / `column_catalogs` / `user_facility_assignments` / 施設別設定 / ユーザー施設別設定 / 他施設公開設定を参照して判断する。
+
+例外として、`users.account_type='SYSTEM_ADMIN'` の共有システム管理者アカウントは通常ユーザーへ付与するロールではなく、運用上1件のみ用意する共有アカウントとして扱う。このアカウントでログインした場合は、未削除の全施設、全 `feature_code`、全 `column_code` を利用可能とし、担当施設割当、施設提供設定、ユーザー施設別設定、協業グループ、他施設公開設定による通常判定をバイパスする。監査ログ上は共有アカウントの `user_id` の操作として記録し、実際にログインしていた個人は追跡しない。
+
+施設ごとの提供機能・提供カラムを編集する権限管理画面（`/permission-management`）は、通常ユーザー向けの利用機能ではなく共有システム管理者専用の管理導線として扱う。そのため `facility_feature_edit` のような通常アカウント向け `feature_code` は設けず、画面表示と API 実行可否は `users.account_type='SYSTEM_ADMIN'` と対象施設の未削除確認で直接判定する。
+
+権限管理で扱う `feature_code` / `column_code` は `feature_catalogs` / `column_catalogs` に登録したコードを正本とし、本API群で固定的に使用するコードと判定ルールは本設計書内で定義する。1つの管理単位に対して1つの `feature_code` または `column_code` を割り当てる。
+
+### 用語定義
+
+| 用語 | 説明 |
+| --- | --- |
+| 担当施設 | `user_facility_assignments` に直接登録された、ユーザーが作業対象として選択できる施設 |
+| 作業対象施設 | ログイン後に現在の操作文脈として選択した施設。`actingFacilityId` で表す |
+| 共有システム管理者アカウント | `users.account_type='SYSTEM_ADMIN'` の共有アカウント。未削除施設を対象とする限り通常認可判定をバイパスし、全機能・全カラムを利用可能とする |
+| 施設権限管理 | `/permission-management` で施設ごとの提供機能・提供カラムを設定する共有システム管理者専用の管理導線。通常アカウント向け `feature_code` では制御しない |
+| 実効 feature_code | `config_scope` に応じて判定済みの利用可能機能コード。`FACILITY_USER` は施設提供機能とユーザー施設別機能の両方を基本条件として判定する。`FACILITY` は施設単位のみで完結するスコープとし、現行採用コードでは固定導線を除く業務機能を `FACILITY_USER` に統一する |
+| 実効 column_code | 施設提供カラムとユーザー施設別カラムの両方が有効で、かつ関連 feature が有効な場合に表示できるカラムコード |
+| 他施設閲覧 | 作業対象施設とは別の施設データを、協業グループと公開元施設設定に基づいて閲覧すること |
+
+### 対象画面
+
+| 画面名 | 画面パス | 利用目的 |
+| --- | --- | --- |
+| ログイン画面 | /login | 利用者認証、担当施設決定導線の開始 |
+| パスワード再設定URL送信画面 | /password-reset | パスワード再設定申請 |
+| 作業対象施設選択画面 | /facility-select | 担当施設からの作業対象施設選択 |
+| ホーム画面 | /main | 選択中施設に対するメニュー表示と業務導線表示 |
+
+## 第2章 システム全体構成
+
+### API の位置づけ
+
+本 API 群は、認証状態の確立、担当施設一覧の取得、施設選択後の表示制御情報の取得、共通認可判定を担う。施設選択画面やホーム画面のための専用集約 API は持たず、`/auth/me`、`/auth/context`、各業務 API の組み合わせで構成する。
+
+`POST /authorization/check` は UI 側の補助判定に利用できるが、最終的な security boundary は各業務 API 側の再判定とする。
+
+### 画面と API の関係
+
+1. ログイン画面で `POST /auth/login` を呼び出し、認証成功後に `GET /auth/me` を呼んで `/facility-select` へ遷移する
+2. `/facility-select` では `GET /auth/me` の `assignedFacilities` / `defaultFacilityId` を用いて施設候補を表示する。担当施設数が1件でも自動で `/main` へ遷移せず、利用者の決定操作後に `GET /auth/context` を呼ぶ
+3. ホーム画面および各業務画面は `GET /auth/context` の結果を使ってメニュー、画面、ボタン、カラムの表示制御を行う
+4. 施設権限管理画面（`/permission-management`）の表示可否は `/auth/context` の `featureCodes` ではなく、`GET /auth/me` で取得した `accountType='SYSTEM_ADMIN'` により判定する
+5. 必要に応じて `POST /authorization/check` を使い、対象施設・対象機能・対象カラムの可否を補助判定する
+
+### 使用テーブル
+
+| テーブル | 利用内容 | 主な項目 |
+| --- | --- | --- |
+| users | 認証、ユーザー基本情報、アカウント状態、最終ログイン更新、共有システム管理者例外判定 | user_id, email_address, password_hash, name, account_type, is_active, locked_at, last_login_at |
+| user_remember_tokens | current device のログイン状態保持トークンの発行・更新・失効 | token_id, user_id, token, expires_at, last_used_at |
+| password_reset_tokens | パスワード再設定トークンの発行・使用済み管理、管理者起点の初回設定案内送信時の内部利用 | token_id, user_id, token, expires_at, used_at |
+| user_facility_assignments | 担当施設一覧、既定施設、施設アクセス可否判定 | user_facility_assignment_id, user_id, facility_id, is_default, is_active, valid_from, valid_to |
+| facilities | 担当施設名称、契約状態、公開元施設判定、論理削除状態確認 | facility_id, facility_name, system_contract_status, deleted_at |
+| feature_catalogs | 認可対象機能の正本、承認用 feature を含むコード体系 | feature_code, feature_name, usage_context, config_scope |
+| column_catalogs | 認可対象カラムの正本 | column_code, column_name, related_feature_code |
+| facility_feature_settings | 施設単位の提供機能判定 | facility_id, feature_code, is_enabled |
+| facility_column_settings | 施設単位の提供カラム判定 | facility_id, column_code, is_enabled |
+| user_facility_feature_settings | ユーザー施設別の利用機能判定 | user_facility_assignment_id, feature_code, is_enabled |
+| user_facility_column_settings | ユーザー施設別の利用カラム判定 | user_facility_assignment_id, column_code, is_enabled |
+| facility_collaboration_groups | 他施設閲覧候補の協業グループ定義 | facility_collaboration_group_id, group_name, is_active |
+| facility_collaboration_group_facilities | 協業グループ所属施設 | facility_collaboration_group_id, facility_id |
+| facility_external_view_settings | 公開元施設の他施設向け公開データ設定 | provider_facility_id, sharing_data_type, is_enabled |
+| facility_external_column_settings | 公開元施設の他施設向け公開カラム設定 | provider_facility_id, column_code, is_enabled |
+
+current device の再認証、アクセストークン再発行、およびセッション失効の詳細実装は認証基盤側責務とし、DB 正本としては上記テーブルを参照する。長期保持する remember token は平文保存せずハッシュ化して `user_remember_tokens` に保持し、クライアント側は `HttpOnly` / `Secure` / `SameSite=Lax` cookie でのみ保持する前提とする。レスポンスボディやリクエストボディでは長期保持トークンを扱わない。
+
+管理者がユーザー管理画面から初回設定案内を送信・再送する場合も、公開契約はユーザー管理 API 側に置き、旧トークン無効化・新規トークン発行・メール送信は認証基盤内部処理として本 API 群と同じ責務で扱う。
+
+`facilities.deleted_at` が設定された施設は、担当施設一覧、施設選択、認可判定、業務 API の対象外とする。一方で `user_facility_assignments` や各種 `*_feature_settings` / `*_column_settings` は削除せず保持し、再契約等で `deleted_at` を解除した場合は既存設定を再利用する。
+
+## 第3章 共通仕様
+
+### API 共通仕様
+
+- 通信方式: HTTPS
+- データ形式: JSON
+- 文字コード: UTF-8
+- 日時形式: ISO 8601（例: `2026-04-13T00:00:00Z`）
+- 認証済み API は Bearer トークンを `Authorization` ヘッダーに付与する
+- `rememberMe=true` の場合は current device 用の remember token を `Set-Cookie` で `HttpOnly` / `Secure` / `SameSite=Lax` cookie として設定し、JavaScript から参照できる領域には保持しない
+- `/auth/refresh` はリクエストボディではなく、cookie の remember token を検証してアクセストークンを再発行する
+- remember token cookie を利用する API は POST のみで受け付け、信頼済み Origin 以外への credentialed CORS を許可しない。必要に応じて `Origin` / `Referer` を検証する
+- 認証・トークン系レスポンスは `Cache-Control: no-store` を付与し、共有キャッシュやブラウザキャッシュに保存させない
+- `facilities.deleted_at IS NOT NULL` の施設は `/auth/me`、`/auth/context`、`/authorization/check`、各業務 API の対象外とする
+- `users.account_type='SYSTEM_ADMIN'` の共有システム管理者アカウントは、未削除施設を対象とする限り担当施設割当や施設別・ユーザー別設定に依存せず全機能・全カラムを利用できる
+- `/permission-management` は通常アカウント向け `feature_code` の管理対象に含めず、共有システム管理者アカウントかどうかで直接認可する
+- 画面表示制御用の `GET /auth/context` は UX 用キャッシュであり、業務 API の認可判定を代替しない
+
+### 認証方式
+
+ログインはメールアドレスとパスワードで行う。`POST /auth/login` 成功後はレスポンスボディで返却されたアクセストークンを Bearer トークンとして用い、`GET /auth/me`、`GET /auth/context`、各業務 API を呼び出す。`rememberMe=true` の場合は current device のログイン状態保持用 remember token も `HttpOnly` cookie として発行し、アクセストークン期限切れ時や再訪時は `/auth/refresh` で cookie を検証して新しいアクセストークンを再発行する。未認証時は 401 を返却する。
+
+### 権限モデル
+
+認可判定は `feature_code` / `column_code` を正本とし、`config_scope='FACILITY_USER'` の機能は施設単位設定とユーザー施設別設定の両方が有効な場合に成立する。固定導線を除く現行採用機能は `FACILITY_USER` に統一し、Phase1では `lending_in_use_used` をユーザー施設別設定の対象に含める。`normal_ship_request` は Phase2 の SHIP 代理作業依頼で利用する候補であり、Phase1 では `feature_catalogs.is_active=true` の有効コードとして登録せず、施設提供機能設定、ユーザー施設別設定、`/auth/context` の返却候補、`/authorization/check` の許可対象には含めない。ただし子機能など追加条件を持つコードは各コードの補足規定に従う。`auth_login` と `facility_select` は `config_scope='SYSTEM_FIXED'` のため、施設・ユーザー単位の ON/OFF 対象に含めない。施設提供設定そのものを編集する `/permission-management` は通常アカウント向け機能ではないため `feature_code` を割り当てず、`users.account_type='SYSTEM_ADMIN'` と対象施設の未削除確認で直接制御する。`棚卸し / 完了` や `DataLINK / SHIP表示列（リモデル）` / `DataLINK / SHIP表示列（通常）` / `資産マスタ / SHIP表示列` のように、管理単位がボタン群や列群を含む場合も、当該管理単位に対応する1つの `feature_code` / `column_code` で扱う。他施設閲覧専用の別コードは設けず、閲覧者側は既存の `original_list_view` / `original_price_column`、公開元施設側は `facility_external_view_settings` / `facility_external_column_settings` で制御する。
+
+共有システム管理者アカウント（`account_type='SYSTEM_ADMIN'`）は通常ユーザーのロールではなく、初期データまたは運用設定で1件のみ用意する特別アカウントである。認可サービスはこの値を検出した場合、選択施設または対象施設が未削除であることだけを確認し、担当施設割当、施設提供設定、ユーザー施設別設定、協業グループ、公開元施設設定の通常判定を行わず許可する。
+
+| 管理単位名 | 種別 | コード | 対象処理 |
+| --- | --- | --- | --- |
+| ログイン・パスワード再設定（固定導線） | feature_code | `auth_login` | `POST /auth/login`、`POST /auth/password/forgot`、`POST /auth/password/reset` の固定導線を扱う。`config_scope='SYSTEM_FIXED'` として固定扱いにする |
+| 施設選択（固定導線） | feature_code | `facility_select` | `GET /auth/me` の担当施設選択導線と `GET /auth/context` の `actingFacilityId` 確定に用いる。`config_scope='SYSTEM_FIXED'` として固定扱いにする |
+
+固定導線を含む本システム全体の `feature_code` / `column_code` カタログは以下の通りとする。各業務 API 設計書は当該 API 群で利用するコードだけを抜粋して記載するが、コード追加・名称変更・関連付けは本表を基準に扱う。
+
+#### feature_code 全量一覧
+
+| 管理単位名 | feature_code | category_code | usage_context | config_scope |
+| --- | --- | --- | --- | --- |
+| ユーザー 一覧 | `user_list_view` | `USER_MGMT` | `COMMON` | `FACILITY_USER` |
+| ユーザー 新規作成・編集 | `user_edit` | `USER_MGMT` | `COMMON` | `FACILITY_USER` |
+| 担当施設 編集 | `user_facility_assignment_edit` | `USER_MGMT` | `COMMON` | `FACILITY_USER` |
+| 施設グループ 一覧 | `facility_group_list` | `USER_MGMT` | `COMMON` | `FACILITY_USER` |
+| 施設グループ 新規作成・編集 | `facility_group_edit` | `USER_MGMT` | `COMMON` | `FACILITY_USER` |
+| ログイン・パスワード再設定（固定導線） | `auth_login` | `AUTH` | `COMMON` | `SYSTEM_FIXED` |
+| 施設選択（固定導線） | `facility_select` | `AUTH` | `COMMON` | `SYSTEM_FIXED` |
+| 資産一覧・カルテ閲覧 | `original_list_view` | `ASSET_REQUEST` | `OWN` | `FACILITY_USER` |
+| 資産一覧 / 新規・更新・増設・移動・廃棄 | `original_application` | `ASSET_REQUEST` | `OWN` | `FACILITY_USER` |
+| 資産一覧 / 管理部署編集 | `management_department_edit` | `ASSET_REQUEST` | `OWN` | `FACILITY_USER` |
+| 資産カルテ / 原本編集 | `original_list_edit` | `ASSET_REQUEST` | `OWN` | `FACILITY_USER` |
+| 日常点検・オフライン準備 | `daily_inspection` | `MAINTENANCE` | `OWN` | `FACILITY_USER` |
+| 貸出・返却 | `lending_checkout` | `MAINTENANCE` | `OWN` | `FACILITY_USER` |
+| 貸出・返却 / 使用中 & 使用済み | `lending_in_use_used` | `MAINTENANCE` | `OWN` | `FACILITY_USER` |
+| 修理申請 | `repair_application` | `MAINTENANCE` | `OWN` | `FACILITY_USER` |
+| 棚卸し | `inventory` | `INVENTORY` | `OWN` | `FACILITY_USER` |
+| 棚卸し / 完了 | `inventory_complete` | `INVENTORY` | `OWN` | `FACILITY_USER` |
+| QRコード発行 | `qr_issue` | `QR` | `OWN` | `FACILITY_USER` |
+| 現有品調査 | `existing_survey` | `SURVEY` | `OWN` | `FACILITY_USER` |
+| 現有品調査内容修正 | `survey_data_edit` | `SURVEY` | `OWN` | `FACILITY_USER` |
+| 資産台帳取込登録 | `asset_ledger_import` | `SURVEY` | `OWN` | `FACILITY_USER` |
+| データ突合 | `survey_ledger_matching` | `SURVEY` | `OWN` | `FACILITY_USER` |
+| 編集リスト（リモデル） | `remodel_edit_list` | `REMODEL` | `OWN` | `FACILITY_USER` |
+| リモデル購入管理 / 申請受付～見積登録 | `remodel_purchase` | `REMODEL` | `OWN` | `FACILITY_USER` |
+| リモデル購入管理 / 発注登録～資産登録 | `remodel_order` | `REMODEL` | `OWN` | `FACILITY_USER` |
+| リモデル購入管理 / 検収登録 | `remodel_acceptance` | `REMODEL` | `OWN` | `FACILITY_USER` |
+| 編集リスト（通常） | `normal_edit_list` | `TASK` | `OWN` | `FACILITY_USER` |
+| 通常購入管理 / 申請受付～見積登録 | `normal_purchase` | `TASK` | `OWN` | `FACILITY_USER` |
+| 通常購入管理 / 発注登録～仮資産登録 | `normal_order` | `TASK` | `OWN` | `FACILITY_USER` |
+| 通常購入管理 / 検収登録 | `normal_acceptance` | `TASK` | `OWN` | `FACILITY_USER` |
+| 通常購入管理 / 見積管理 | `normal_quotation` | `TASK` | `OWN` | `FACILITY_USER` |
+| 通常購入管理 / SHIP依頼機能（Phase2候補） | `normal_ship_request` | `TASK` | `OWN` | `FACILITY_USER` |
+| 移動・廃棄管理 | `transfer_disposal` | `TASK` | `OWN` | `FACILITY_USER` |
+| 修理管理 | `repair_management` | `TASK` | `OWN` | `FACILITY_USER` |
+| 保守契約管理 | `maintenance_contract` | `TASK` | `OWN` | `FACILITY_USER` |
+| 点検管理 | `inspection_management` | `TASK` | `OWN` | `FACILITY_USER` |
+| 貸出管理（タスク管理） | `lending_management` | `TASK` | `OWN` | `FACILITY_USER` |
+| 資産マスタ / 一覧 | `asset_master_list` | `MASTER` | `OWN` | `FACILITY_USER` |
+| 資産マスタ / 新規作成・編集 | `asset_master_edit` | `MASTER` | `OWN` | `FACILITY_USER` |
+| 施設マスタ / 一覧 | `facility_master_list` | `MASTER` | `OWN` | `FACILITY_USER` |
+| 施設マスタ / 新規作成・編集 | `facility_master_edit` | `MASTER` | `OWN` | `FACILITY_USER` |
+| SHIP部署マスタ / 一覧 | `ship_dept_master_list` | `MASTER` | `OWN` | `FACILITY_USER` |
+| SHIP部署マスタ / 新規作成・編集 | `ship_dept_master_edit` | `MASTER` | `OWN` | `FACILITY_USER` |
+| 個別部署マスタ / 一覧 | `hospital_dept_master_list` | `MASTER` | `OWN` | `FACILITY_USER` |
+| 個別部署マスタ / 新規作成・編集 | `hospital_dept_master_edit` | `MASTER` | `OWN` | `FACILITY_USER` |
+| 業者マスタ / 一覧 | `vendor_master_list` | `MASTER` | `OWN` | `FACILITY_USER` |
+| 業者マスタ / 新規作成・編集 | `vendor_master_edit` | `MASTER` | `OWN` | `FACILITY_USER` |
+
+#### column_code 全量一覧
+
+| column_code | column_name | related_feature_code | usage_context |
+| --- | --- | --- | --- |
+| `original_price_column` | 資産一覧・カルテ / 原本価格情報 | `original_list_view` | `OWN` |
+| `remodel_ship_column` | DataLINK / SHIP表示列（リモデル） | `remodel_edit_list` | `OWN` |
+| `normal_ship_column` | DataLINK / SHIP表示列（通常） | `normal_edit_list` | `OWN` |
+| `asset_master_ship_column` | 資産マスタ / SHIP表示列 | `asset_master_list` | `OWN` |
+
+#### コードカタログの利用方針
+
+本 API 群の `/auth/context` と `/authorization/check` は、上記 `feature_code` / `column_code` カタログに登録されたコードを汎用的に評価する。各業務 API 設計書は、そのうち当該 API 群で必要なコードだけを抜粋して記載するが、コード値、管理単位名、関連付けの正本は本設計書のカタログとする。資産一覧起点の管理部署編集は `management_department_edit`、点検管理登録は `inspection_management`、保守契約登録は `maintenance_contract` を利用する。`normal_ship_request` は Phase2 の SHIP 代理作業依頼で利用する候補としてカタログに残すが、Phase1 の通常購入管理ではボタン表示、API 実行可否判定、施設提供機能設定、ユーザー施設別設定に使用しない。貸出・返却の使用中/使用済みフローは `config_scope='FACILITY_USER'` の `lending_in_use_used` を利用し、実効利用には `lending_checkout` も有効であることを必須とする。
+
+`/permission-management` は施設提供機能・提供カラム設定を変更する管理 API 群であり、通常アカウントへ付与する `feature_code` では制御しない。旧整理の `facility_feature_edit` は本カタログから除外し、`/auth/context` の `featureCodes` にも含めない。施設権限管理 API 群は、各 API 側で Bearer トークンの `users.account_type='SYSTEM_ADMIN'` と対象施設の未削除を直接確認する。
+
+| 対象 | 判定に使う主な情報 | 説明 |
+| --- | --- | --- |
+| ログイン関連 | `users`, `user_remember_tokens`, `password_reset_tokens` | 認証とトークン管理を扱う。施設別権限は判定しない |
+| 作業対象施設決定 | `users.account_type`, `user_facility_assignments`, `facilities` | 通常アカウントは担当施設一覧と既定施設を決定する。共有システム管理者アカウントは未削除の全施設を選択候補とする |
+| 自施設機能判定 | `feature_catalogs.config_scope`, `facility_feature_settings`, `user_facility_feature_settings` | `FACILITY_USER` は施設提供とユーザー許可の両方を基本条件とする。Phase1では `lending_in_use_used` も `FACILITY_USER` として判定し、親 `lending_checkout` も必要とする。`normal_ship_request` は Phase2 対象のため Phase1 の判定候補に含めない |
+| 自施設カラム判定 | `facility_column_settings`, `user_facility_column_settings`, `column_catalogs.related_feature_code` | 関連 feature が有効な場合のみ成立する |
+| 他施設閲覧判定 | `original_list_view`, `original_price_column`, `facility_collaboration_groups`, `facility_collaboration_group_facilities`, `facility_external_view_settings`, `facility_external_column_settings` | 閲覧者側の既存実効権限と公開元施設設定の両方が必要 |
+
+### エラーレスポンス仕様
+
+#### 基本エラーレスポンス（ErrorResponse）
+
+| フィールド | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| code | string | ✓ | エラーコード |
+| message | string | ✓ | 利用者向けエラーメッセージ |
+| details | string[] | - | 入力エラーや補足情報 |
+
+## 第4章 API 一覧
+
+| 機能名 | Method | Path | 概要 | 認証 |
+| --- | --- | --- | --- | --- |
+| ログイン | POST | /auth/login | ユーザー認証とトークン発行を行う | 不要 |
+| ログアウト | POST | /auth/logout | 現在のセッションとトークンを失効する | 要 |
+| トークン再発行 | POST | /auth/refresh | remember token cookie を検証してアクセストークンを再発行する | 不要（remember token cookie 必須） |
+| ログインユーザー基本情報取得 | GET | /auth/me | ログインユーザー、担当施設一覧、既定施設を取得する | 要 |
+| 認可コンテキスト取得 | GET | /auth/context | 選択施設に対する実効 feature / column を取得する | 要 |
+| パスワード再設定申請 | POST | /auth/password/forgot | パスワード再設定用 URL 発行を受け付ける | 不要 |
+| パスワード更新 | POST | /auth/password/reset | 再設定トークンを使ってパスワードを更新する | 不要 |
+| 認可可否判定 | POST | /authorization/check | 画面・操作単位の可否を補助判定する | 要 |
+
+## 第5章 認証／認可機能設計
+
+### postAuthLogin
+
+#### 権限
+
+- `auth_login` は `SYSTEM_FIXED` の認証前提機能であり、施設・ユーザー権限設定では制御しない
+- `users.is_active=true` かつ `locked_at IS NULL` のアカウントのみ認証成功とする
+
+#### 処理仕様
+
+1. `users.email_address` で対象ユーザーを特定し、`password_hash` と入力パスワードを照合する
+2. 認証成功時はアクセストークンを発行し、`users.last_login_at` を更新する
+3. `rememberMe=true` の場合は `user_remember_tokens` に current device のログイン状態保持用 remember token を発行または更新する
+4. remember token は平文を保持せず、ハッシュ化した値を `user_remember_tokens` へ保存する
+5. クライアント側には remember token を `Set-Cookie` で `HttpOnly` / `Secure` / `SameSite=Lax` cookie として設定し、レスポンスボディには含めない
+6. `rememberMe=false` の場合は remember token を新規発行せず、既存の remember token cookie が同一 device に存在する場合は削除し、対応する `user_remember_tokens` も失効対象とする
+7. 次回アクセス時またはアクセストークン期限切れ時に有効な remember token が存在する場合は、`/auth/refresh` でアクセストークン再発行を試みる
+8. 作業対象施設の確定や `feature_code` / `column_code` の返却は本 API では行わず、後続の `/auth/me` と `/auth/context` で解決する
+
+#### Cookie 設定
+
+- remember token cookie は `HttpOnly`、`Secure`、`SameSite=Lax`、`Path=/auth` を基本属性とし、`Max-Age` または `Expires` は `user_remember_tokens.expires_at` と整合させる
+- cookie 名、`Domain` の有無、具体的な有効期間は認証基盤の環境設定で定義し、削除時は発行時と同じ `Path` / `Domain` 属性で期限切れ cookie を返す
+
+### postAuthLogout
+
+#### 権限
+
+- 認証済みセッション、または有効な remember token cookie に紐づく current device であること
+
+#### 処理仕様
+
+1. Authorization ヘッダーまたは remember token cookie で識別される current device の現在セッションを失効対象とする
+2. 同一 device に紐づくログイン状態保持トークンが存在する場合は同時に無効化する
+3. remember token cookie が存在する場合は、発行時と同じ `Path` / `Domain` 属性で期限切れ cookie を返して削除する
+4. remember token cookie が不正または期限切れの場合も、期限切れ cookie を返してクライアント側の cookie を削除する
+5. 他 device のセッションやトークンは本 API の失効対象に含めない
+
+### postAuthRefresh
+
+#### 権限
+
+- 認証条件は「不要（remember token cookie 必須）」とする。
+
+#### 処理仕様
+
+1. remember token cookie が存在することを確認する
+2. 受信した remember token をハッシュ化し、`user_remember_tokens.token` の保存値と照合する
+3. `user_remember_tokens.expires_at` と失効状態を確認し、期限切れまたは失効済みの場合は 401 とし、期限切れ cookie を返して削除する
+4. トークンに紐づくユーザーについて `users.is_active=true` かつ `locked_at IS NULL` を再確認する
+5. 有効であれば新しいアクセストークンを発行する
+6. 再発行成功時は `user_remember_tokens.last_used_at` を更新する
+7. remember token をローテーションする場合は、更新後トークンをレスポンスボディではなく `Set-Cookie` で返し、旧トークンは再利用不可にする
+8. credentialed CORS は信頼済み Origin のみに限定し、必要に応じて `Origin` / `Referer` を検証する
+
+### getAuthMe
+
+#### 権限
+
+- 認証済みセッションであること
+- 認証済みユーザーが `users.is_active=true` かつ `locked_at IS NULL` であること
+
+#### 処理仕様
+
+1. 認証済みユーザーの `users` を取得する
+2. 通常アカウントの場合は `user_facility_assignments` から有効な担当施設一覧を取得する
+3. 共有システム管理者アカウント（`account_type='SYSTEM_ADMIN'`）の場合は `user_facility_assignments` に依存せず、`facilities.deleted_at IS NULL` の全施設を `assignedFacilities` へ含める
+4. 施設名称、契約状態を付与する。通常アカウントが削除済み施設を既定担当に持つ場合は `defaultFacilityId` へ返さない
+5. 共有システム管理者アカウントでは `defaultFacilityId` を自動固定せず、作業対象施設選択画面で明示選択させる
+6. 協業グループ経由で見える施設は通常アカウントの `assignedFacilities` へ含めない
+
+### getAuthContext
+
+#### 権限
+
+- 認証済みセッションであること
+- 認証済みユーザーが `users.is_active=true` かつ `locked_at IS NULL` であること
+- 通常アカウントの場合、指定 `actingFacilityId` が `user_facility_assignments` 上の有効な担当施設であること
+- 共有システム管理者アカウントの場合、指定 `actingFacilityId` が未削除施設であること
+- 指定 `actingFacilityId` に対応する `facilities.deleted_at IS NULL` であること
+
+#### 処理仕様
+
+1. 認証済みユーザーの `users.account_type` を確認する
+2. 通常アカウントの場合は `user_facility_assignments` で対象施設への割当を確認する
+3. `facilities.deleted_at IS NULL` の未削除施設であることを確認し、削除済みなら 404 とする
+4. 通常アカウントの場合は `facilities.system_contract_status` を確認し、契約有効施設だけを認可判定対象にする
+5. 共有システム管理者アカウントの場合は選択施設が未削除であれば、`feature_catalogs.is_active=true` の全 `feature_code` と `column_catalogs.is_active=true` の全 `column_code` を返す
+6. `/permission-management` の表示可否は `featureCodes` に含めず、クライアントは `GET /auth/me` の `accountType='SYSTEM_ADMIN'` を用いて判定する
+7. `config_scope='FACILITY_USER'` の `feature_code` は `facility_feature_settings` と `user_facility_feature_settings` の両方が `is_enabled=true` の場合に実効機能として返す
+8. Phase1では `lending_in_use_used` は `config_scope='FACILITY_USER'` として `facility_feature_settings.is_enabled=true` かつ `user_facility_feature_settings.is_enabled=true` の場合だけ返却候補に含める。`normal_ship_request` は Phase2 対象のため Phase1 の返却候補に含めない
+9. `lending_in_use_used` は施設提供設定とユーザー施設別設定が有効であっても、同一担当施設で `lending_checkout` の実効権限が成立しない場合は `featureCodes` から除外する
+10. `facility_column_settings` と `user_facility_column_settings` の両方が `is_enabled=true` で、かつ `related_feature_code` が有効な `column_code` を実効カラムとして返す
+11. 最新の `権限管理単位一覧` シートで採用した `feature_code` / `column_code` だけを返却候補に含める
+12. 他施設閲覧の具体的な対象施設可否は本 API では解決せず、協業グループ、対象施設契約状態、公開元施設設定を `/authorization/check` または業務 API 側で再判定する。QRコードや他施設閲覧専用の別コードは返却せず、既存の `original_list_view` / `original_price_column` の実効有無を返す
+13. 通常アカウントでは `config_scope='SYSTEM_FIXED'` の `auth_login` / `facility_select` は返却対象に含めない。共有システム管理者アカウントでは全 `feature_code` 返却方針に合わせてこれらも返却してよいが、UI と業務 API は固定導線として扱い、施設・ユーザー単位の ON/OFF 対象にはしない
+
+### postAuthPasswordForgot
+
+#### 権限
+
+- 認証条件は「不要」とする。
+
+#### 処理仕様
+
+1. メールアドレス形式を検証する
+2. `users` に該当ユーザーが存在し、再設定対象として扱える場合は `password_reset_tokens` を発行する
+3. 再設定トークンは平文のまま保持せず、ハッシュ化した値を保存する
+4. 同一ユーザーの未使用トークンが残っている場合は旧トークンを無効化してから新規トークンを発行する
+5. 管理者起点の初回設定案内再送でも、同一のトークン発行・旧トークン無効化ロジックを内部利用してよい
+6. 存在有無や有効性にかかわらず、画面上では共通応答を返す
+7. メール送信は非同期ジョブまたはメール基盤側責務としてよい
+
+### postAuthPasswordReset
+
+#### 権限
+
+- 認証条件は「不要」とする。
+
+#### 処理仕様
+
+1. 受信した再設定トークンをハッシュ化し、`password_reset_tokens` の保存値と照合する
+2. `password_reset_tokens` の存在、有効期限、未使用状態を確認する
+3. 有効なトークンであれば `users.password_hash` を更新する
+4. `password_reset_tokens.used_at` を更新して再利用不可にする
+5. 既存の認証セッションとログイン情報記憶トークンを失効対象とし、対象 device の remember token cookie が存在する場合は削除する
+
+### postAuthorizationCheck
+
+#### 権限
+
+- 認証済みセッションであること
+- 認証済みユーザーが `users.is_active=true` かつ `locked_at IS NULL` であること
+- 通常アカウントの場合、指定 `actingFacilityId` が担当施設であること
+- 共有システム管理者アカウントの場合、指定 `actingFacilityId` が未削除施設であること
+- 指定 `actingFacilityId` に対応する施設が未削除であること
+
+#### 処理仕様
+
+1. 判定対象ユーザーは Bearer トークンから解決し、リクエストボディで `userId` は受け取らない
+2. 共有システム管理者アカウント（`account_type='SYSTEM_ADMIN'`）の場合は、`actingFacilityId` と指定された `targetFacilityId` が未削除であることだけを確認し、全 `feature_code` と全 `column_code` を許可する。協業グループ、施設提供設定、ユーザー施設別設定、公開元施設設定は判定しない
+3. 上記の全 `feature_code` とは `feature_catalogs` に登録された有効コードを指す。旧整理の `facility_feature_edit` は本カタログから除外するため、`featureCode='facility_feature_edit'` を指定した場合は存在しない機能コードとして 404 を返す。`/permission-management` API 群の認可では本 API に `facility_feature_edit` を渡さず、各 API 側で `account_type='SYSTEM_ADMIN'` を直接判定する
+4. 通常アカウントの自施設判定では `user_facility_assignments`、`feature_catalogs.config_scope`、`facility_feature_settings`、`user_facility_feature_settings` を用いて `featureCode` の可否を評価する。Phase1では `lending_in_use_used` は `config_scope='FACILITY_USER'` として施設提供設定とユーザー施設別設定の両方を必須とし、`lending_checkout` の実効権限も成立する場合のみ許可する。`normal_ship_request` は Phase2 対象のため Phase1 では許可対象に含めない
+5. 通常アカウントのカラム判定では `facility_column_settings`、`user_facility_column_settings`、`column_catalogs.related_feature_code` を用いて可否を評価する。`original_price_column` は `related_feature_code='original_list_view'` が実効有効な場合のみ許可候補とする
+6. 通常アカウントで `targetFacilityId` が指定され、`actingFacilityId` と異なる場合は、`featureCode='original_list_view'` を必須とし、閲覧者側施設と公開元施設の両方が `deleted_at IS NULL` かつ `system_contract_status='ACTIVE'` であること、双方が active な同一 `facility_collaboration_groups` に所属すること、公開元施設の `facility_external_view_settings(provider_facility_id=targetFacilityId, sharing_data_type='asset', is_enabled=true)` が存在することを追加で評価する。`columnCodes` に `original_price_column` が含まれる場合は、閲覧者側の実効カラム権限に加え、公開元施設の `facility_external_column_settings(provider_facility_id=targetFacilityId, column_code='original_price_column', is_enabled=true)` が存在する場合だけ `allowedColumnCodes` へ含める
+7. 本 API は補助判定用であり、各業務 API 側でも同条件を再判定する
+
+## 第6章 権限・業務ルール
+
+### 認可ルール
+
+- `auth_login` と `facility_select` は `SYSTEM_FIXED` のため、施設・ユーザー設定で ON/OFF しない
+- `/auth/me` は担当施設一覧と既定施設を返し、協業グループ経由で見える施設は返さない
+- 共有システム管理者アカウントでは `/auth/me` が未削除の全施設を `assignedFacilities` に返し、`/auth/context` と `/authorization/check` は未削除施設を対象とする限り全機能・全カラムを許可する
+- 施設権限管理画面（`/permission-management`）とその API 群は通常アカウント向け `feature_code` で制御せず、共有システム管理者アカウント専用の管理導線として `users.account_type='SYSTEM_ADMIN'` を直接判定する
+- `/auth/me` と `/auth/context` は `facilities.deleted_at IS NULL` の未削除施設だけを対象にする
+- `/auth/context` は選択施設に対する実効 `feature_code` / `column_code` を返す
+- QRコードや他施設閲覧専用の別 `feature_code` / `column_code` は採用しない。他施設閲覧は既存の `original_list_view` / `original_price_column` と公開元施設設定で判定し、施設切替候補へは展開しない
+- `column_code` は、関連 `feature_code` が有効な場合のみ成立する
+
+### 施設選択・ホーム導線ルール
+
+- ログイン後は病院ユーザー、SHRCユーザー、SHIPユーザーを問わず `/facility-select` へ遷移する
+- Phase1の `/facility-select` では担当施設一覧と決定ボタンを表示する。共有システム管理者アカウントでは未削除の全施設を選択候補として表示する
+- 通常業務へ進む場合は利用者が施設を選択して決定し、`/auth/context` 取得後に `/main` へ遷移する
+- ホーム画面の通常業務導線の表示可否は、`/auth/context` の実効 `feature_code` / `column_code` を正本として判断する
+- ホーム画面のマスタ管理導線のうち `/permission-management` への遷移ボタンは、`featureCodes` ではなく `accountType='SYSTEM_ADMIN'` の場合だけ表示する
+
+## 第7章 運用方針
+
+- `GET /auth/context` は画面表示制御のための一括取得 API とし、個別権限確認 API の多重呼び出しを避ける
+- 一方で、業務 API は `GET /auth/context` の結果を信頼して認可判定を省略しない
+- 施設論理削除時は関連認可設定を削除せず保持し、再契約等で `deleted_at` を解除した場合は既存設定を再利用する
+- 認証・認可APIの外部I/Fは本機能の`openapi.yaml`、処理・認可ルールは本`design.md`、DB構造は`db-schema.puml`を正本とする
